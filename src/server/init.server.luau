@@ -7,5 +7,6 @@ for _, name in { "Weapons", "Skills", "Pets" } do
 end
 
 require(script.PlayerData)
+require(script.Combat)
 
 print("Madlands is alive. Configs loaded: Weapons, Skills, Pets")
