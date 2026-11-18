@@ -8,6 +8,8 @@ end
 
 require(script.PlayerData)
 require(script.Combat)
+require(script.WeaponVisuals)
+require(script.DevGround) -- must load before the dummy and mobs, which stand on it
 require(script.DevDummy)
 require(script.MobSpawner)
 

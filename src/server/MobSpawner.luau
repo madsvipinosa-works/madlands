@@ -2,6 +2,7 @@
 -- shortcut: mobs walk straight at the target with MoveTo (no pathfinding), so walls block them; upgrade with PathfindingService when zones have terrain.
 local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
+local ServerStorage = game:GetService("ServerStorage")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Mobs = require(ReplicatedStorage.Shared.Config.Mobs)
@@ -10,65 +11,102 @@ local PlayerData = require(script.Parent.PlayerData)
 local rng = Random.new()
 local active = {} -- [model] = state
 
--- A decoration part welded to the body. No collision and no mass, so it never changes how the wolf moves.
-local function addPart(model, root, class, name, size, color, offset, tiltDegrees)
-	local part = Instance.new(class)
-	part.Name = name
-	part.Size = size
-	part.Color = color
-	part.CanCollide = false
-	part.Massless = true
-	part.CFrame = root.CFrame * CFrame.new(offset) * CFrame.Angles(math.rad(tiltDegrees or 0), 0, 0)
-	part.Parent = model
-	local weld = Instance.new("WeldConstraint")
-	weld.Part0, weld.Part1 = root, part
-	weld.Parent = part
-	return part
+local function weld(a, b)
+	local w = Instance.new("WeldConstraint")
+	w.Part0, w.Part1 = a, b
+	w.Parent = b
 end
 
+-- A hinge the client can swing (client/MobAnimation). Phase +1/-1 makes diagonal legs move together, like a trot.
+local function hinge(part0, part1, c0, c1, name, role, phase)
+	local motor = Instance.new("Motor6D")
+	motor.Name = name
+	motor.Part0, motor.Part1 = part0, part1
+	motor.C0, motor.C1 = c0, c1
+	motor:SetAttribute("Role", role)
+	motor:SetAttribute("Phase", phase)
+	motor.Parent = part0
+end
+
+-- Builds the mob from the imported mesh model in ServerStorage.Models (saved from Studio as assets/models/<Look.Model>.rbxm).
+-- Returns nil if that model has not been added yet.
 local function buildModel(name, def, position)
 	local look = def.Look
+	local models = ServerStorage:FindFirstChild("Models")
+	local template = models and models:FindFirstChild(look.Model)
+	if not (template and template:IsA("Model")) then
+		warn(`[Mob] ServerStorage.Models.{look.Model} not found: import the mesh and save it as assets/models/{look.Model}.rbxm`)
+		return nil
+	end
+
+	local meshes = template:Clone()
+	local extents = meshes:GetExtentsSize()
+	meshes:ScaleTo(look.TargetLength / math.max(extents.X, extents.Z)) -- the importer's scale is unknown, so size it by length
+	meshes.PrimaryPart = meshes:FindFirstChild("Torso", true)
+	local boxCFrame, boxSize = meshes:GetBoundingBox()
+
 	local model = Instance.new("Model")
 	model.Name = name
 
+	-- The root is the invisible combat hitbox, at the center of the mesh box.
 	local root = Instance.new("Part")
 	root.Name = "HumanoidRootPart"
 	root.Size = look.BodySize
-	root.Color = look.BodyColor
+	root.Transparency = 1
+	root.CollisionGroup = "Mobs" -- dashing players pass through it
 	root.Position = position
 	root.Parent = model
 
-	addPart(model, root, "Part", "Belly", look.Belly.Size, look.Belly.Color, look.Belly.Offset)
-	addPart(model, root, "Part", "Head", look.Head.Size, look.Head.Color, look.Head.Offset)
-	addPart(model, root, "Part", "Snout", look.Snout.Size, look.Snout.Color, look.Snout.Offset)
-	addPart(model, root, "Part", "Tail", look.Tail.Size, look.Tail.Color, look.Tail.Offset, look.Tail.TiltDegrees)
-	for _, side in { -1, 1 } do
-		local ear = look.Ear
-		local offset = Vector3.new(ear.Offset.X * side, ear.Offset.Y, ear.Offset.Z)
-		addPart(model, root, "WedgePart", "Ear", ear.Size, ear.Color, offset)
+	local yaw = CFrame.Angles(0, math.rad(look.YawDegrees), 0)
+	local byName = {}
+	for _, part in meshes:GetDescendants() do
+		if part:IsA("MeshPart") then
+			part.CFrame = root.CFrame * yaw * boxCFrame:ToObjectSpace(part.CFrame)
+			part.Anchored = false
+			part.CanCollide = false -- no collision and no mass, so it never changes how the mob moves
+			part.Massless = true
+			local style = look.Colors[part.Name] or look.Colors.Default
+			part.Color = style.Color
+			part.Material = Enum.Material[style.Material]
+			part.Parent = model
+			byName[part.Name] = part
+		end
 	end
+	meshes:Destroy()
 
-	-- Legs hang from the bottom of the body on Motor6D hinges; the client swings them (client/MobAnimation).
-	-- Phase +1/-1 makes diagonal legs move together, like a trot.
-	local leg = look.Leg
-	for _, spec in { { "LegFL", -1, -1, 1 }, { "LegFR", 1, -1, -1 }, { "LegBL", -1, 1, -1 }, { "LegBR", 1, 1, 1 } } do
-		local hip = Vector3.new(spec[2] * leg.XOffset, -look.BodySize.Y / 2, spec[3] * leg.ZOffset)
-		local part = addPart(model, root, "Part", spec[1], leg.Size, leg.Color, hip - Vector3.new(0, leg.Size.Y / 2, 0))
-		part:FindFirstChildOfClass("WeldConstraint"):Destroy() -- replaced by the hinge below
-		local motor = Instance.new("Motor6D")
-		motor.Name = spec[1]
-		motor.Part0, motor.Part1 = root, part
-		motor.C0 = CFrame.new(hip)
-		motor.C1 = CFrame.new(0, leg.Size.Y / 2, 0)
-		motor:SetAttribute("Phase", spec[4])
-		motor.Parent = root
+	-- The torso hangs on a "Body" hinge so the whole upper body can bob and rock while walking.
+	-- Legs hang from the top of their mesh and the tail from its top, both attached to the torso. Everything else is rigid.
+	local torso = byName.Torso
+	hinge(root, torso, root.CFrame:ToObjectSpace(torso.CFrame), CFrame.new(), "Torso_Body", "Body", 1)
+	local moving = { [torso] = true }
+	local function addHinge(partName, role, phase)
+		local part = byName[partName]
+		if part then
+			local c1 = CFrame.new(0, part.Size.Y / 2, 0)
+			hinge(torso, part, torso.CFrame:ToObjectSpace(part.CFrame * c1), c1, partName .. "_" .. role, role, phase)
+			moving[part] = true
+		end
 	end
+	for legName, phase in look.Legs do
+		addHinge(legName, "Hip", phase)
+	end
+	addHinge(look.Tail, "Tail", 1)
+	for _, part in byName do
+		if not moving[part] then
+			weld(torso, part)
+		end
+	end
+	local motorCount = 0
+	for _ in moving do
+		motorCount += 1
+	end
+	model:SetAttribute("MotorCount", motorCount) -- the client waits for this many hinges before animating
 
 	local humanoid = Instance.new("Humanoid")
 	humanoid.RigType = Enum.HumanoidRigType.R15
 	humanoid.RequiresNeck = false
 	humanoid.BreakJointsOnDeath = false -- keep the body in one piece for CorpseSeconds
-	humanoid.HipHeight = leg.Size.Y
+	humanoid.HipHeight = math.max(0, boxSize.Y / 2 - look.BodySize.Y / 2) -- feet touch the ground
 	humanoid.MaxHealth = def.Health
 	humanoid.Health = def.Health
 	humanoid.WalkSpeed = def.WalkSpeed
@@ -98,9 +136,12 @@ end
 
 local function spawnMob(name, def, position)
 	local model, humanoid, root = buildModel(name, def, position)
+	if not model then
+		return
+	end
 	local state = { def = def, humanoid = humanoid, root = root, home = position, lastAttack = 0, returning = false }
 	active[model] = state
-	print(`[Mob] {name} spawned at {position}`)
+	print(`[Mob] {name} spawned at {position}, size {model:GetExtentsSize()}, yaw {def.Look.YawDegrees}`)
 
 	humanoid.Died:Once(function()
 		active[model] = nil

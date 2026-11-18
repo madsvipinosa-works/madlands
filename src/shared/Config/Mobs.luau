@@ -3,7 +3,7 @@ return {
 	Wolf = {
 		Health = 60,
 		Damage = 8, -- per bite
-		AttackRange = 5, -- studs, root part to root part
+		AttackRange = 6, -- studs, root part to root part (a big wolf bites from further away)
 		AttackCooldown = 1.2, -- seconds between bites
 		AggroRange = 30, -- starts chasing a player closer than this
 		LeashRange = 60, -- gives up and walks home when this far from its spawn
@@ -15,23 +15,38 @@ return {
 		RespawnSeconds = 10, -- a new wolf appears this long after death
 		Spawns = { Vector3.new(30, 3, -30) }, -- one wolf per position
 
-		-- Looks only. Offsets are studs from the body's center; the wolf faces -Z (head at negative Z).
-		-- BodySize is the combat hitbox. Keep it the same unless you want to change how the wolf is hit.
+		-- Looks only. The mesh comes from ServerStorage.Models.<Model>, saved from Studio as assets/models/<Model>.rbxm
+		-- (import assets/models/wolf.glb with the 3D Importer first).
+		-- BodySize is the invisible combat hitbox. Keep it the same unless you want to change how the wolf is hit.
 		Look = {
-			BodySize = Vector3.new(2, 2, 4),
-			BodyColor = Color3.fromRGB(105, 105, 110),
-			Belly = { Size = Vector3.new(1.7, 0.6, 3.4), Offset = Vector3.new(0, -0.8, 0), Color = Color3.fromRGB(190, 190, 185) },
-			Head = { Size = Vector3.new(1.5, 1.4, 1.5), Offset = Vector3.new(0, 0.5, -2.6), Color = Color3.fromRGB(120, 120, 125) },
-			Snout = { Size = Vector3.new(0.7, 0.6, 1), Offset = Vector3.new(0, 0.2, -3.7), Color = Color3.fromRGB(170, 165, 160) },
-			Ear = { Size = Vector3.new(0.3, 0.8, 0.5), Offset = Vector3.new(0.45, 1.5, -2.3), Color = Color3.fromRGB(80, 80, 85) }, -- one per side
-			Tail = { Size = Vector3.new(0.5, 0.5, 2), Offset = Vector3.new(0, 0.9, 2.8), TiltDegrees = -35, Color = Color3.fromRGB(95, 95, 100) },
-			Leg = {
-				Size = Vector3.new(0.5, 1.5, 0.5), -- the height also lifts the body off the ground
-				XOffset = 0.7, -- left/right from the center
-				ZOffset = 1.4, -- front/back from the center
-				Color = Color3.fromRGB(85, 85, 90),
+			Model = "Wolf",
+			TargetLength = 9, -- studs, nose to tail; the mesh is scaled to this
+			YawDegrees = 0, -- turns the mesh to face the way the wolf moves. If it faces away from you, set this to 180
+			BodySize = Vector3.new(3.6, 3.8, 7.2), -- about 0.4 x 0.42 x 0.8 of TargetLength; resize it when you change TargetLength
+			Legs = { FrontLeg_L = 1, HindLeg_R = 1, FrontLeg_R = -1, HindLeg_L = -1 }, -- mesh name = swing direction (diagonals match)
+			Tail = "Tail",
+			-- Roblox's importer drops the colors saved in the .glb, so they are set here. Default is used for any piece not listed.
+			Colors = {
+				Default = { Color = Color3.fromRGB(80, 80, 86), Material = "SmoothPlastic" }, -- grey fur
+				Torso = { Color = Color3.fromRGB(72, 72, 78), Material = "SmoothPlastic" },
+				Neck = { Color = Color3.fromRGB(95, 95, 101), Material = "SmoothPlastic" }, -- lighter ruff
+				Head = { Color = Color3.fromRGB(100, 100, 106), Material = "SmoothPlastic" },
+				Tail = { Color = Color3.fromRGB(92, 92, 98), Material = "SmoothPlastic" },
+				Ear_L = { Color = Color3.fromRGB(50, 50, 55), Material = "SmoothPlastic" }, -- darker ears
+				Ear_R = { Color = Color3.fromRGB(50, 50, 55), Material = "SmoothPlastic" },
+				Eye_L = { Color = Color3.fromRGB(255, 184, 20), Material = "Neon" },
+				Eye_R = { Color = Color3.fromRGB(255, 184, 20), Material = "Neon" },
+				Nose = { Color = Color3.fromRGB(30, 30, 34), Material = "SmoothPlastic" },
 			},
-			Swing = { AngleDegrees = 35, RadiansPerStud = 1.2 }, -- leg swing size, and how fast legs cycle per stud walked
+			Swing = {
+				HipDegrees = 28, -- how far each leg swings
+				LegLiftStuds = 0.45, -- the leg lifts this much while swinging forward, so feet clear the ground
+				RadiansPerStud = 0.9, -- how fast the legs cycle per stud walked; lower = longer strides
+				BodyBobStuds = 0.17, -- body moves up and down twice per stride
+				BodyPitchDegrees = 3, -- body rocks forward and back once per stride
+				TailDegrees = 20, -- tail wag size
+				TailSpeed = 3, -- tail wag speed
+			},
 		},
 	},
 }

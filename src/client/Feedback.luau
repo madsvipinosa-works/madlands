@@ -8,6 +8,8 @@ local Weapons = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("C
 
 local Style = require(ReplicatedStorage.Shared.Config:WaitForChild("DamageNumbers"))
 
+local Animations = require(script.Parent.Animations)
+
 local Feedback = {}
 
 function Feedback.PlaySwing()
@@ -16,6 +18,7 @@ function Feedback.PlaySwing()
 	sound.SoundId = Weapons.Sword.SwingSound
 	sound.Parent = SoundService
 	sound:Play()
+	Animations.Play(Weapons.Sword.SwingAnimation)
 	Debris:AddItem(sound, 2)
 end
 

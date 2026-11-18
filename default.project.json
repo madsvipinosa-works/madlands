@@ -15,6 +15,12 @@
       }
     },
 
+    "ServerStorage": {
+      "Models": {
+        "$path": "assets/models"
+      }
+    },
+
     "StarterPlayer": {
       "StarterPlayerScripts": {
         "Client": {
