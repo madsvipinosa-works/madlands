@@ -9,5 +9,6 @@ end
 require(script.PlayerData)
 require(script.Combat)
 require(script.DevDummy)
+require(script.MobSpawner)
 
 print("Madlands is alive. Configs loaded: Weapons, Skills, Pets")

@@ -2,6 +2,7 @@
 local UserInputService = game:GetService("UserInputService")
 local swingRemote = game:GetService("ReplicatedStorage"):WaitForChild("Swing")
 local Feedback = require(script.Feedback)
+require(script.MobAnimation)
 
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
 	if not gameProcessed and input.UserInputType == Enum.UserInputType.MouseButton1 then

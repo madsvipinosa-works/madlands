@@ -4,6 +4,7 @@ local ProfileStore = require(script.Parent.ProfileStore)
 
 local TEMPLATE = {
 	Level = 1,
+	Xp = 0,
 	Weapon = "Sword", -- equipped weapon id, a key in Config/Weapons
 	Gold = 0, -- carried gold, can drop on death
 	BankGold = 0, -- safe gold

@@ -6,6 +6,8 @@ local TweenService = game:GetService("TweenService")
 
 local Weapons = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"):WaitForChild("Weapons"))
 
+local Style = require(ReplicatedStorage.Shared.Config:WaitForChild("DamageNumbers"))
+
 local Feedback = {}
 
 function Feedback.PlaySwing()
@@ -28,25 +30,50 @@ local function flash(model)
 	Debris:AddItem(highlight, 0.3)
 end
 
+local rng = Random.new()
+
 local function floatNumber(root, amount)
+	local style = amount >= Style.StrongThreshold and Style.Strong or Style.Normal
+
 	local gui = Instance.new("BillboardGui")
-	gui.Size = UDim2.fromOffset(100, 40)
-	gui.StudsOffset = Vector3.new(0, 3, 0)
+	gui.Size = UDim2.fromOffset(200, 80)
+	gui.StudsOffset = Vector3.new(0, Style.StartHeight, 0)
 	gui.AlwaysOnTop = true
+
 	local label = Instance.new("TextLabel")
 	label.Size = UDim2.fromScale(1, 1)
 	label.BackgroundTransparency = 1
 	label.Text = tostring(math.round(amount))
-	label.TextColor3 = Color3.fromRGB(255, 80, 80)
-	label.TextStrokeTransparency = 0
-	label.Font = Enum.Font.GothamBold
-	label.TextSize = 26
+	label.TextColor3 = style.Color
+	label.Font = Enum.Font[Style.Font]
+	label.TextSize = style.TextSize
 	label.Parent = gui
+
+	local outline = Instance.new("UIStroke") -- TextStrokeTransparency is too thin for a thick outline
+	outline.Color = Style.OutlineColor
+	outline.Thickness = Style.OutlineThickness
+	outline.Parent = label
+
+	local scale = Instance.new("UIScale")
+	scale.Scale = Style.StartScale
+	scale.Parent = label
+
 	gui.Parent = root
-	local info = TweenInfo.new(0.8)
-	TweenService:Create(gui, info, { StudsOffset = Vector3.new(0, 5, 0) }):Play()
-	TweenService:Create(label, info, { TextTransparency = 1, TextStrokeTransparency = 1 }):Play()
-	Debris:AddItem(gui, 0.9)
+
+	-- Pop: Back easing overshoots slightly, then settles at full size.
+	TweenService:Create(scale, TweenInfo.new(Style.PopTime, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
+
+	-- Drift up and a little sideways, fast at first, slowing down.
+	local side = rng:NextNumber(-Style.SideStuds, Style.SideStuds)
+	local drift = TweenInfo.new(Style.Lifetime, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+	TweenService:Create(gui, drift, { StudsOffset = Vector3.new(side, Style.StartHeight + Style.RiseStuds, 0) }):Play()
+
+	-- Fade out over the last part of the lifetime.
+	local fade = TweenInfo.new(Style.Lifetime - Style.FadeStart, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, 0, false, Style.FadeStart)
+	TweenService:Create(label, fade, { TextTransparency = 1 }):Play()
+	TweenService:Create(outline, fade, { Transparency = 1 }):Play()
+
+	Debris:AddItem(gui, Style.Lifetime + 0.1)
 end
 
 local function watch(humanoid)

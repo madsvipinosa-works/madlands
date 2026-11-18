@@ -46,6 +46,7 @@ swingRemote.OnServerEvent:Connect(function(player) -- extra arguments are ignore
 			seen[model] = true
 			local offset = (targetRoot.Position - root.Position) * Vector3.new(1, 0, 1)
 			if offset.Magnitude < 0.01 or forward:Dot(offset.Unit) >= minDot then
+				model:SetAttribute("LastHitBy", player.UserId) -- lets mobs reward the killer
 				targetHumanoid:TakeDamage(weapon.Damage)
 				print(`[Combat] {player.Name} hit {model.Name} for {weapon.Damage}, health now {targetHumanoid.Health}`)
 			end
