@@ -6,4 +6,6 @@ for _, name in { "Weapons", "Skills", "Pets" } do
 	assert(type(data) == "table", name .. " config must return a table")
 end
 
+require(script.PlayerData)
+
 print("Madlands is alive. Configs loaded: Weapons, Skills, Pets")
