@@ -1,1 +1,9 @@
-print("Madlands is alive")
+local Config = game:GetService("ReplicatedStorage").Shared.Config
+
+-- Load every config table at startup so a broken config shows up in Output right away.
+for _, name in { "Weapons", "Skills", "Pets" } do
+	local data = require(Config[name])
+	assert(type(data) == "table", name .. " config must return a table")
+end
+
+print("Madlands is alive. Configs loaded: Weapons, Skills, Pets")
