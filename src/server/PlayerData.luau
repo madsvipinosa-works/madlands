@@ -43,8 +43,7 @@ local function onJoin(player)
 	end
 	profiles[player] = profile
 	local d = profile.Data
-	print(`[PlayerData] {player.Name}: Level {d.Level}, Gold {d.Gold}, Bank {d.BankGold}`)
-end
+	print(`[PlayerData] {player.Name}: Level {d.Level}, Gold {d.Gold}, Bank {d.BankGold}`)end
 
 Players.PlayerAdded:Connect(onJoin)
 for _, player in Players:GetPlayers() do
