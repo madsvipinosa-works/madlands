@@ -1,0 +1,1 @@
+print("Madlands is alive")
