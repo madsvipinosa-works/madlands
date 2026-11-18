@@ -56,3 +56,5 @@ end)
 Players.PlayerRemoving:Connect(function(player)
 	lastSwing[player] = nil
 end)
+
+return true
