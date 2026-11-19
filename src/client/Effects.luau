@@ -77,6 +77,28 @@ function Effects.Dust(position, size)
 	Debris:AddItem(ring, c.Lifetime)
 end
 
+-- A flat ring on the ground that grows and fades. `seconds` is how long it takes.
+function Effects.Ring(position, size, seconds)
+	local ring = Instance.new("Part")
+	ring.Shape = Enum.PartType.Cylinder
+	ring.Anchored = true
+	ring.CanCollide = false
+	ring.CanQuery = false
+	ring.CanTouch = false
+	ring.Color = Config.Dust.Color
+	ring.Material = Enum.Material.SmoothPlastic
+	ring.Transparency = 0.5
+	ring.Size = Vector3.new(0.2, 2, 2)
+	ring.CFrame = CFrame.new(position + Vector3.new(0, 0.2, 0)) * CFrame.Angles(0, 0, math.rad(90))
+	ring.Parent = workspace
+	TweenService:Create(
+		ring,
+		TweenInfo.new(seconds, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
+		{ Size = Vector3.new(0.2, size, size), Transparency = 1 }
+	):Play()
+	Debris:AddItem(ring, seconds + 0.1)
+end
+
 -- Shakes the camera for a moment, fading out.
 local shakeUntil, shakeStart, shakeStrength = 0, 0, 0
 RunService.RenderStepped:Connect(function()
@@ -114,6 +136,14 @@ function Effects.SkillStarted(skill)
 	if e.StartDustSize then
 		Effects.Dust(groundBelow(root), e.StartDustSize)
 	end
+	if e.SpinRingSize then -- a ring sweeping out around the spin
+		task.delay(skill.HitDelay or 0, function()
+			local now = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+			if now then
+				Effects.Ring(groundBelow(now), e.SpinRingSize, 0.45)
+			end
+		end)
+	end
 	if e.ShakeAmplitude and not e.LandingDustSize then
 		Effects.Shake(e.ShakeAmplitude, e.ShakeSeconds)
 	end
@@ -121,7 +151,9 @@ function Effects.SkillStarted(skill)
 		task.delay(skill.HitDelay, function()
 			local now = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 			if now then
-				Effects.Dust(groundBelow(now), e.LandingDustSize)
+				local ground = groundBelow(now)
+				Effects.Dust(ground, e.LandingDustSize)
+				Effects.Ring(ground, e.ShockwaveSize, 0.35) -- the slam snaps out faster than the dust
 				Effects.Shake(e.ShakeAmplitude, e.ShakeSeconds)
 			end
 		end)

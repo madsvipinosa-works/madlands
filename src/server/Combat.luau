@@ -4,9 +4,11 @@ local PhysicsService = game:GetService("PhysicsService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local ServerStorage = game:GetService("ServerStorage")
 
 local Weapons = require(ReplicatedStorage.Shared.Config.Weapons)
 local Skills = require(ReplicatedStorage.Shared.Config.Skills)
+local EffectStyle = require(ReplicatedStorage.Shared.Config.Effects)
 local SwingAnimations = require(ReplicatedStorage.Shared.Config.SwingAnimations)
 local PlayerData = require(script.Parent.PlayerData)
 local WeaponVisuals = require(script.Parent.WeaponVisuals)
@@ -103,6 +105,8 @@ local function flatLook(root)
 	return (root.CFrame.LookVector * Vector3.new(1, 0, 1)).Unit
 end
 
+local spawnWave -- defined below, after the handlers that use it
+
 -- One handler per skill Type in Config/Skills.
 local handlers = {}
 
@@ -142,20 +146,105 @@ function handlers.Jump(player, character, root, skill)
 end
 
 -- Wave: a slash that flies straight ahead and cuts every mob it passes through.
+-- The slash leaves the blade partway through the swing, so it looks cut out of the air, not thrown.
 function handlers.Wave(player, character, root, skill)
+	local style = EffectStyle.Wave
+	task.delay(SwingAnimations[skill.Animation].TrailStart / skill.AnimationSpeed, function()
+		if root.Parent then
+			spawnWave(player, character, root, skill, style)
+		end
+	end)
+end
+
+function spawnWave(player, character, root, skill, style)
 	local direction = flatLook(root)
-	local start = root.Position + direction * 2
+	local start = root.Position + direction * style.SpawnForward + Vector3.new(0, style.SpawnHeight, 0)
 	local wave = Instance.new("Part")
 	wave.Name = "SlashWave"
-	wave.Size = Vector3.new(skill.Width, 0.5, 1)
-	wave.Color = Color3.fromRGB(225, 228, 238)
-	wave.Material = Enum.Material.SmoothPlastic
-	wave.Transparency = 0.3
+	wave.Size = Vector3.new(0.2, 0.2, 0.2)
+	wave.Transparency = 1 -- the crescent slices below do the showing; this part just carries them
 	wave.CanCollide = false
 	wave.CanQuery = false
 	wave.CanTouch = false
 	wave.Massless = true
-	wave.CFrame = CFrame.lookAt(start, start + direction) * CFrame.Angles(0, 0, math.rad(35)) -- tilted, like a diagonal cut
+	wave.CFrame = CFrame.lookAt(start, start + direction) * CFrame.Angles(0, 0, math.rad(style.TiltDegrees))
+
+	-- A ready-made effect, if one is set up. It is welded on and flies with the wave.
+	local models = ServerStorage:FindFirstChild("Models")
+	local template = style.Model ~= "" and models and models:FindFirstChild(style.Model)
+	if template then
+		local visual = template:Clone()
+		local rotation = style.ModelRotation
+		local turn = CFrame.Angles(math.rad(rotation.X), math.rad(rotation.Y), math.rad(rotation.Z))
+		for _, item in visual:GetDescendants() do
+			if item:IsA("WeldConstraint") or item:IsA("JointInstance") then
+				item:Destroy() -- joints to parts that are not coming along
+			elseif item:IsA("SpecialMesh") then
+				item.Scale *= style.ModelScale
+			end
+		end
+		for _, part in (if visual:IsA("BasePart") then { visual } else visual:GetDescendants()) do
+			if part:IsA("BasePart") then
+				part.Anchored = false
+				part.CanCollide = false
+				part.CanQuery = false
+				part.CanTouch = false
+				part.Massless = true
+				part.CFrame = wave.CFrame * CFrame.new(style.ModelOffset) * turn
+				local weld = Instance.new("WeldConstraint")
+				weld.Part0, weld.Part1 = wave, part
+				weld.Parent = part
+			end
+		end
+		visual.Parent = wave
+	end
+
+	-- Otherwise: thin slices laid along an arc. Each one is turned around a point behind the wave, so
+	-- together they curve like a sword stroke, tallest in the middle and tapering to nothing at the tips.
+	local halfArc = math.rad(style.ArcDegrees) / 2
+	local sliceLength = (style.Radius * halfArc * 2 / style.Slices) * 1.2 -- a little overlap, so there are no gaps
+	for i = 1, (if template then 0 else style.Slices) do
+		local along = (i - 0.5) / style.Slices * 2 - 1 -- -1 at one tip, 1 at the other
+		local taper = math.cos(along * math.pi / 2)
+		local slice = Instance.new("Part")
+		slice.Name = "WaveSlice"
+		-- Upright: the slice spans sideways and the arc climbs. Flat: the slice stands up and the arc sweeps wide.
+		slice.Size = if style.Upright
+			then Vector3.new(style.Height * taper, style.Thickness, sliceLength)
+			else Vector3.new(style.Thickness, style.Height * taper, sliceLength)
+		slice.Color = style.Color
+		slice.Material = Enum.Material.SmoothPlastic
+		slice.Transparency = style.Transparency
+		slice.CanCollide = false
+		slice.CanQuery = false
+		slice.CanTouch = false
+		slice.Massless = true
+		local turn = if style.Upright then CFrame.Angles(along * halfArc, 0, 0) else CFrame.Angles(0, along * halfArc, 0)
+		slice.CFrame = wave.CFrame * CFrame.new(0, 0, style.Radius) * turn * CFrame.new(0, 0, -style.Radius)
+		slice.Parent = wave
+		local weld = Instance.new("WeldConstraint")
+		weld.Part0, weld.Part1 = wave, slice
+		weld.Parent = slice
+
+		if i == 1 or i == style.Slices then -- the tips smear as the crescent flies
+			local across = if style.Upright then Vector3.new(slice.Size.X / 2, 0, 0) else Vector3.new(0, slice.Size.Y / 2, 0)
+			local top = Instance.new("Attachment")
+			top.Position = across
+			top.Parent = slice
+			local bottom = Instance.new("Attachment")
+			bottom.Position = -across
+			bottom.Parent = slice
+			local trail = Instance.new("Trail")
+			trail.Attachment0, trail.Attachment1 = top, bottom
+			trail.Color = ColorSequence.new(style.Color)
+			trail.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.45), NumberSequenceKeypoint.new(1, 1) })
+			trail.Lifetime = style.TrailLifetime
+			trail.LightEmission = 0
+			trail.FaceCamera = false
+			trail.Parent = slice
+		end
+	end
+
 	local attachment = Instance.new("Attachment")
 	attachment.Parent = wave
 	local mover = Instance.new("LinearVelocity")
