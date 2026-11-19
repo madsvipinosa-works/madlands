@@ -56,11 +56,17 @@ return {
 		Dash = {
 			StartDustSize = 5,
 			EndDustSize = 4, -- dust where the rush ends
-			StreakSeconds = 0.3, -- a speed streak behind the body while rushing
+			StreakSeconds = 0.4, -- a speed streak behind the body while rushing
 			StreakColor = Color3.fromRGB(205, 225, 255),
 			StreakHeight = 4, -- studs tall, roughly head to knee
 			StreakSpread = 1.4, -- studs between the three ribbons, so the streak is a wide band
-			CutMarkLength = 12, -- the slash line that flashes where the cut lands
+			TrailDustSize = 2.5, -- a small puff of dust on the ground this often along the rush
+			TrailDustEvery = 0.04, -- seconds
+			-- The crescent that flashes where the cut lands (the same mesh as the Wave Slash).
+			CutMarkScale = 1.7, -- times its native size (6 studs wide), so about 10 studs against the 7 stud wide cut
+			CutMarkAhead = 4, -- studs in front of you when it lands
+			CutMarkTurn = 180, -- 180: curved edge leads, like a blade swept across; 0: curved edge trails
+			CutMarkSeconds = 0.3,
 			FlashColor = Color3.fromRGB(190, 220, 255),
 			FovKick = 9,
 		},

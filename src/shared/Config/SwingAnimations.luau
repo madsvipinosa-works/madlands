@@ -69,17 +69,18 @@ return {
 		},
 	},
 	-- The four sword skills. They have no published AssetId yet, so these poses are what plays.
-	DashSlash = { -- coil low with the blade level, then rush through the target in one flat sideways cut and follow it through
+	DashSlash = { -- coil low with the blade level, burst through the target in one flat sideways cut, then slide to a low stop
 		AssetId = "",
-		TrailStart = 0.06, -- seconds into the move when the blade starts cutting
+		TrailStart = 0.04, -- seconds into the move when the blade starts cutting
 		TrailSeconds = 0.3,
-		Duration = 0.6,
+		Duration = 0.7,
 		Keyframes = {
-			{ T = 0.05, Pose = { RightShoulder = V(12, 0, 85), RightElbow = V(25, 0, 0), LeftShoulder = V(14, 0, -25), Waist = V(0, -60, 0), Root = V(-22, -12, 0), RightHip = V(-25, 0, 0), RightKnee = V(-15, 0, 0), LeftHip = V(20, 0, 0), LeftKnee = V(-10, 0, 0) } }, -- coil
-			{ T = 0.13, Ease = "In", Pose = { RightShoulder = V(20, 0, 60), RightElbow = V(8, 0, 0), LeftShoulder = V(18, 0, -40), Waist = V(0, 65, 0), Root = V(-26, 14, 0), RightHip = V(28, 0, 0), RightKnee = V(-30, 0, 0), LeftHip = V(-18, 0, 0) } }, -- the cut
+			{ T = 0.05, Pose = { RightShoulder = V(12, 0, 85), RightElbow = V(25, 0, 0), LeftShoulder = V(-25, 0, -18), Waist = V(0, -60, 0), Root = V(-22, -12, 0), RightHip = V(-25, 0, 0), RightKnee = V(-15, 0, 0), LeftHip = V(20, 0, 0), LeftKnee = V(-22, 0, 0) } }, -- coil, free arm swung back
+			{ T = 0.13, Ease = "In", Pose = { RightShoulder = V(20, 0, 60), RightElbow = V(8, 0, 0), LeftShoulder = V(25, 0, -32), Waist = V(0, 65, 0), Root = V(-26, 14, 0), RightHip = V(28, 0, 0), RightKnee = V(-30, 0, 0), LeftHip = V(-18, 0, 0), LeftKnee = V(-8, 0, 0) } }, -- the cut
 			{ T = 0.26, Pose = { RightShoulder = V(24, 0, 48), RightElbow = V(8, 0, 0), LeftShoulder = V(18, 0, -35), Waist = V(0, 78, 0), Root = V(-22, 18, 0), RightHip = V(20, 0, 0), RightKnee = V(-25, 0, 0), LeftHip = V(-10, 0, 0) } }, -- follow-through
-			{ T = 0.4, Pose = { RightShoulder = V(22, 0, 50), Waist = V(0, 64, 0), Root = V(-14, 12, 0) } }, -- hold the pose a beat
-			{ T = 0.6, Ease = "InOut", Pose = {} },
+			{ T = 0.36, Pose = { RightShoulder = V(22, 0, 50), RightElbow = V(8, 0, 0), LeftShoulder = V(14, 0, -30), Waist = V(0, 70, 0), Root = V(-18, 14, 0), RightHip = V(22, 0, 0), RightKnee = V(-35, 0, 0), LeftHip = V(-14, 0, 0), LeftKnee = V(-30, 0, 0) } }, -- sink into the slide as the rush ends
+			{ T = 0.5, Pose = { RightShoulder = V(22, 0, 50), Waist = V(0, 64, 0), Root = V(-12, 10, 0) } }, -- hold the pose a beat
+			{ T = 0.7, Ease = "InOut", Pose = {} },
 		},
 	},
 	Skyfall = { -- crouch, launch with the sword high behind the head, hang, then chop straight down as you land

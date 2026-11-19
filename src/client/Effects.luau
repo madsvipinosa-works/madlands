@@ -49,11 +49,10 @@ function Effects.HitSpark(root, big)
 	Debris:AddItem(attachment, c.Lifetime + 0.2)
 end
 
--- A puff of dust and an expanding ring on the ground.
-function Effects.Dust(position, size)
+-- A puff of dust, no ring (cheap enough to drop along a whole dash).
+function Effects.Puff(position, size)
 	local c = Config.Dust
 	local anchor = anchorAt(CFrame.new(position))
-
 	local emitter = Instance.new("ParticleEmitter")
 	emitter.Color = ColorSequence.new(c.Color)
 	emitter.LightEmission = 0
@@ -65,6 +64,13 @@ function Effects.Dust(position, size)
 	emitter.Rate = 0
 	emitter.Parent = anchor
 	emitter:Emit(math.floor(size * 2))
+	Debris:AddItem(anchor, c.Lifetime + 0.3)
+end
+
+-- A puff of dust and an expanding ring on the ground.
+function Effects.Dust(position, size)
+	local c = Config.Dust
+	Effects.Puff(position, size)
 
 	local ring = Instance.new("Part") -- flat ring that grows and fades
 	ring.Shape = Enum.PartType.Cylinder
@@ -79,8 +85,6 @@ function Effects.Dust(position, size)
 	ring.CFrame = CFrame.new(position + Vector3.new(0, 0.15, 0)) * CFrame.Angles(0, 0, math.rad(90))
 	ring.Parent = workspace
 	tween(ring, c.Lifetime * 0.6, { Size = Vector3.new(0.2, size * 2, size * 2), Transparency = 1 })
-
-	Debris:AddItem(anchor, c.Lifetime + 0.3)
 	Debris:AddItem(ring, c.Lifetime)
 end
 
@@ -204,27 +208,15 @@ function Effects.Whirl(root, style)
 	end)
 end
 
--- The flying slash of a Wave skill, drawn here on every client. The server sends where it starts and how it
--- moves and only moves the hit box itself, so this runs smoothly from the first frame. It swells out of a small
--- size and fades before it ends. (Fading copies left behind it were tried and looked like separate frames.)
-function Effects.Wave(shooter, start, direction, speed, range)
-	local c = Config.Wave
-	local glow = Config.WaveGlow
+-- A fresh, white, anchored copy of the crescent mesh, and how to resize it: slash, the thing to resize, its
+-- property ("Scale" or "Size") and the full size it comes at. Nil if the mesh is not there.
+local function newSlash()
 	local template = ReplicatedStorage:WaitForChild("WaveSlash", 5)
 	-- Either the old premade Part with a SpecialMesh, or an imported Model whose MeshPart is the slash.
 	local source = template and (if template:IsA("BasePart") then template else template:FindFirstChildWhichIsA("BasePart", true))
 	if not source then
-		return
+		return nil
 	end
-
-	local rotation = c.ModelRotation
-	local aim = CFrame.lookAt(start, start + direction)
-		* CFrame.Angles(0, 0, math.rad(c.TiltDegrees))
-		* CFrame.new(c.ModelOffset)
-		* CFrame.Angles(math.rad(rotation.X), math.rad(rotation.Y), math.rad(rotation.Z))
-	local facing = aim.Rotation
-	local origin = aim.Position
-
 	local slash = source:Clone()
 	slash.Anchored = true
 	slash.CanCollide = false
@@ -239,13 +231,50 @@ function Effects.Wave(shooter, start, direction, speed, range)
 	-- The old premade slash is sized and colored through its SpecialMesh; an imported MeshPart through itself.
 	local mesh = slash:FindFirstChildOfClass("SpecialMesh")
 	if mesh then
-		mesh.VertexColor = c.Tint
+		mesh.VertexColor = Config.Wave.Tint
 	else
 		slash.Material = Enum.Material.Neon -- glows pure white
 	end
 	slash.Color = Color3.new(1, 1, 1)
 	local sized, property = mesh or slash, if mesh then "Scale" else "Size"
-	local fullScale = sized[property] * c.ModelScale
+	return slash, sized, property, sized[property]
+end
+
+-- The crescent flashing where a cut lands (a Dash): swells to `scale` times its native size and fades.
+-- `cframe` is where it sits; turn it about Y by 180 to make its curved edge lead instead of trail.
+function Effects.CutMark(cframe, scale, seconds)
+	local slash, sized, property, native = newSlash()
+	if not slash then
+		return
+	end
+	slash.CFrame = cframe
+	sized[property] = native * scale * 0.5
+	slash.Parent = workspace
+	tween(sized, seconds * 0.5, { [property] = native * scale }, Enum.EasingStyle.Back)
+	tween(slash, seconds, { Transparency = 1 }, Enum.EasingStyle.Quad)
+	Debris:AddItem(slash, seconds + 0.1)
+end
+
+-- The flying slash of a Wave skill, drawn here on every client. The server sends where it starts and how it
+-- moves and only moves the hit box itself, so this runs smoothly from the first frame. It swells out of a small
+-- size and fades before it ends. (Fading copies left behind it were tried and looked like separate frames.)
+function Effects.Wave(shooter, start, direction, speed, range)
+	local c = Config.Wave
+	local glow = Config.WaveGlow
+	local slash, sized, property, native = newSlash()
+	if not slash then
+		return
+	end
+
+	local rotation = c.ModelRotation
+	local aim = CFrame.lookAt(start, start + direction)
+		* CFrame.Angles(0, 0, math.rad(c.TiltDegrees))
+		* CFrame.new(c.ModelOffset)
+		* CFrame.Angles(math.rad(rotation.X), math.rad(rotation.Y), math.rad(rotation.Z))
+	local facing = aim.Rotation
+	local origin = aim.Position
+
+	local fullScale = native * c.ModelScale
 	sized[property] = fullScale * c.GrowFrom
 	slash.CFrame = CFrame.new(origin) * facing
 	slash.Parent = workspace
@@ -399,10 +428,20 @@ function Effects.SkillStarted(skill)
 	if e.FovKick then
 		Effects.FovKick(e.FovKick, 0.4)
 	end
-	if e.CutMarkLength then -- where the server's cut lands, a bright line across the path
+	if e.CutMarkScale then -- where the server's cut lands: the crescent flashes across the path, with a pop of light
 		later(skill.HitDelay, function(now)
-			Effects.SlashMark(now.Position + now.CFrame.LookVector * 3, e.CutMarkLength, e.FlashColor, -15)
+			local look = now.CFrame.LookVector
+			local at = now.Position + look * e.CutMarkAhead
+			Effects.CutMark(CFrame.lookAt(at, at + look) * CFrame.Angles(0, math.rad(e.CutMarkTurn), 0), e.CutMarkScale, e.CutMarkSeconds)
+			Effects.Flash(at, 4, e.FlashColor)
 		end)
+	end
+	if e.TrailDustSize then -- a line of dust along the ground the whole way
+		for i = 1, math.floor(skill.DashTime / e.TrailDustEvery) do
+			later(i * e.TrailDustEvery, function(now)
+				Effects.Puff(groundBelow(now), e.TrailDustSize)
+			end)
+		end
 	end
 	if e.EndDustSize then
 		later(skill.DashTime, function(now)

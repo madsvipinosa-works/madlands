@@ -17,7 +17,9 @@ return {
 		HitDelay = 0.1, -- seconds before the cut lands, about halfway through the dash
 		Width = 7, -- width of the path that gets cut
 		Cooldown = 3, -- seconds
-		Trail = { Color = Color3.fromRGB(170, 215, 255), LightEmission = 0.6 }, -- blade trail while the skill plays; skills without one use the weapon's plain trail
+		-- Blade trail while the skill plays. Color and LightEmission tint it; Lifetime (seconds it lingers) and MaxLength
+		-- (studs it can stretch) are optional and default to the weapon's. Skills without a Trail use the weapon's plain one.
+		Trail = { Color = Color3.fromRGB(170, 215, 255), LightEmission = 0.85, Lifetime = 0.32, MaxLength = 16 },
 	},
 	Skyfall = {
 		Weapon = "Sword",
