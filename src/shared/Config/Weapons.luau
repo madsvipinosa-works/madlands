@@ -17,12 +17,21 @@ return {
 			Model = "Sword",
 			Length = 4.2, -- studs, pommel to tip; the mesh is scaled to this
 			HandlePart = "Grip", -- the part held in the fist; the rest follow it
-			MeshRotation = Vector3.new(-90, 0, 0), -- the mesh points its blade along +Y; this turns it to point forward
+			-- How the blade sits in the fist.
+			-- X: where it points. 0 = straight up, -90 = straight forward, -125 = forward and angled down, 180 = down.
+			-- Y: rolls the blade around its own length. 0 = flat side up, 90 = edge down (how a sword is held).
+			-- Z: tilts it away from the leg.
+			MeshRotation = Vector3.new(-125, 90, 8),
 			GripOffset = Vector3.new(0, -0.2, 0),
-			GripAngleDegrees = 35, -- blade tilts up this much from straight ahead
+			GripAngleDegrees = 0, -- extra tilt on top of MeshRotation
 			TrailPart = "Blade", -- the part that leaves a trail during swings and skills
 			TrailAxis = Vector3.new(0, 1, 0), -- direction from the blade's base to its tip, in the blade's own space
-			Trail = { Color = Color3.fromRGB(235, 235, 240), Lifetime = 0.3 }, -- Lifetime = how long the trail lingers
+			Trail = {
+				Color = Color3.fromRGB(235, 235, 240),
+				Lifetime = 0.12, -- how long the ribbon lingers
+				MaxLength = 5, -- how far it stretches behind the blade
+				FromBladeFraction = 0.5, -- the ribbon covers only the outer half of the blade, so it reads as an edge, not a sheet
+			},
 			-- Roblox's importer drops the colors saved in the .glb, so they are set here. Default is used for any part not listed.
 			Colors = {
 				Default = { Color = Color3.fromRGB(184, 191, 204), Material = "Metal" },

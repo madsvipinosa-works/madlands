@@ -5,22 +5,27 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 
 local Weapons = require(ReplicatedStorage.Shared.Config.Weapons)
+local Dev = require(ReplicatedStorage.Shared.Config.Dev)
 local PlayerData = require(script.Parent.PlayerData)
 
 local effects = setmetatable({}, { __mode = "k" }) -- [character] = { trail, token }
 
 local WeaponVisuals = {}
 
--- Turns the blade trail on for a number of seconds (called by Combat when a swing or skill starts).
-function WeaponVisuals.ShowTrail(character, seconds)
+-- Shows the blade trail for the part of a move where the blade is cutting (called by Combat).
+function WeaponVisuals.ShowTrail(character, delay, seconds)
 	local fx = effects[character]
 	if not (fx and fx.trail.Parent) then
 		return
 	end
 	fx.token += 1
 	local token = fx.token
-	fx.trail.Enabled = true
-	task.delay(seconds, function()
+	task.delay(delay, function()
+		if fx.token ~= token or not fx.trail.Parent then
+			return
+		end
+		fx.trail.Enabled = true
+		task.wait(seconds)
 		if fx.token == token and fx.trail.Parent then
 			fx.trail.Enabled = false
 		end
@@ -35,7 +40,7 @@ local function addTrail(character, model, visual)
 	local axis = visual.TrailAxis
 	local half = Vector3.new(blade.Size.X * axis.X, blade.Size.Y * axis.Y, blade.Size.Z * axis.Z).Magnitude / 2
 	local base = Instance.new("Attachment")
-	base.Position = -axis * half
+	base.Position = axis * half * (visual.Trail.FromBladeFraction * 2 - 1)
 	base.Parent = blade
 	local tip = Instance.new("Attachment")
 	tip.Position = axis * half
@@ -44,11 +49,13 @@ local function addTrail(character, model, visual)
 	local trail = Instance.new("Trail")
 	trail.Attachment0, trail.Attachment1 = base, tip
 	trail.Color = ColorSequence.new(visual.Trail.Color)
-	trail.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.1), NumberSequenceKeypoint.new(1, 1) })
+	trail.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.25), NumberSequenceKeypoint.new(1, 1) })
 	trail.Lifetime = visual.Trail.Lifetime
+	trail.MaxLength = visual.Trail.MaxLength -- keeps the ribbon from smearing across the screen
+	trail.WidthScale = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(1, 0.15) }) -- tapers to a point
 	trail.LightEmission = 0 -- plain, not glowing
-	trail.FaceCamera = true
-	trail.MinLength = 0.05
+	trail.FaceCamera = false -- lies along the blade, like the path of the edge
+	trail.MinLength = 0.2
 	trail.Enabled = false
 	trail.Parent = blade
 
@@ -80,6 +87,28 @@ local function collectParts(visual)
 		table.insert(parts, part)
 	end
 	return parts
+end
+
+-- Dev only: puts the grip numbers on the WeaponVisual model as attributes you can drag in Studio's
+-- Properties panel while playing. The weapon moves as you change them, and the values print so you can
+-- copy them into Config/Weapons. Does nothing once DEV_MODE is off.
+local function addTuner(model, grip, visual)
+	if not Dev.DEV_MODE then
+		return
+	end
+	local offset, rotation = visual.GripOffset, visual.MeshRotation
+	model:SetAttribute("GripX", offset.X)
+	model:SetAttribute("GripY", offset.Y)
+	model:SetAttribute("GripZ", offset.Z)
+	model:SetAttribute("RotX", rotation.X + visual.GripAngleDegrees)
+	model:SetAttribute("RotY", rotation.Y)
+	model:SetAttribute("RotZ", rotation.Z)
+	model.AttributeChanged:Connect(function()
+		local x, y, z = model:GetAttribute("GripX"), model:GetAttribute("GripY"), model:GetAttribute("GripZ")
+		local rx, ry, rz = model:GetAttribute("RotX"), model:GetAttribute("RotY"), model:GetAttribute("RotZ")
+		grip.C0 = CFrame.new(x, y, z) * CFrame.Angles(math.rad(rx), math.rad(ry), math.rad(rz))
+		print(`[WeaponVisuals] GripOffset = Vector3.new({x}, {y}, {z}), MeshRotation = Vector3.new({rx}, {ry}, {rz})`)
+	end)
 end
 
 local function attach(player, character)
@@ -144,12 +173,13 @@ local function attach(player, character)
 		copy:Destroy()
 	end
 
-	local grip = Instance.new("Weld") -- blade points forward and a little up from the fist
+	local grip = Instance.new("Weld") -- holds the weapon in the fist
 	grip.Part0, grip.Part1 = hand, handle
 	grip.C0 = gripCFrame
 	grip.Parent = handle
 	model.Parent = character
 	addTrail(character, model, visual)
+	addTuner(model, grip, visual)
 end
 
 local function track(player)

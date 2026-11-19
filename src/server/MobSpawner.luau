@@ -91,6 +91,17 @@ local function buildModel(name, def, position)
 		addHinge(legName, "Hip", phase)
 	end
 	addHinge(look.Tail, "Tail", 1)
+	addHinge(look.Head.Part, "Neck", 1)
+
+	-- The head group rides on the neck; everything else is fixed to the torso.
+	local neck = byName[look.Head.Part]
+	for _, partName in look.Head.Follows do
+		local part = byName[partName]
+		if part and neck then
+			weld(neck, part)
+			moving[part] = true -- already joined, so the torso loop below skips it
+		end
+	end
 	for _, part in byName do
 		if not moving[part] then
 			weld(torso, part)
@@ -187,6 +198,7 @@ local function step(s)
 		local now = os.clock()
 		if now - s.lastAttack >= def.AttackCooldown then
 			s.lastAttack = now
+			s.root.Parent:SetAttribute("BiteAt", workspace:GetServerTimeNow()) -- clients animate the lunge
 			targetHumanoid:TakeDamage(def.Damage)
 		end
 	else

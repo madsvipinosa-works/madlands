@@ -25,6 +25,17 @@ return {
 			BodySize = Vector3.new(3.6, 3.8, 7.2), -- about 0.4 x 0.42 x 0.8 of TargetLength; resize it when you change TargetLength
 			Legs = { FrontLeg_L = 1, HindLeg_R = 1, FrontLeg_R = -1, HindLeg_L = -1 }, -- mesh name = swing direction (diagonals match)
 			Tail = "Tail",
+			-- The head swings on the neck, and these parts ride along with it.
+			Head = { Part = "Neck", Follows = { "Head", "Ear_L", "Ear_R", "Eye_L", "Eye_R", "Nose" } },
+			-- The bite: rear back, snap the head down and forward, then recover.
+			Bite = {
+				Duration = 0.55, -- seconds for the whole move
+				RearDegrees = 14, -- how far the body pulls back first
+				PitchDegrees = 22, -- how far it drops into the bite
+				HeadUpDegrees = 12, -- head lifts during the wind-up
+				HeadDropDegrees = 32, -- head snaps down this far
+				LungeStuds = 1, -- how far the body shoves forward on the bite
+			},
 			-- Roblox's importer drops the colors saved in the .glb, so they are set here. Default is used for any piece not listed.
 			Colors = {
 				Default = { Color = Color3.fromRGB(80, 80, 86), Material = "SmoothPlastic" }, -- grey fur

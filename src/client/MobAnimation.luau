@@ -35,15 +35,41 @@ RunService.RenderStepped:Connect(function(dt)
 		local swing = s.def.Look.Swing
 		s.phase += speed * dt * swing.RadiansPerStud
 		local power = math.min(speed / s.def.WalkSpeed, 1)
+
+		-- The bite runs on top of the walk: wind up, snap forward, recover.
+		local bite = s.def.Look.Bite
+		local since = workspace:GetServerTimeNow() - (model:GetAttribute("BiteAt") or -99)
+		local bitePitch, biteLunge, headAngle = 0, 0, 0
+		if since >= 0 and since < bite.Duration then
+			local p = since / bite.Duration
+			if p < 0.3 then -- wind up
+				local a = p / 0.3
+				bitePitch = -math.rad(bite.RearDegrees) * a
+				headAngle = -math.rad(bite.HeadUpDegrees) * a
+			elseif p < 0.55 then -- snap
+				local a = (p - 0.3) / 0.25
+				bitePitch = -math.rad(bite.RearDegrees) + (math.rad(bite.RearDegrees + bite.PitchDegrees)) * a
+				headAngle = -math.rad(bite.HeadUpDegrees) + (math.rad(bite.HeadUpDegrees + bite.HeadDropDegrees)) * a
+				biteLunge = math.sin(a * math.pi) * bite.LungeStuds
+			else -- recover
+				local a = 1 - (p - 0.55) / 0.45
+				bitePitch = math.rad(bite.PitchDegrees) * a
+				headAngle = math.rad(bite.HeadDropDegrees) * a
+				biteLunge = 0
+			end
+		end
 		for _, motor in s.motors do
 			local role = motor:GetAttribute("Role")
 			if role == "Tail" then -- wags side to side, a little even when standing
 				local wag = math.sin(os.clock() * swing.TailSpeed) * math.rad(swing.TailDegrees)
 				motor.Transform = CFrame.Angles(0, wag * (0.4 + 0.6 * power), 0)
-			elseif role == "Body" then -- bobs twice and rocks once per stride
+			elseif role == "Neck" then -- head dips into the bite
+				motor.Transform = CFrame.Angles(headAngle, 0, 0)
+			elseif role == "Body" then -- bobs twice and rocks once per stride, plus the bite lunge
 				local bob = math.sin(s.phase * 2) * swing.BodyBobStuds * power
 				local pitch = math.sin(s.phase) * math.rad(swing.BodyPitchDegrees) * power
-				motor.Transform = CFrame.new(0, bob, 0) * CFrame.Angles(pitch, 0, 0)
+				local forward = -math.cos(math.rad(s.def.Look.YawDegrees)) * biteLunge
+				motor.Transform = CFrame.new(0, bob, forward) * CFrame.Angles(pitch + bitePitch, 0, 0)
 			else -- Hip
 				local p = s.phase + (if motor:GetAttribute("Phase") == 1 then 0 else math.pi) -- diagonal legs move together
 				-- The hinge is turned by YawDegrees, so this sign says which swing direction is "forward".

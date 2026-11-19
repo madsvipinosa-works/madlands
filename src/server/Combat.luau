@@ -205,7 +205,8 @@ swingRemote.OnServerEvent:Connect(function(player) -- extra arguments are ignore
 	combo[player] = { index = index, expires = now + weapon.ComboResetSeconds }
 
 	swingRemote:FireClient(player, index) -- the client animates only what the server accepted
-	WeaponVisuals.ShowTrail(character, SwingAnimations[weapon.SwingCombo[index]].Duration)
+	local swing = SwingAnimations[weapon.SwingCombo[index]]
+	WeaponVisuals.ShowTrail(character, swing.TrailStart, swing.TrailSeconds)
 	hitArc(player, character, root, weapon.Damage, weapon.Range, weapon.ArcDegrees)
 end)
 
@@ -233,7 +234,8 @@ skillRemote.OnServerEvent:Connect(function(player, slot)
 	ready[skillId] = now + skill.Cooldown
 
 	skillUsedRemote:FireClient(player, slot, skill.Cooldown)
-	WeaponVisuals.ShowTrail(character, SwingAnimations[skill.Animation].Duration / skill.AnimationSpeed)
+	local move = SwingAnimations[skill.Animation]
+	WeaponVisuals.ShowTrail(character, move.TrailStart / skill.AnimationSpeed, move.TrailSeconds / skill.AnimationSpeed)
 	handler(player, character, root, skill)
 end)
 
