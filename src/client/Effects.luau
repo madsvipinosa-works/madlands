@@ -99,6 +99,30 @@ function Effects.Ring(position, size, seconds)
 	Debris:AddItem(ring, seconds + 0.1)
 end
 
+-- A streak behind the body, for a rush that is over too fast to read on its own.
+function Effects.Streak(root, style)
+	local top = Instance.new("Attachment")
+	top.Position = Vector3.new(0, style.StreakHeight / 2, 0)
+	top.Parent = root
+	local bottom = Instance.new("Attachment")
+	bottom.Position = Vector3.new(0, -style.StreakHeight / 2, 0)
+	bottom.Parent = root
+
+	local streak = Instance.new("Trail")
+	streak.Attachment0, streak.Attachment1 = top, bottom
+	streak.Color = ColorSequence.new(style.StreakColor)
+	streak.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.55), NumberSequenceKeypoint.new(1, 1) })
+	streak.WidthScale = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(1, 0.2) })
+	streak.Lifetime = style.StreakSeconds
+	streak.LightEmission = 0
+	streak.FaceCamera = true
+	streak.Parent = root
+
+	Debris:AddItem(streak, style.StreakSeconds * 2)
+	Debris:AddItem(top, style.StreakSeconds * 2)
+	Debris:AddItem(bottom, style.StreakSeconds * 2)
+end
+
 -- Shakes the camera for a moment, fading out.
 local shakeUntil, shakeStart, shakeStrength = 0, 0, 0
 RunService.RenderStepped:Connect(function()
@@ -135,6 +159,9 @@ function Effects.SkillStarted(skill)
 	end
 	if e.StartDustSize then
 		Effects.Dust(groundBelow(root), e.StartDustSize)
+	end
+	if e.StreakSeconds then
+		Effects.Streak(root, e)
 	end
 	if e.SpinRingSize then -- a ring sweeping out around the spin
 		task.delay(skill.HitDelay or 0, function()

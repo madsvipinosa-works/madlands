@@ -158,7 +158,13 @@ end
 
 function spawnWave(player, character, root, skill, style)
 	local direction = flatLook(root)
-	local start = root.Position + direction * style.SpawnForward + Vector3.new(0, style.SpawnHeight, 0)
+
+	-- Start at the blade itself, so the slash is clearly cut off the sword rather than thrown from the body.
+	local weapon = character:FindFirstChild("WeaponVisual")
+	local blade = weapon and weapon:FindFirstChild("Blade")
+	local start = if blade
+		then blade.Position + direction * 1.5
+		else root.Position + direction * style.SpawnForward + Vector3.new(0, style.SpawnHeight, 0)
 	local wave = Instance.new("Part")
 	wave.Name = "SlashWave"
 	wave.Size = Vector3.new(0.2, 0.2, 0.2)
@@ -256,9 +262,25 @@ function spawnWave(player, character, root, skill, style)
 	wave:SetNetworkOwner(nil)
 
 	local seen, traveled = {}, 0
+	local shown = {} -- [part] = its starting transparency, so the fade keeps each part's own look
+	for _, part in wave:GetDescendants() do
+		if part:IsA("BasePart") then
+			shown[part] = part.Transparency
+		end
+	end
+
 	local connection
 	connection = RunService.Heartbeat:Connect(function(dt)
 		traveled += skill.Speed * dt
+
+		-- Fade out over the last part of the flight instead of blinking away at the end.
+		local gone = (traveled / skill.Range - style.FadeFrom) / (1 - style.FadeFrom)
+		if gone > 0 then
+			for part, base in shown do
+				part.Transparency = base + (1 - base) * math.min(gone, 1)
+			end
+		end
+
 		if traveled >= skill.Range or not wave.Parent then
 			connection:Disconnect()
 			wave:Destroy()
