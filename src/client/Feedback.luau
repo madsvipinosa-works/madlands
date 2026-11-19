@@ -9,16 +9,17 @@ local Weapons = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("C
 local Style = require(ReplicatedStorage.Shared.Config:WaitForChild("DamageNumbers"))
 
 local Animations = require(script.Parent.Animations)
+local Effects = require(script.Parent.Effects)
 
 local Feedback = {}
 
-function Feedback.PlaySwing()
+function Feedback.PlaySwing(comboIndex)
 	-- shortcut: always the Sword sound, the client doesn't know the equipped weapon yet; fix in build step 5
 	local sound = Instance.new("Sound")
 	sound.SoundId = Weapons.Sword.SwingSound
 	sound.Parent = SoundService
 	sound:Play()
-	Animations.Play(Weapons.Sword.SwingAnimation)
+	Animations.Play(Weapons.Sword.SwingCombo[comboIndex] or Weapons.Sword.SwingCombo[1])
 	Debris:AddItem(sound, 2)
 end
 
@@ -88,6 +89,7 @@ local function watch(humanoid)
 		local root = model and model:FindFirstChild("HumanoidRootPart")
 		if lost > 0 and root then
 			flash(model)
+			Effects.HitSpark(root)
 			floatNumber(root, lost)
 		end
 	end)

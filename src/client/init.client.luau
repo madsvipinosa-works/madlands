@@ -8,6 +8,10 @@ require(script.SkillBar)
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
 	if not gameProcessed and input.UserInputType == Enum.UserInputType.MouseButton1 then
 		swingRemote:FireServer()
-		Feedback.PlaySwing() -- shortcut: plays even if the server rejects the swing (cooldown); fine for now
 	end
+end)
+
+-- The server answers an accepted swing with which swing of the combo it was.
+swingRemote.OnClientEvent:Connect(function(index)
+	Feedback.PlaySwing(index)
 end)

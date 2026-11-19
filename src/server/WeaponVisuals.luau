@@ -2,6 +2,7 @@
 -- during swings and skills. Looks only.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ServerStorage = game:GetService("ServerStorage")
 
 local Weapons = require(ReplicatedStorage.Shared.Config.Weapons)
 local PlayerData = require(script.Parent.PlayerData)
@@ -31,12 +32,13 @@ local function addTrail(character, model, visual)
 	if not blade then
 		return
 	end
-	local half = blade.Size.Z / 2 -- the blade runs along Z; the tip is on the -Z side
+	local axis = visual.TrailAxis
+	local half = Vector3.new(blade.Size.X * axis.X, blade.Size.Y * axis.Y, blade.Size.Z * axis.Z).Magnitude / 2
 	local base = Instance.new("Attachment")
-	base.Position = Vector3.new(0, 0, half)
+	base.Position = -axis * half
 	base.Parent = blade
 	local tip = Instance.new("Attachment")
-	tip.Position = Vector3.new(0, 0, -half)
+	tip.Position = axis * half
 	tip.Parent = blade
 
 	local trail = Instance.new("Trail")
@@ -51,6 +53,33 @@ local function addTrail(character, model, visual)
 	trail.Parent = blade
 
 	effects[character] = { trail = trail, token = 0 }
+end
+
+-- Returns the weapon's parts, positioned relative to each other. Uses the imported mesh, or plain stand-in parts if it is missing.
+local function collectParts(visual)
+	local models = ServerStorage:FindFirstChild("Models")
+	local template = models and models:FindFirstChild(visual.Model)
+	local parts = {}
+	if template then
+		local copy = template:Clone()
+		local size = copy:GetExtentsSize()
+		copy:ScaleTo(visual.Length / math.max(size.X, size.Y, size.Z)) -- the importer's scale is unknown, so size it by length
+		for _, part in copy:GetDescendants() do
+			if part:IsA("MeshPart") then
+				table.insert(parts, part)
+			end
+		end
+		return parts, copy
+	end
+	warn(`[WeaponVisuals] ServerStorage.Models.{visual.Model} not found, using plain parts: import the mesh and save it as assets/models/{visual.Model}.rbxm`)
+	for _, spec in visual.Parts do
+		local part = Instance.new("Part")
+		part.Name = spec.Name
+		part.Size = spec.Size
+		part.CFrame = CFrame.new(spec.Offset) -- the handle part has Offset 0, so it sits at the origin
+		table.insert(parts, part)
+	end
+	return parts
 end
 
 local function attach(player, character)
@@ -68,34 +97,56 @@ local function attach(player, character)
 		return
 	end
 
+	local parts, copy = collectParts(visual)
+	local handle
+	for _, part in parts do
+		if part.Name == visual.HandlePart then
+			handle = part
+		end
+	end
+	if not handle then
+		warn(`[WeaponVisuals] no part named {visual.HandlePart} in the {visual.Model} model`)
+		return
+	end
+
+	-- Where each part sits relative to the handle, kept while the whole weapon moves into the hand.
+	local rotation = visual.MeshRotation
+	local gripCFrame = CFrame.new(visual.GripOffset)
+		* CFrame.Angles(math.rad(visual.GripAngleDegrees), 0, 0)
+		* CFrame.Angles(math.rad(rotation.X), math.rad(rotation.Y), math.rad(rotation.Z))
+	local handleCFrame = handle.CFrame
+	local relative = {}
+	for _, part in parts do
+		relative[part] = handleCFrame:ToObjectSpace(part.CFrame)
+	end
+
 	local model = Instance.new("Model")
 	model.Name = "WeaponVisual"
-	local handle
-	for i, spec in visual.Parts do
-		local part = Instance.new("Part")
-		part.Name = spec.Name
-		part.Size = spec.Size
-		part.Color = spec.Color
-		part.Material = Enum.Material[spec.Material]
+	handle.CFrame = hand.CFrame * gripCFrame
+	for _, part in parts do
+		local style = visual.Colors[part.Name] or visual.Colors.Default
+		part.Color = style.Color
+		part.Material = Enum.Material[style.Material]
+		part.Anchored = false
 		part.CanCollide = false
 		part.CanQuery = false
 		part.CanTouch = false
 		part.Massless = true
-		if i == 1 then
-			handle = part
-			part.CFrame = hand.CFrame
-		else
-			part.CFrame = handle.CFrame * CFrame.new(spec.Offset)
+		if part ~= handle then
+			part.CFrame = handle.CFrame * relative[part]
 			local weld = Instance.new("WeldConstraint")
 			weld.Part0, weld.Part1 = handle, part
 			weld.Parent = part
 		end
 		part.Parent = model
 	end
+	if copy then
+		copy:Destroy()
+	end
 
 	local grip = Instance.new("Weld") -- blade points forward and a little up from the fist
 	grip.Part0, grip.Part1 = hand, handle
-	grip.C0 = CFrame.new(visual.GripOffset) * CFrame.Angles(math.rad(visual.GripAngleDegrees), 0, 0)
+	grip.C0 = gripCFrame
 	grip.Parent = handle
 	model.Parent = character
 	addTrail(character, model, visual)

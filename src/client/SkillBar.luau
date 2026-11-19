@@ -8,6 +8,7 @@ local Config = ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")
 local Weapons = require(Config:WaitForChild("Weapons"))
 local Skills = require(Config:WaitForChild("Skills"))
 local Animations = require(script.Parent.Animations)
+local Effects = require(script.Parent.Effects)
 local skillRemote = ReplicatedStorage:WaitForChild("UseSkill")
 local skillUsedRemote = ReplicatedStorage:WaitForChild("SkillUsed")
 
@@ -103,6 +104,7 @@ skillUsedRemote.OnClientEvent:Connect(function(slot, cooldown)
 		s.duration = cooldown
 		local skill = Skills[skillIds[slot]]
 		Animations.Play(skill.Animation, skill.AnimationSpeed)
+		Effects.SkillStarted(skill)
 	end
 end)
 

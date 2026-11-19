@@ -1,4 +1,6 @@
--- Plays the code-made swing animations (Config/SwingAnimations) on the local character by turning its joints.
+-- Plays a move from Config/SwingAnimations: the published animation when it has an AssetId, otherwise by turning the character's joints.
+-- Characters come in two rig types: old ones joined by Motor6D, new ones by AnimationConstraint. Both are handled.
+-- It turns the joint's resting pose, not the pose Roblox's own animations write every frame, so ours is not erased.
 -- shortcut: only you see your own swing, because joint turns are not sent to other players; fix when PvP needs it (build step 8).
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -8,20 +10,42 @@ local Defs = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Conf
 local player = Players.LocalPlayer
 local ZERO = Vector3.zero
 
-local active -- { def, joints, start, speed }
+-- Older R6 characters name their joints differently.
+local ALIASES = {
+	Root = "RootJoint",
+	RightShoulder = "Right Shoulder",
+	LeftShoulder = "Left Shoulder",
+	Waist = "RootJoint",
+}
+
+local active -- { def, joints, start, speed }; joints[name] = { object, property, rest }
+
+-- The thing to turn for this joint, and which of its properties holds the resting pose.
+local function targetOf(joint)
+	if joint:IsA("Motor6D") then
+		return joint, "C0"
+	end
+	local attachment = joint.Attachment0 -- AnimationConstraint: its first attachment holds the resting pose
+	if attachment then
+		return attachment, "CFrame"
+	end
+end
 
 local function setPose(joints, from, to, alpha)
-	for name, joint in joints do
+	for name, j in joints do
 		local v = (from[name] or ZERO):Lerp(to[name] or ZERO, alpha)
-		local x, y, z = math.rad(v.X), math.rad(v.Y), math.rad(v.Z)
-		if name == "Root" then
-			-- R15's Root joint is turned: its X is the body's -X, its Y is the body's Z and its Z is the body's up.
-			-- This maps the config's pose (lean X, turn Y, roll Z) onto it, so Y really spins the body.
-			joint.Transform = CFrame.Angles(-x, z, y)
-		else
-			joint.Transform = CFrame.Angles(x, y, z)
-		end
+		local turn = CFrame.Angles(math.rad(v.X), math.rad(v.Y), math.rad(v.Z))
+		-- Turned around the joint but along the body part it hangs from, not along the joint's own tilted axes.
+		-- That way X always swings forward, Y always turns and Z always moves out to the side, on every rig.
+		j.object[j.property] = CFrame.new(j.rest.Position) * turn * j.rest.Rotation
 	end
+end
+
+local function finish()
+	for _, j in active.joints do
+		j.object[j.property] = j.rest
+	end
+	active = nil
 end
 
 local function update()
@@ -31,10 +55,7 @@ local function update()
 	local t = (os.clock() - active.start) * active.speed
 	local def = active.def
 	if t >= def.Duration then
-		for _, joint in active.joints do
-			joint.Transform = CFrame.new()
-		end
-		active = nil
+		finish()
 		return
 	end
 	local from, fromT = {}, 0
@@ -48,9 +69,30 @@ local function update()
 	end
 end
 
--- Written after the game's own animations each frame, so ours wins.
-RunService.Heartbeat:Connect(update)
 RunService.RenderStepped:Connect(update)
+
+local tracks = {} -- [assetId] = { animator, track }; reloaded after a respawn
+
+-- A move published from the Animation Editor. Roblox plays it, so other players see it too.
+local function playPublished(def, speed)
+	local character = player.Character
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	local animator = humanoid and humanoid:FindFirstChildOfClass("Animator")
+	if not animator then
+		return false
+	end
+	local entry = tracks[def.AssetId]
+	if not entry or entry.animator ~= animator then
+		local animation = Instance.new("Animation")
+		animation.AnimationId = def.AssetId
+		entry = { animator = animator, track = animator:LoadAnimation(animation) }
+		entry.track.Priority = Enum.AnimationPriority.Action
+		tracks[def.AssetId] = entry
+	end
+	entry.track:Play(0.05)
+	entry.track:AdjustSpeed(speed or 1)
+	return true
+end
 
 local Animations = {}
 
@@ -60,15 +102,33 @@ function Animations.Play(name, speed)
 	if not (def and character) then
 		return
 	end
+	if def.AssetId ~= "" and playPublished(def, speed) then
+		return
+	end
+	if active then
+		finish() -- a new move cuts off the old one
+	end
+
+	local rig = {} -- every joint in the character, by name
+	for _, item in character:GetDescendants() do
+		if item:IsA("Motor6D") or item.ClassName == "AnimationConstraint" then
+			rig[item.Name] = item
+		end
+	end
+
 	local joints = {}
 	for _, key in def.Keyframes do
 		for jointName in key.Pose do
-			local joint = joints[jointName] or character:FindFirstChild(jointName, true)
-			if joint and joint:IsA("Motor6D") then
-				joints[jointName] = joint
+			local joint = rig[jointName] or rig[ALIASES[jointName]]
+			if joint and not joints[jointName] then
+				local object, property = targetOf(joint)
+				if object then
+					joints[jointName] = { object = object, property = property, rest = object[property] }
+				end
 			end
 		end
 	end
+
 	active = { def = def, joints = joints, start = os.clock(), speed = speed or 1 }
 end
 

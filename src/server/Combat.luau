@@ -27,6 +27,7 @@ PhysicsService:RegisterCollisionGroup("Mobs")
 PhysicsService:CollisionGroupSetCollidable("Dashing", "Mobs", false)
 
 local lastSwing = {} -- [player] = os.clock() of last accepted swing
+local combo = {} -- [player] = { index, expires }: which basic swing comes next
 local skillReady = {} -- [player][skillId] = os.clock() when that skill can be used again
 
 -- Returns the player's saved data, weapon, character and root part, or nil if they can't fight right now.
@@ -197,7 +198,14 @@ swingRemote.OnServerEvent:Connect(function(player) -- extra arguments are ignore
 		return
 	end
 	lastSwing[player] = now
-	WeaponVisuals.ShowTrail(character, SwingAnimations[weapon.SwingAnimation].Duration)
+
+	-- Swings chain while you keep attacking, then start over.
+	local chain = combo[player]
+	local index = if chain and now < chain.expires then chain.index % #weapon.SwingCombo + 1 else 1
+	combo[player] = { index = index, expires = now + weapon.ComboResetSeconds }
+
+	swingRemote:FireClient(player, index) -- the client animates only what the server accepted
+	WeaponVisuals.ShowTrail(character, SwingAnimations[weapon.SwingCombo[index]].Duration)
 	hitArc(player, character, root, weapon.Damage, weapon.Range, weapon.ArcDegrees)
 end)
 
@@ -232,6 +240,7 @@ end)
 Players.PlayerRemoving:Connect(function(player)
 	lastSwing[player] = nil
 	skillReady[player] = nil
+	combo[player] = nil
 end)
 
 print("[Combat] ready: Swing, UseSkill")

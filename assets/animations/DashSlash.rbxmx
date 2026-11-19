@@ -1,0 +1,2049 @@
+<roblox version="4">
+	<Item class="KeyframeSequence">
+		<Properties>
+			<string name="Name">DashSlash</string>
+			<bool name="Loop">false</bool>
+			<token name="Priority">3</token>
+		</Properties>
+		<Item class="Keyframe">
+			<Properties>
+				<string name="Name">Keyframe</string>
+				<float name="Time">0</float>
+			</Properties>
+			<Item class="Pose">
+				<Properties>
+					<string name="Name">HumanoidRootPart</string>
+					<CoordinateFrame name="CFrame">
+						<X>0</X><Y>0</Y><Z>0</Z>
+						<R00>1.000000</R00>
+						<R01>0.000000</R01>
+						<R02>0.000000</R02>
+						<R10>0.000000</R10>
+						<R11>1.000000</R11>
+						<R12>0.000000</R12>
+						<R20>0.000000</R20>
+						<R21>0.000000</R21>
+						<R22>1.000000</R22>
+					</CoordinateFrame>
+					<float name="Weight">1</float>
+				</Properties>
+				<Item class="Pose">
+					<Properties>
+						<string name="Name">LowerTorso</string>
+						<CoordinateFrame name="CFrame">
+							<X>0</X><Y>0</Y><Z>0</Z>
+							<R00>1.000000</R00>
+							<R01>0.000000</R01>
+							<R02>0.000000</R02>
+							<R10>0.000000</R10>
+							<R11>1.000000</R11>
+							<R12>0.000000</R12>
+							<R20>0.000000</R20>
+							<R21>0.000000</R21>
+							<R22>1.000000</R22>
+						</CoordinateFrame>
+						<float name="Weight">1</float>
+					</Properties>
+					<Item class="Pose">
+						<Properties>
+							<string name="Name">UpperTorso</string>
+							<CoordinateFrame name="CFrame">
+								<X>0</X><Y>0</Y><Z>0</Z>
+								<R00>1.000000</R00>
+								<R01>0.000000</R01>
+								<R02>0.000000</R02>
+								<R10>0.000000</R10>
+								<R11>1.000000</R11>
+								<R12>0.000000</R12>
+								<R20>0.000000</R20>
+								<R21>0.000000</R21>
+								<R22>1.000000</R22>
+							</CoordinateFrame>
+							<float name="Weight">1</float>
+						</Properties>
+						<Item class="Pose">
+							<Properties>
+								<string name="Name">LeftUpperArm</string>
+								<CoordinateFrame name="CFrame">
+									<X>0</X><Y>0</Y><Z>0</Z>
+									<R00>1.000000</R00>
+									<R01>0.000000</R01>
+									<R02>0.000000</R02>
+									<R10>0.000000</R10>
+									<R11>1.000000</R11>
+									<R12>0.000000</R12>
+									<R20>0.000000</R20>
+									<R21>0.000000</R21>
+									<R22>1.000000</R22>
+								</CoordinateFrame>
+								<float name="Weight">1</float>
+							</Properties>
+							<Item class="Pose">
+								<Properties>
+									<string name="Name">LeftLowerArm</string>
+									<CoordinateFrame name="CFrame">
+										<X>0</X><Y>0</Y><Z>0</Z>
+										<R00>1.000000</R00>
+										<R01>0.000000</R01>
+										<R02>0.000000</R02>
+										<R10>0.000000</R10>
+										<R11>1.000000</R11>
+										<R12>0.000000</R12>
+										<R20>0.000000</R20>
+										<R21>0.000000</R21>
+										<R22>1.000000</R22>
+									</CoordinateFrame>
+									<float name="Weight">1</float>
+								</Properties>
+							</Item>
+						</Item>
+						<Item class="Pose">
+							<Properties>
+								<string name="Name">RightUpperArm</string>
+								<CoordinateFrame name="CFrame">
+									<X>0</X><Y>0</Y><Z>0</Z>
+									<R00>1.000000</R00>
+									<R01>0.000000</R01>
+									<R02>0.000000</R02>
+									<R10>0.000000</R10>
+									<R11>1.000000</R11>
+									<R12>0.000000</R12>
+									<R20>0.000000</R20>
+									<R21>0.000000</R21>
+									<R22>1.000000</R22>
+								</CoordinateFrame>
+								<float name="Weight">1</float>
+							</Properties>
+							<Item class="Pose">
+								<Properties>
+									<string name="Name">RightLowerArm</string>
+									<CoordinateFrame name="CFrame">
+										<X>0</X><Y>0</Y><Z>0</Z>
+										<R00>1.000000</R00>
+										<R01>0.000000</R01>
+										<R02>0.000000</R02>
+										<R10>0.000000</R10>
+										<R11>1.000000</R11>
+										<R12>0.000000</R12>
+										<R20>0.000000</R20>
+										<R21>0.000000</R21>
+										<R22>1.000000</R22>
+									</CoordinateFrame>
+									<float name="Weight">1</float>
+								</Properties>
+							</Item>
+						</Item>
+					</Item>
+					<Item class="Pose">
+						<Properties>
+							<string name="Name">LeftUpperLeg</string>
+							<CoordinateFrame name="CFrame">
+								<X>0</X><Y>0</Y><Z>0</Z>
+								<R00>1.000000</R00>
+								<R01>0.000000</R01>
+								<R02>0.000000</R02>
+								<R10>0.000000</R10>
+								<R11>1.000000</R11>
+								<R12>0.000000</R12>
+								<R20>0.000000</R20>
+								<R21>0.000000</R21>
+								<R22>1.000000</R22>
+							</CoordinateFrame>
+							<float name="Weight">1</float>
+						</Properties>
+						<Item class="Pose">
+							<Properties>
+								<string name="Name">LeftLowerLeg</string>
+								<CoordinateFrame name="CFrame">
+									<X>0</X><Y>0</Y><Z>0</Z>
+									<R00>1.000000</R00>
+									<R01>0.000000</R01>
+									<R02>0.000000</R02>
+									<R10>0.000000</R10>
+									<R11>1.000000</R11>
+									<R12>0.000000</R12>
+									<R20>0.000000</R20>
+									<R21>0.000000</R21>
+									<R22>1.000000</R22>
+								</CoordinateFrame>
+								<float name="Weight">1</float>
+							</Properties>
+						</Item>
+					</Item>
+					<Item class="Pose">
+						<Properties>
+							<string name="Name">RightUpperLeg</string>
+							<CoordinateFrame name="CFrame">
+								<X>0</X><Y>0</Y><Z>0</Z>
+								<R00>1.000000</R00>
+								<R01>0.000000</R01>
+								<R02>0.000000</R02>
+								<R10>0.000000</R10>
+								<R11>1.000000</R11>
+								<R12>0.000000</R12>
+								<R20>0.000000</R20>
+								<R21>0.000000</R21>
+								<R22>1.000000</R22>
+							</CoordinateFrame>
+							<float name="Weight">1</float>
+						</Properties>
+						<Item class="Pose">
+							<Properties>
+								<string name="Name">RightLowerLeg</string>
+								<CoordinateFrame name="CFrame">
+									<X>0</X><Y>0</Y><Z>0</Z>
+									<R00>1.000000</R00>
+									<R01>0.000000</R01>
+									<R02>0.000000</R02>
+									<R10>0.000000</R10>
+									<R11>1.000000</R11>
+									<R12>0.000000</R12>
+									<R20>0.000000</R20>
+									<R21>0.000000</R21>
+									<R22>1.000000</R22>
+								</CoordinateFrame>
+								<float name="Weight">1</float>
+							</Properties>
+						</Item>
+					</Item>
+				</Item>
+			</Item>
+		</Item>
+		<Item class="Keyframe">
+			<Properties>
+				<string name="Name">Keyframe</string>
+				<float name="Time">0.026666666666666665</float>
+			</Properties>
+			<Item class="Pose">
+				<Properties>
+					<string name="Name">HumanoidRootPart</string>
+					<CoordinateFrame name="CFrame">
+						<X>0</X><Y>0</Y><Z>0</Z>
+						<R00>1.000000</R00>
+						<R01>0.000000</R01>
+						<R02>0.000000</R02>
+						<R10>0.000000</R10>
+						<R11>1.000000</R11>
+						<R12>0.000000</R12>
+						<R20>0.000000</R20>
+						<R21>0.000000</R21>
+						<R22>1.000000</R22>
+					</CoordinateFrame>
+					<float name="Weight">1</float>
+				</Properties>
+				<Item class="Pose">
+					<Properties>
+						<string name="Name">LowerTorso</string>
+						<CoordinateFrame name="CFrame">
+							<X>0</X><Y>0</Y><Z>0</Z>
+							<R00>1.000000</R00>
+							<R01>0.000000</R01>
+							<R02>0.000000</R02>
+							<R10>0.000000</R10>
+							<R11>0.984808</R11>
+							<R12>0.173648</R12>
+							<R20>0.000000</R20>
+							<R21>-0.173648</R21>
+							<R22>0.984808</R22>
+						</CoordinateFrame>
+						<float name="Weight">1</float>
+					</Properties>
+					<Item class="Pose">
+						<Properties>
+							<string name="Name">UpperTorso</string>
+							<CoordinateFrame name="CFrame">
+								<X>0</X><Y>0</Y><Z>0</Z>
+								<R00>0.965926</R00>
+								<R01>0.000000</R01>
+								<R02>-0.258819</R02>
+								<R10>0.000000</R10>
+								<R11>1.000000</R11>
+								<R12>0.000000</R12>
+								<R20>0.258819</R20>
+								<R21>0.000000</R21>
+								<R22>0.965926</R22>
+							</CoordinateFrame>
+							<float name="Weight">1</float>
+						</Properties>
+						<Item class="Pose">
+							<Properties>
+								<string name="Name">LeftUpperArm</string>
+								<CoordinateFrame name="CFrame">
+									<X>0</X><Y>0</Y><Z>0</Z>
+									<R00>0.997564</R00>
+									<R01>0.069756</R01>
+									<R02>0.000000</R02>
+									<R10>-0.069587</R10>
+									<R11>0.995134</R11>
+									<R12>-0.069756</R12>
+									<R20>-0.004866</R20>
+									<R21>0.069587</R21>
+									<R22>0.997564</R22>
+								</CoordinateFrame>
+								<float name="Weight">1</float>
+							</Properties>
+							<Item class="Pose">
+								<Properties>
+									<string name="Name">LeftLowerArm</string>
+									<CoordinateFrame name="CFrame">
+										<X>0</X><Y>0</Y><Z>0</Z>
+										<R00>1.000000</R00>
+										<R01>0.000000</R01>
+										<R02>0.000000</R02>
+										<R10>0.000000</R10>
+										<R11>1.000000</R11>
+										<R12>0.000000</R12>
+										<R20>0.000000</R20>
+										<R21>0.000000</R21>
+										<R22>1.000000</R22>
+									</CoordinateFrame>
+									<float name="Weight">1</float>
+								</Properties>
+							</Item>
+						</Item>
+						<Item class="Pose">
+							<Properties>
+								<string name="Name">RightUpperArm</string>
+								<CoordinateFrame name="CFrame">
+									<X>0</X><Y>0</Y><Z>0</Z>
+									<R00>0.906308</R00>
+									<R01>-0.422618</R01>
+									<R02>0.000000</R02>
+									<R10>0.338992</R10>
+									<R11>0.726970</R11>
+									<R12>-0.597159</R12>
+									<R20>0.252370</R20>
+									<R21>0.541209</R21>
+									<R22>0.802123</R22>
+								</CoordinateFrame>
+								<float name="Weight">1</float>
+							</Properties>
+							<Item class="Pose">
+								<Properties>
+									<string name="Name">RightLowerArm</string>
+									<CoordinateFrame name="CFrame">
+										<X>0</X><Y>0</Y><Z>0</Z>
+										<R00>1.000000</R00>
+										<R01>0.000000</R01>
+										<R02>0.000000</R02>
+										<R10>0.000000</R10>
+										<R11>0.957990</R11>
+										<R12>-0.286803</R12>
+										<R20>0.000000</R20>
+										<R21>0.286803</R21>
+										<R22>0.957990</R22>
+									</CoordinateFrame>
+									<float name="Weight">1</float>
+								</Properties>
+							</Item>
+						</Item>
+					</Item>
+					<Item class="Pose">
+						<Properties>
+							<string name="Name">LeftUpperLeg</string>
+							<CoordinateFrame name="CFrame">
+								<X>0</X><Y>0</Y><Z>0</Z>
+								<R00>1.000000</R00>
+								<R01>0.000000</R01>
+								<R02>0.000000</R02>
+								<R10>0.000000</R10>
+								<R11>1.000000</R11>
+								<R12>0.000000</R12>
+								<R20>0.000000</R20>
+								<R21>0.000000</R21>
+								<R22>1.000000</R22>
+							</CoordinateFrame>
+							<float name="Weight">1</float>
+						</Properties>
+						<Item class="Pose">
+							<Properties>
+								<string name="Name">LeftLowerLeg</string>
+								<CoordinateFrame name="CFrame">
+									<X>0</X><Y>0</Y><Z>0</Z>
+									<R00>1.000000</R00>
+									<R01>0.000000</R01>
+									<R02>0.000000</R02>
+									<R10>0.000000</R10>
+									<R11>1.000000</R11>
+									<R12>0.000000</R12>
+									<R20>0.000000</R20>
+									<R21>0.000000</R21>
+									<R22>1.000000</R22>
+								</CoordinateFrame>
+								<float name="Weight">1</float>
+							</Properties>
+						</Item>
+					</Item>
+					<Item class="Pose">
+						<Properties>
+							<string name="Name">RightUpperLeg</string>
+							<CoordinateFrame name="CFrame">
+								<X>0</X><Y>0</Y><Z>0</Z>
+								<R00>1.000000</R00>
+								<R01>0.000000</R01>
+								<R02>0.000000</R02>
+								<R10>0.000000</R10>
+								<R11>0.993238</R11>
+								<R12>0.116093</R12>
+								<R20>0.000000</R20>
+								<R21>-0.116093</R21>
+								<R22>0.993238</R22>
+							</CoordinateFrame>
+							<float name="Weight">1</float>
+						</Properties>
+						<Item class="Pose">
+							<Properties>
+								<string name="Name">RightLowerLeg</string>
+								<CoordinateFrame name="CFrame">
+									<X>0</X><Y>0</Y><Z>0</Z>
+									<R00>1.000000</R00>
+									<R01>0.000000</R01>
+									<R02>0.000000</R02>
+									<R10>0.000000</R10>
+									<R11>1.000000</R11>
+									<R12>0.000000</R12>
+									<R20>0.000000</R20>
+									<R21>0.000000</R21>
+									<R22>1.000000</R22>
+								</CoordinateFrame>
+								<float name="Weight">1</float>
+							</Properties>
+						</Item>
+					</Item>
+				</Item>
+			</Item>
+		</Item>
+		<Item class="Keyframe">
+			<Properties>
+				<string name="Name">Keyframe</string>
+				<float name="Time">0.05333333333333333</float>
+			</Properties>
+			<Item class="Pose">
+				<Properties>
+					<string name="Name">HumanoidRootPart</string>
+					<CoordinateFrame name="CFrame">
+						<X>0</X><Y>0</Y><Z>0</Z>
+						<R00>1.000000</R00>
+						<R01>0.000000</R01>
+						<R02>0.000000</R02>
+						<R10>0.000000</R10>
+						<R11>1.000000</R11>
+						<R12>0.000000</R12>
+						<R20>0.000000</R20>
+						<R21>0.000000</R21>
+						<R22>1.000000</R22>
+					</CoordinateFrame>
+					<float name="Weight">1</float>
+				</Properties>
+				<Item class="Pose">
+					<Properties>
+						<string name="Name">LowerTorso</string>
+						<CoordinateFrame name="CFrame">
+							<X>0</X><Y>0</Y><Z>0</Z>
+							<R00>1.000000</R00>
+							<R01>0.000000</R01>
+							<R02>0.000000</R02>
+							<R10>0.000000</R10>
+							<R11>0.939693</R11>
+							<R12>0.342020</R12>
+							<R20>0.000000</R20>
+							<R21>-0.342020</R21>
+							<R22>0.939693</R22>
+						</CoordinateFrame>
+						<float name="Weight">1</float>
+					</Properties>
+					<Item class="Pose">
+						<Properties>
+							<string name="Name">UpperTorso</string>
+							<CoordinateFrame name="CFrame">
+								<X>0</X><Y>0</Y><Z>0</Z>
+								<R00>0.866025</R00>
+								<R01>0.000000</R01>
+								<R02>-0.500000</R02>
+								<R10>0.000000</R10>
+								<R11>1.000000</R11>
+								<R12>0.000000</R12>
+								<R20>0.500000</R20>
+								<R21>0.000000</R21>
+								<R22>0.866025</R22>
+							</CoordinateFrame>
+							<float name="Weight">1</float>
+						</Properties>
+						<Item class="Pose">
+							<Properties>
+								<string name="Name">LeftUpperArm</string>
+								<CoordinateFrame name="CFrame">
+									<X>0</X><Y>0</Y><Z>0</Z>
+									<R00>0.990268</R00>
+									<R01>0.139173</R01>
+									<R02>0.000000</R02>
+									<R10>-0.137819</R10>
+									<R11>0.980631</R11>
+									<R12>-0.139173</R12>
+									<R20>-0.019369</R20>
+									<R21>0.137819</R21>
+									<R22>0.990268</R22>
+								</CoordinateFrame>
+								<float name="Weight">1</float>
+							</Properties>
+							<Item class="Pose">
+								<Properties>
+									<string name="Name">LeftLowerArm</string>
+									<CoordinateFrame name="CFrame">
+										<X>0</X><Y>0</Y><Z>0</Z>
+										<R00>1.000000</R00>
+										<R01>0.000000</R01>
+										<R02>0.000000</R02>
+										<R10>0.000000</R10>
+										<R11>1.000000</R11>
+										<R12>0.000000</R12>
+										<R20>0.000000</R20>
+										<R21>0.000000</R21>
+										<R22>1.000000</R22>
+									</CoordinateFrame>
+									<float name="Weight">1</float>
+								</Properties>
+							</Item>
+						</Item>
+						<Item class="Pose">
+							<Properties>
+								<string name="Name">RightUpperArm</string>
+								<CoordinateFrame name="CFrame">
+									<X>0</X><Y>0</Y><Z>0</Z>
+									<R00>0.642788</R00>
+									<R01>-0.766044</R01>
+									<R02>0.000000</R02>
+									<R10>0.219704</R10>
+									<R11>0.184354</R11>
+									<R12>-0.957990</R12>
+									<R20>0.733863</R20>
+									<R21>0.615784</R21>
+									<R22>0.286803</R22>
+								</CoordinateFrame>
+								<float name="Weight">1</float>
+							</Properties>
+							<Item class="Pose">
+								<Properties>
+									<string name="Name">RightLowerArm</string>
+									<CoordinateFrame name="CFrame">
+										<X>0</X><Y>0</Y><Z>0</Z>
+										<R00>1.000000</R00>
+										<R01>0.000000</R01>
+										<R02>0.000000</R02>
+										<R10>0.000000</R10>
+										<R11>0.835488</R11>
+										<R12>-0.549509</R12>
+										<R20>0.000000</R20>
+										<R21>0.549509</R21>
+										<R22>0.835488</R22>
+									</CoordinateFrame>
+									<float name="Weight">1</float>
+								</Properties>
+							</Item>
+						</Item>
+					</Item>
+					<Item class="Pose">
+						<Properties>
+							<string name="Name">LeftUpperLeg</string>
+							<CoordinateFrame name="CFrame">
+								<X>0</X><Y>0</Y><Z>0</Z>
+								<R00>1.000000</R00>
+								<R01>0.000000</R01>
+								<R02>0.000000</R02>
+								<R10>0.000000</R10>
+								<R11>1.000000</R11>
+								<R12>0.000000</R12>
+								<R20>0.000000</R20>
+								<R21>0.000000</R21>
+								<R22>1.000000</R22>
+							</CoordinateFrame>
+							<float name="Weight">1</float>
+						</Properties>
+						<Item class="Pose">
+							<Properties>
+								<string name="Name">LeftLowerLeg</string>
+								<CoordinateFrame name="CFrame">
+									<X>0</X><Y>0</Y><Z>0</Z>
+									<R00>1.000000</R00>
+									<R01>0.000000</R01>
+									<R02>0.000000</R02>
+									<R10>0.000000</R10>
+									<R11>1.000000</R11>
+									<R12>0.000000</R12>
+									<R20>0.000000</R20>
+									<R21>0.000000</R21>
+									<R22>1.000000</R22>
+								</CoordinateFrame>
+								<float name="Weight">1</float>
+							</Properties>
+						</Item>
+					</Item>
+					<Item class="Pose">
+						<Properties>
+							<string name="Name">RightUpperLeg</string>
+							<CoordinateFrame name="CFrame">
+								<X>0</X><Y>0</Y><Z>0</Z>
+								<R00>1.000000</R00>
+								<R01>0.000000</R01>
+								<R02>0.000000</R02>
+								<R10>0.000000</R10>
+								<R11>0.973045</R11>
+								<R12>0.230616</R12>
+								<R20>0.000000</R20>
+								<R21>-0.230616</R21>
+								<R22>0.973045</R22>
+							</CoordinateFrame>
+							<float name="Weight">1</float>
+						</Properties>
+						<Item class="Pose">
+							<Properties>
+								<string name="Name">RightLowerLeg</string>
+								<CoordinateFrame name="CFrame">
+									<X>0</X><Y>0</Y><Z>0</Z>
+									<R00>1.000000</R00>
+									<R01>0.000000</R01>
+									<R02>0.000000</R02>
+									<R10>0.000000</R10>
+									<R11>1.000000</R11>
+									<R12>0.000000</R12>
+									<R20>0.000000</R20>
+									<R21>0.000000</R21>
+									<R22>1.000000</R22>
+								</CoordinateFrame>
+								<float name="Weight">1</float>
+							</Properties>
+						</Item>
+					</Item>
+				</Item>
+			</Item>
+		</Item>
+		<Item class="Keyframe">
+			<Properties>
+				<string name="Name">Keyframe</string>
+				<float name="Time">0.08</float>
+			</Properties>
+			<Item class="Pose">
+				<Properties>
+					<string name="Name">HumanoidRootPart</string>
+					<CoordinateFrame name="CFrame">
+						<X>0</X><Y>0</Y><Z>0</Z>
+						<R00>1.000000</R00>
+						<R01>0.000000</R01>
+						<R02>0.000000</R02>
+						<R10>0.000000</R10>
+						<R11>1.000000</R11>
+						<R12>0.000000</R12>
+						<R20>0.000000</R20>
+						<R21>0.000000</R21>
+						<R22>1.000000</R22>
+					</CoordinateFrame>
+					<float name="Weight">1</float>
+				</Properties>
+				<Item class="Pose">
+					<Properties>
+						<string name="Name">LowerTorso</string>
+						<CoordinateFrame name="CFrame">
+							<X>0</X><Y>0</Y><Z>0</Z>
+							<R00>1.000000</R00>
+							<R01>0.000000</R01>
+							<R02>0.000000</R02>
+							<R10>0.000000</R10>
+							<R11>0.866025</R11>
+							<R12>0.500000</R12>
+							<R20>0.000000</R20>
+							<R21>-0.500000</R21>
+							<R22>0.866025</R22>
+						</CoordinateFrame>
+						<float name="Weight">1</float>
+					</Properties>
+					<Item class="Pose">
+						<Properties>
+							<string name="Name">UpperTorso</string>
+							<CoordinateFrame name="CFrame">
+								<X>0</X><Y>0</Y><Z>0</Z>
+								<R00>0.707107</R00>
+								<R01>0.000000</R01>
+								<R02>-0.707107</R02>
+								<R10>0.000000</R10>
+								<R11>1.000000</R11>
+								<R12>0.000000</R12>
+								<R20>0.707107</R20>
+								<R21>0.000000</R21>
+								<R22>0.707107</R22>
+							</CoordinateFrame>
+							<float name="Weight">1</float>
+						</Properties>
+						<Item class="Pose">
+							<Properties>
+								<string name="Name">LeftUpperArm</string>
+								<CoordinateFrame name="CFrame">
+									<X>0</X><Y>0</Y><Z>0</Z>
+									<R00>0.978148</R00>
+									<R01>0.207912</R01>
+									<R02>0.000000</R02>
+									<R10>-0.203368</R10>
+									<R11>0.956773</R11>
+									<R12>-0.207912</R12>
+									<R20>-0.043227</R20>
+									<R21>0.203368</R21>
+									<R22>0.978148</R22>
+								</CoordinateFrame>
+								<float name="Weight">1</float>
+							</Properties>
+							<Item class="Pose">
+								<Properties>
+									<string name="Name">LeftLowerArm</string>
+									<CoordinateFrame name="CFrame">
+										<X>0</X><Y>0</Y><Z>0</Z>
+										<R00>1.000000</R00>
+										<R01>0.000000</R01>
+										<R02>0.000000</R02>
+										<R10>0.000000</R10>
+										<R11>1.000000</R11>
+										<R12>0.000000</R12>
+										<R20>0.000000</R20>
+										<R21>0.000000</R21>
+										<R22>1.000000</R22>
+									</CoordinateFrame>
+									<float name="Weight">1</float>
+								</Properties>
+							</Item>
+						</Item>
+						<Item class="Pose">
+							<Properties>
+								<string name="Name">RightUpperArm</string>
+								<CoordinateFrame name="CFrame">
+									<X>0</X><Y>0</Y><Z>0</Z>
+									<R00>0.258819</R00>
+									<R01>-0.965926</R01>
+									<R02>0.000000</R02>
+									<R10>-0.330366</R10>
+									<R11>-0.088521</R11>
+									<R12>-0.939693</R12>
+									<R20>0.907673</R20>
+									<R21>0.243210</R21>
+									<R22>-0.342020</R22>
+								</CoordinateFrame>
+								<float name="Weight">1</float>
+							</Properties>
+							<Item class="Pose">
+								<Properties>
+									<string name="Name">RightLowerArm</string>
+									<CoordinateFrame name="CFrame">
+										<X>0</X><Y>0</Y><Z>0</Z>
+										<R00>1.000000</R00>
+										<R01>0.000000</R01>
+										<R02>0.000000</R02>
+										<R10>0.000000</R10>
+										<R11>0.642788</R11>
+										<R12>-0.766044</R12>
+										<R20>0.000000</R20>
+										<R21>0.766044</R21>
+										<R22>0.642788</R22>
+									</CoordinateFrame>
+									<float name="Weight">1</float>
+								</Properties>
+							</Item>
+						</Item>
+					</Item>
+					<Item class="Pose">
+						<Properties>
+							<string name="Name">LeftUpperLeg</string>
+							<CoordinateFrame name="CFrame">
+								<X>0</X><Y>0</Y><Z>0</Z>
+								<R00>1.000000</R00>
+								<R01>0.000000</R01>
+								<R02>0.000000</R02>
+								<R10>0.000000</R10>
+								<R11>1.000000</R11>
+								<R12>0.000000</R12>
+								<R20>0.000000</R20>
+								<R21>0.000000</R21>
+								<R22>1.000000</R22>
+							</CoordinateFrame>
+							<float name="Weight">1</float>
+						</Properties>
+						<Item class="Pose">
+							<Properties>
+								<string name="Name">LeftLowerLeg</string>
+								<CoordinateFrame name="CFrame">
+									<X>0</X><Y>0</Y><Z>0</Z>
+									<R00>1.000000</R00>
+									<R01>0.000000</R01>
+									<R02>0.000000</R02>
+									<R10>0.000000</R10>
+									<R11>1.000000</R11>
+									<R12>0.000000</R12>
+									<R20>0.000000</R20>
+									<R21>0.000000</R21>
+									<R22>1.000000</R22>
+								</CoordinateFrame>
+								<float name="Weight">1</float>
+							</Properties>
+						</Item>
+					</Item>
+					<Item class="Pose">
+						<Properties>
+							<string name="Name">RightUpperLeg</string>
+							<CoordinateFrame name="CFrame">
+								<X>0</X><Y>0</Y><Z>0</Z>
+								<R00>1.000000</R00>
+								<R01>0.000000</R01>
+								<R02>0.000000</R02>
+								<R10>0.000000</R10>
+								<R11>0.939693</R11>
+								<R12>0.342020</R12>
+								<R20>0.000000</R20>
+								<R21>-0.342020</R21>
+								<R22>0.939693</R22>
+							</CoordinateFrame>
+							<float name="Weight">1</float>
+						</Properties>
+						<Item class="Pose">
+							<Properties>
+								<string name="Name">RightLowerLeg</string>
+								<CoordinateFrame name="CFrame">
+									<X>0</X><Y>0</Y><Z>0</Z>
+									<R00>1.000000</R00>
+									<R01>0.000000</R01>
+									<R02>0.000000</R02>
+									<R10>0.000000</R10>
+									<R11>1.000000</R11>
+									<R12>0.000000</R12>
+									<R20>0.000000</R20>
+									<R21>0.000000</R21>
+									<R22>1.000000</R22>
+								</CoordinateFrame>
+								<float name="Weight">1</float>
+							</Properties>
+						</Item>
+					</Item>
+				</Item>
+			</Item>
+		</Item>
+		<Item class="Keyframe">
+			<Properties>
+				<string name="Name">Keyframe</string>
+				<float name="Time">0.12</float>
+			</Properties>
+			<Item class="Pose">
+				<Properties>
+					<string name="Name">HumanoidRootPart</string>
+					<CoordinateFrame name="CFrame">
+						<X>0</X><Y>0</Y><Z>0</Z>
+						<R00>1.000000</R00>
+						<R01>0.000000</R01>
+						<R02>0.000000</R02>
+						<R10>0.000000</R10>
+						<R11>1.000000</R11>
+						<R12>0.000000</R12>
+						<R20>0.000000</R20>
+						<R21>0.000000</R21>
+						<R22>1.000000</R22>
+					</CoordinateFrame>
+					<float name="Weight">1</float>
+				</Properties>
+				<Item class="Pose">
+					<Properties>
+						<string name="Name">LowerTorso</string>
+						<CoordinateFrame name="CFrame">
+							<X>0</X><Y>0</Y><Z>0</Z>
+							<R00>1.000000</R00>
+							<R01>0.000000</R01>
+							<R02>0.000000</R02>
+							<R10>0.000000</R10>
+							<R11>0.841825</R11>
+							<R12>0.539751</R12>
+							<R20>0.000000</R20>
+							<R21>-0.539751</R21>
+							<R22>0.841825</R22>
+						</CoordinateFrame>
+						<float name="Weight">1</float>
+					</Properties>
+					<Item class="Pose">
+						<Properties>
+							<string name="Name">UpperTorso</string>
+							<CoordinateFrame name="CFrame">
+								<X>0</X><Y>0</Y><Z>0</Z>
+								<R00>0.979341</R00>
+								<R01>0.000000</R01>
+								<R02>-0.202218</R02>
+								<R10>0.000000</R10>
+								<R11>1.000000</R11>
+								<R12>0.000000</R12>
+								<R20>0.202218</R20>
+								<R21>0.000000</R21>
+								<R22>0.979341</R22>
+							</CoordinateFrame>
+							<float name="Weight">1</float>
+						</Properties>
+						<Item class="Pose">
+							<Properties>
+								<string name="Name">LeftUpperArm</string>
+								<CoordinateFrame name="CFrame">
+									<X>0</X><Y>0</Y><Z>0</Z>
+									<R00>0.974370</R00>
+									<R01>0.224951</R01>
+									<R02>0.000000</R02>
+									<R10>-0.217621</R10>
+									<R11>0.942620</R11>
+									<R12>-0.253195</R12>
+									<R20>-0.056957</R20>
+									<R21>0.246706</R21>
+									<R22>0.967415</R22>
+								</CoordinateFrame>
+								<float name="Weight">1</float>
+							</Properties>
+							<Item class="Pose">
+								<Properties>
+									<string name="Name">LeftLowerArm</string>
+									<CoordinateFrame name="CFrame">
+										<X>0</X><Y>0</Y><Z>0</Z>
+										<R00>1.000000</R00>
+										<R01>0.000000</R01>
+										<R02>0.000000</R02>
+										<R10>0.000000</R10>
+										<R11>1.000000</R11>
+										<R12>0.000000</R12>
+										<R20>0.000000</R20>
+										<R21>0.000000</R21>
+										<R22>1.000000</R22>
+									</CoordinateFrame>
+									<float name="Weight">1</float>
+								</Properties>
+							</Item>
+						</Item>
+						<Item class="Pose">
+							<Properties>
+								<string name="Name">RightUpperArm</string>
+								<CoordinateFrame name="CFrame">
+									<X>0</X><Y>0</Y><Z>0</Z>
+									<R00>0.851117</R00>
+									<R01>-0.524977</R01>
+									<R02>0.000000</R02>
+									<R10>-0.135874</R10>
+									<R11>-0.220285</R11>
+									<R12>-0.965926</R12>
+									<R20>0.507088</R20>
+									<R21>0.822116</R21>
+									<R22>-0.258819</R22>
+								</CoordinateFrame>
+								<float name="Weight">1</float>
+							</Properties>
+							<Item class="Pose">
+								<Properties>
+									<string name="Name">RightLowerArm</string>
+									<CoordinateFrame name="CFrame">
+										<X>0</X><Y>0</Y><Z>0</Z>
+										<R00>1.000000</R00>
+										<R01>0.000000</R01>
+										<R02>0.000000</R02>
+										<R10>0.000000</R10>
+										<R11>0.809017</R11>
+										<R12>-0.587785</R12>
+										<R20>0.000000</R20>
+										<R21>0.587785</R21>
+										<R22>0.809017</R22>
+									</CoordinateFrame>
+									<float name="Weight">1</float>
+								</Properties>
+							</Item>
+						</Item>
+					</Item>
+					<Item class="Pose">
+						<Properties>
+							<string name="Name">LeftUpperLeg</string>
+							<CoordinateFrame name="CFrame">
+								<X>0</X><Y>0</Y><Z>0</Z>
+								<R00>1.000000</R00>
+								<R01>0.000000</R01>
+								<R02>0.000000</R02>
+								<R10>0.000000</R10>
+								<R11>1.000000</R11>
+								<R12>0.000000</R12>
+								<R20>0.000000</R20>
+								<R21>0.000000</R21>
+								<R22>1.000000</R22>
+							</CoordinateFrame>
+							<float name="Weight">1</float>
+						</Properties>
+						<Item class="Pose">
+							<Properties>
+								<string name="Name">LeftLowerLeg</string>
+								<CoordinateFrame name="CFrame">
+									<X>0</X><Y>0</Y><Z>0</Z>
+									<R00>1.000000</R00>
+									<R01>0.000000</R01>
+									<R02>0.000000</R02>
+									<R10>0.000000</R10>
+									<R11>1.000000</R11>
+									<R12>0.000000</R12>
+									<R20>0.000000</R20>
+									<R21>0.000000</R21>
+									<R22>1.000000</R22>
+								</CoordinateFrame>
+								<float name="Weight">1</float>
+							</Properties>
+						</Item>
+					</Item>
+					<Item class="Pose">
+						<Properties>
+							<string name="Name">RightUpperLeg</string>
+							<CoordinateFrame name="CFrame">
+								<X>0</X><Y>0</Y><Z>0</Z>
+								<R00>1.000000</R00>
+								<R01>0.000000</R01>
+								<R02>0.000000</R02>
+								<R10>0.000000</R10>
+								<R11>0.996195</R11>
+								<R12>0.087156</R12>
+								<R20>0.000000</R20>
+								<R21>-0.087156</R21>
+								<R22>0.996195</R22>
+							</CoordinateFrame>
+							<float name="Weight">1</float>
+						</Properties>
+						<Item class="Pose">
+							<Properties>
+								<string name="Name">RightLowerLeg</string>
+								<CoordinateFrame name="CFrame">
+									<X>0</X><Y>0</Y><Z>0</Z>
+									<R00>1.000000</R00>
+									<R01>0.000000</R01>
+									<R02>0.000000</R02>
+									<R10>0.000000</R10>
+									<R11>0.984808</R11>
+									<R12>0.173648</R12>
+									<R20>0.000000</R20>
+									<R21>-0.173648</R21>
+									<R22>0.984808</R22>
+								</CoordinateFrame>
+								<float name="Weight">1</float>
+							</Properties>
+						</Item>
+					</Item>
+				</Item>
+			</Item>
+		</Item>
+		<Item class="Keyframe">
+			<Properties>
+				<string name="Name">Keyframe</string>
+				<float name="Time">0.16</float>
+			</Properties>
+			<Item class="Pose">
+				<Properties>
+					<string name="Name">HumanoidRootPart</string>
+					<CoordinateFrame name="CFrame">
+						<X>0</X><Y>0</Y><Z>0</Z>
+						<R00>1.000000</R00>
+						<R01>0.000000</R01>
+						<R02>0.000000</R02>
+						<R10>0.000000</R10>
+						<R11>1.000000</R11>
+						<R12>0.000000</R12>
+						<R20>0.000000</R20>
+						<R21>0.000000</R21>
+						<R22>1.000000</R22>
+					</CoordinateFrame>
+					<float name="Weight">1</float>
+				</Properties>
+				<Item class="Pose">
+					<Properties>
+						<string name="Name">LowerTorso</string>
+						<CoordinateFrame name="CFrame">
+							<X>0</X><Y>0</Y><Z>0</Z>
+							<R00>1.000000</R00>
+							<R01>0.000000</R01>
+							<R02>0.000000</R02>
+							<R10>0.000000</R10>
+							<R11>0.815801</R11>
+							<R12>0.578332</R12>
+							<R20>0.000000</R20>
+							<R21>-0.578332</R21>
+							<R22>0.815801</R22>
+						</CoordinateFrame>
+						<float name="Weight">1</float>
+					</Properties>
+					<Item class="Pose">
+						<Properties>
+							<string name="Name">UpperTorso</string>
+							<CoordinateFrame name="CFrame">
+								<X>0</X><Y>0</Y><Z>0</Z>
+								<R00>0.929348</R00>
+								<R01>0.000000</R01>
+								<R02>0.369206</R02>
+								<R10>0.000000</R10>
+								<R11>1.000000</R11>
+								<R12>0.000000</R12>
+								<R20>-0.369206</R20>
+								<R21>0.000000</R21>
+								<R22>0.929348</R22>
+							</CoordinateFrame>
+							<float name="Weight">1</float>
+						</Properties>
+						<Item class="Pose">
+							<Properties>
+								<string name="Name">LeftUpperArm</string>
+								<CoordinateFrame name="CFrame">
+									<X>0</X><Y>0</Y><Z>0</Z>
+									<R00>0.970296</R00>
+									<R01>0.241922</R01>
+									<R02>0.000000</R02>
+									<R10>-0.230936</R10>
+									<R11>0.926232</R11>
+									<R12>-0.297930</R12>
+									<R20>-0.072076</R20>
+									<R21>0.289080</R21>
+									<R22>0.954588</R22>
+								</CoordinateFrame>
+								<float name="Weight">1</float>
+							</Properties>
+							<Item class="Pose">
+								<Properties>
+									<string name="Name">LeftLowerArm</string>
+									<CoordinateFrame name="CFrame">
+										<X>0</X><Y>0</Y><Z>0</Z>
+										<R00>1.000000</R00>
+										<R01>0.000000</R01>
+										<R02>0.000000</R02>
+										<R10>0.000000</R10>
+										<R11>1.000000</R11>
+										<R12>0.000000</R12>
+										<R20>0.000000</R20>
+										<R21>0.000000</R21>
+										<R22>1.000000</R22>
+									</CoordinateFrame>
+									<float name="Weight">1</float>
+								</Properties>
+							</Item>
+						</Item>
+						<Item class="Pose">
+							<Properties>
+								<string name="Name">RightUpperArm</string>
+								<CoordinateFrame name="CFrame">
+									<X>0</X><Y>0</Y><Z>0</Z>
+									<R00>0.979341</R00>
+									<R01>0.202218</R01>
+									<R02>0.000000</R02>
+									<R10>0.035115</R10>
+									<R11>-0.170061</R11>
+									<R12>-0.984808</R12>
+									<R20>-0.199145</R20>
+									<R21>0.964462</R21>
+									<R22>-0.173648</R22>
+								</CoordinateFrame>
+								<float name="Weight">1</float>
+							</Properties>
+							<Item class="Pose">
+								<Properties>
+									<string name="Name">RightLowerArm</string>
+									<CoordinateFrame name="CFrame">
+										<X>0</X><Y>0</Y><Z>0</Z>
+										<R00>1.000000</R00>
+										<R01>0.000000</R01>
+										<R02>0.000000</R02>
+										<R10>0.000000</R10>
+										<R11>0.927184</R11>
+										<R12>-0.374607</R12>
+										<R20>0.000000</R20>
+										<R21>0.374607</R21>
+										<R22>0.927184</R22>
+									</CoordinateFrame>
+									<float name="Weight">1</float>
+								</Properties>
+							</Item>
+						</Item>
+					</Item>
+					<Item class="Pose">
+						<Properties>
+							<string name="Name">LeftUpperLeg</string>
+							<CoordinateFrame name="CFrame">
+								<X>0</X><Y>0</Y><Z>0</Z>
+								<R00>1.000000</R00>
+								<R01>0.000000</R01>
+								<R02>0.000000</R02>
+								<R10>0.000000</R10>
+								<R11>1.000000</R11>
+								<R12>0.000000</R12>
+								<R20>0.000000</R20>
+								<R21>0.000000</R21>
+								<R22>1.000000</R22>
+							</CoordinateFrame>
+							<float name="Weight">1</float>
+						</Properties>
+						<Item class="Pose">
+							<Properties>
+								<string name="Name">LeftLowerLeg</string>
+								<CoordinateFrame name="CFrame">
+									<X>0</X><Y>0</Y><Z>0</Z>
+									<R00>1.000000</R00>
+									<R01>0.000000</R01>
+									<R02>0.000000</R02>
+									<R10>0.000000</R10>
+									<R11>1.000000</R11>
+									<R12>0.000000</R12>
+									<R20>0.000000</R20>
+									<R21>0.000000</R21>
+									<R22>1.000000</R22>
+								</CoordinateFrame>
+								<float name="Weight">1</float>
+							</Properties>
+						</Item>
+					</Item>
+					<Item class="Pose">
+						<Properties>
+							<string name="Name">RightUpperLeg</string>
+							<CoordinateFrame name="CFrame">
+								<X>0</X><Y>0</Y><Z>0</Z>
+								<R00>1.000000</R00>
+								<R01>0.000000</R01>
+								<R02>0.000000</R02>
+								<R10>0.000000</R10>
+								<R11>0.984808</R11>
+								<R12>-0.173648</R12>
+								<R20>0.000000</R20>
+								<R21>0.173648</R21>
+								<R22>0.984808</R22>
+							</CoordinateFrame>
+							<float name="Weight">1</float>
+						</Properties>
+						<Item class="Pose">
+							<Properties>
+								<string name="Name">RightLowerLeg</string>
+								<CoordinateFrame name="CFrame">
+									<X>0</X><Y>0</Y><Z>0</Z>
+									<R00>1.000000</R00>
+									<R01>0.000000</R01>
+									<R02>0.000000</R02>
+									<R10>0.000000</R10>
+									<R11>0.939693</R11>
+									<R12>0.342020</R12>
+									<R20>0.000000</R20>
+									<R21>-0.342020</R21>
+									<R22>0.939693</R22>
+								</CoordinateFrame>
+								<float name="Weight">1</float>
+							</Properties>
+						</Item>
+					</Item>
+				</Item>
+			</Item>
+		</Item>
+		<Item class="Keyframe">
+			<Properties>
+				<string name="Name">Keyframe</string>
+				<float name="Time">0.2</float>
+			</Properties>
+			<Item class="Pose">
+				<Properties>
+					<string name="Name">HumanoidRootPart</string>
+					<CoordinateFrame name="CFrame">
+						<X>0</X><Y>0</Y><Z>0</Z>
+						<R00>1.000000</R00>
+						<R01>0.000000</R01>
+						<R02>0.000000</R02>
+						<R10>0.000000</R10>
+						<R11>1.000000</R11>
+						<R12>0.000000</R12>
+						<R20>0.000000</R20>
+						<R21>0.000000</R21>
+						<R22>1.000000</R22>
+					</CoordinateFrame>
+					<float name="Weight">1</float>
+				</Properties>
+				<Item class="Pose">
+					<Properties>
+						<string name="Name">LowerTorso</string>
+						<CoordinateFrame name="CFrame">
+							<X>0</X><Y>0</Y><Z>0</Z>
+							<R00>1.000000</R00>
+							<R01>0.000000</R01>
+							<R02>0.000000</R02>
+							<R10>0.000000</R10>
+							<R11>0.788011</R11>
+							<R12>0.615661</R12>
+							<R20>0.000000</R20>
+							<R21>-0.615661</R21>
+							<R22>0.788011</R22>
+						</CoordinateFrame>
+						<float name="Weight">1</float>
+					</Properties>
+					<Item class="Pose">
+						<Properties>
+							<string name="Name">UpperTorso</string>
+							<CoordinateFrame name="CFrame">
+								<X>0</X><Y>0</Y><Z>0</Z>
+								<R00>0.573576</R00>
+								<R01>0.000000</R01>
+								<R02>0.819152</R02>
+								<R10>0.000000</R10>
+								<R11>1.000000</R11>
+								<R12>0.000000</R12>
+								<R20>-0.819152</R20>
+								<R21>0.000000</R21>
+								<R22>0.573576</R22>
+							</CoordinateFrame>
+							<float name="Weight">1</float>
+						</Properties>
+						<Item class="Pose">
+							<Properties>
+								<string name="Name">LeftUpperArm</string>
+								<CoordinateFrame name="CFrame">
+									<X>0</X><Y>0</Y><Z>0</Z>
+									<R00>0.965926</R00>
+									<R01>0.258819</R01>
+									<R02>0.000000</R02>
+									<R10>-0.243210</R10>
+									<R11>0.907673</R11>
+									<R12>-0.342020</R12>
+									<R20>-0.088521</R20>
+									<R21>0.330366</R21>
+									<R22>0.939693</R22>
+								</CoordinateFrame>
+								<float name="Weight">1</float>
+							</Properties>
+							<Item class="Pose">
+								<Properties>
+									<string name="Name">LeftLowerArm</string>
+									<CoordinateFrame name="CFrame">
+										<X>0</X><Y>0</Y><Z>0</Z>
+										<R00>1.000000</R00>
+										<R01>0.000000</R01>
+										<R02>0.000000</R02>
+										<R10>0.000000</R10>
+										<R11>1.000000</R11>
+										<R12>0.000000</R12>
+										<R20>0.000000</R20>
+										<R21>0.000000</R21>
+										<R22>1.000000</R22>
+									</CoordinateFrame>
+									<float name="Weight">1</float>
+								</Properties>
+							</Item>
+						</Item>
+						<Item class="Pose">
+							<Properties>
+								<string name="Name">RightUpperArm</string>
+								<CoordinateFrame name="CFrame">
+									<X>0</X><Y>0</Y><Z>0</Z>
+									<R00>0.573576</R00>
+									<R01>0.819152</R01>
+									<R02>0.000000</R02>
+									<R10>0.071394</R10>
+									<R11>-0.049990</R11>
+									<R12>-0.996195</R12>
+									<R20>-0.816035</R20>
+									<R21>0.571394</R21>
+									<R22>-0.087156</R22>
+								</CoordinateFrame>
+								<float name="Weight">1</float>
+							</Properties>
+							<Item class="Pose">
+								<Properties>
+									<string name="Name">RightLowerArm</string>
+									<CoordinateFrame name="CFrame">
+										<X>0</X><Y>0</Y><Z>0</Z>
+										<R00>1.000000</R00>
+										<R01>0.000000</R01>
+										<R02>0.000000</R02>
+										<R10>0.000000</R10>
+										<R11>0.990268</R11>
+										<R12>-0.139173</R12>
+										<R20>0.000000</R20>
+										<R21>0.139173</R21>
+										<R22>0.990268</R22>
+									</CoordinateFrame>
+									<float name="Weight">1</float>
+								</Properties>
+							</Item>
+						</Item>
+					</Item>
+					<Item class="Pose">
+						<Properties>
+							<string name="Name">LeftUpperLeg</string>
+							<CoordinateFrame name="CFrame">
+								<X>0</X><Y>0</Y><Z>0</Z>
+								<R00>1.000000</R00>
+								<R01>0.000000</R01>
+								<R02>0.000000</R02>
+								<R10>0.000000</R10>
+								<R11>1.000000</R11>
+								<R12>0.000000</R12>
+								<R20>0.000000</R20>
+								<R21>0.000000</R21>
+								<R22>1.000000</R22>
+							</CoordinateFrame>
+							<float name="Weight">1</float>
+						</Properties>
+						<Item class="Pose">
+							<Properties>
+								<string name="Name">LeftLowerLeg</string>
+								<CoordinateFrame name="CFrame">
+									<X>0</X><Y>0</Y><Z>0</Z>
+									<R00>1.000000</R00>
+									<R01>0.000000</R01>
+									<R02>0.000000</R02>
+									<R10>0.000000</R10>
+									<R11>1.000000</R11>
+									<R12>0.000000</R12>
+									<R20>0.000000</R20>
+									<R21>0.000000</R21>
+									<R22>1.000000</R22>
+								</CoordinateFrame>
+								<float name="Weight">1</float>
+							</Properties>
+						</Item>
+					</Item>
+					<Item class="Pose">
+						<Properties>
+							<string name="Name">RightUpperLeg</string>
+							<CoordinateFrame name="CFrame">
+								<X>0</X><Y>0</Y><Z>0</Z>
+								<R00>1.000000</R00>
+								<R01>0.000000</R01>
+								<R02>0.000000</R02>
+								<R10>0.000000</R10>
+								<R11>0.906308</R11>
+								<R12>-0.422618</R12>
+								<R20>0.000000</R20>
+								<R21>0.422618</R21>
+								<R22>0.906308</R22>
+							</CoordinateFrame>
+							<float name="Weight">1</float>
+						</Properties>
+						<Item class="Pose">
+							<Properties>
+								<string name="Name">RightLowerLeg</string>
+								<CoordinateFrame name="CFrame">
+									<X>0</X><Y>0</Y><Z>0</Z>
+									<R00>1.000000</R00>
+									<R01>0.000000</R01>
+									<R02>0.000000</R02>
+									<R10>0.000000</R10>
+									<R11>0.866025</R11>
+									<R12>0.500000</R12>
+									<R20>0.000000</R20>
+									<R21>-0.500000</R21>
+									<R22>0.866025</R22>
+								</CoordinateFrame>
+								<float name="Weight">1</float>
+							</Properties>
+						</Item>
+					</Item>
+				</Item>
+			</Item>
+		</Item>
+		<Item class="Keyframe">
+			<Properties>
+				<string name="Name">Keyframe</string>
+				<float name="Time">0.32</float>
+			</Properties>
+			<Item class="Pose">
+				<Properties>
+					<string name="Name">HumanoidRootPart</string>
+					<CoordinateFrame name="CFrame">
+						<X>0</X><Y>0</Y><Z>0</Z>
+						<R00>1.000000</R00>
+						<R01>0.000000</R01>
+						<R02>0.000000</R02>
+						<R10>0.000000</R10>
+						<R11>1.000000</R11>
+						<R12>0.000000</R12>
+						<R20>0.000000</R20>
+						<R21>0.000000</R21>
+						<R22>1.000000</R22>
+					</CoordinateFrame>
+					<float name="Weight">1</float>
+				</Properties>
+				<Item class="Pose">
+					<Properties>
+						<string name="Name">LowerTorso</string>
+						<CoordinateFrame name="CFrame">
+							<X>0</X><Y>0</Y><Z>0</Z>
+							<R00>1.000000</R00>
+							<R01>0.000000</R01>
+							<R02>0.000000</R02>
+							<R10>0.000000</R10>
+							<R11>0.882948</R11>
+							<R12>0.469472</R12>
+							<R20>0.000000</R20>
+							<R21>-0.469472</R21>
+							<R22>0.882948</R22>
+						</CoordinateFrame>
+						<float name="Weight">1</float>
+					</Properties>
+					<Item class="Pose">
+						<Properties>
+							<string name="Name">UpperTorso</string>
+							<CoordinateFrame name="CFrame">
+								<X>0</X><Y>0</Y><Z>0</Z>
+								<R00>0.422618</R00>
+								<R01>0.000000</R01>
+								<R02>0.906308</R02>
+								<R10>0.000000</R10>
+								<R11>1.000000</R11>
+								<R12>0.000000</R12>
+								<R20>-0.906308</R20>
+								<R21>0.000000</R21>
+								<R22>0.422618</R22>
+							</CoordinateFrame>
+							<float name="Weight">1</float>
+						</Properties>
+						<Item class="Pose">
+							<Properties>
+								<string name="Name">LeftUpperArm</string>
+								<CoordinateFrame name="CFrame">
+									<X>0</X><Y>0</Y><Z>0</Z>
+									<R00>0.978148</R00>
+									<R01>0.207912</R01>
+									<R02>0.000000</R02>
+									<R10>-0.199858</R10>
+									<R11>0.940256</R11>
+									<R12>-0.275637</R12>
+									<R20>-0.057308</R20>
+									<R21>0.269614</R21>
+									<R22>0.961262</R22>
+								</CoordinateFrame>
+								<float name="Weight">1</float>
+							</Properties>
+							<Item class="Pose">
+								<Properties>
+									<string name="Name">LeftLowerArm</string>
+									<CoordinateFrame name="CFrame">
+										<X>0</X><Y>0</Y><Z>0</Z>
+										<R00>1.000000</R00>
+										<R01>0.000000</R01>
+										<R02>0.000000</R02>
+										<R10>0.000000</R10>
+										<R11>1.000000</R11>
+										<R12>0.000000</R12>
+										<R20>0.000000</R20>
+										<R21>0.000000</R21>
+										<R22>1.000000</R22>
+									</CoordinateFrame>
+									<float name="Weight">1</float>
+								</Properties>
+							</Item>
+						</Item>
+						<Item class="Pose">
+							<Properties>
+								<string name="Name">RightUpperArm</string>
+								<CoordinateFrame name="CFrame">
+									<X>0</X><Y>0</Y><Z>0</Z>
+									<R00>0.342020</R00>
+									<R01>0.939693</R01>
+									<R02>0.000000</R02>
+									<R10>-0.081900</R10>
+									<R11>0.029809</R11>
+									<R12>-0.996195</R12>
+									<R20>-0.936117</R20>
+									<R21>0.340719</R21>
+									<R22>0.087156</R22>
+								</CoordinateFrame>
+								<float name="Weight">1</float>
+							</Properties>
+							<Item class="Pose">
+								<Properties>
+									<string name="Name">RightLowerArm</string>
+									<CoordinateFrame name="CFrame">
+										<X>0</X><Y>0</Y><Z>0</Z>
+										<R00>1.000000</R00>
+										<R01>0.000000</R01>
+										<R02>0.000000</R02>
+										<R10>0.000000</R10>
+										<R11>0.990268</R11>
+										<R12>-0.139173</R12>
+										<R20>0.000000</R20>
+										<R21>0.139173</R21>
+										<R22>0.990268</R22>
+									</CoordinateFrame>
+									<float name="Weight">1</float>
+								</Properties>
+							</Item>
+						</Item>
+					</Item>
+					<Item class="Pose">
+						<Properties>
+							<string name="Name">LeftUpperLeg</string>
+							<CoordinateFrame name="CFrame">
+								<X>0</X><Y>0</Y><Z>0</Z>
+								<R00>1.000000</R00>
+								<R01>0.000000</R01>
+								<R02>0.000000</R02>
+								<R10>0.000000</R10>
+								<R11>1.000000</R11>
+								<R12>0.000000</R12>
+								<R20>0.000000</R20>
+								<R21>0.000000</R21>
+								<R22>1.000000</R22>
+							</CoordinateFrame>
+							<float name="Weight">1</float>
+						</Properties>
+						<Item class="Pose">
+							<Properties>
+								<string name="Name">LeftLowerLeg</string>
+								<CoordinateFrame name="CFrame">
+									<X>0</X><Y>0</Y><Z>0</Z>
+									<R00>1.000000</R00>
+									<R01>0.000000</R01>
+									<R02>0.000000</R02>
+									<R10>0.000000</R10>
+									<R11>1.000000</R11>
+									<R12>0.000000</R12>
+									<R20>0.000000</R20>
+									<R21>0.000000</R21>
+									<R22>1.000000</R22>
+								</CoordinateFrame>
+								<float name="Weight">1</float>
+							</Properties>
+						</Item>
+					</Item>
+					<Item class="Pose">
+						<Properties>
+							<string name="Name">RightUpperLeg</string>
+							<CoordinateFrame name="CFrame">
+								<X>0</X><Y>0</Y><Z>0</Z>
+								<R00>1.000000</R00>
+								<R01>0.000000</R01>
+								<R02>0.000000</R02>
+								<R10>0.000000</R10>
+								<R11>1.000000</R11>
+								<R12>0.000000</R12>
+								<R20>0.000000</R20>
+								<R21>0.000000</R21>
+								<R22>1.000000</R22>
+							</CoordinateFrame>
+							<float name="Weight">1</float>
+						</Properties>
+						<Item class="Pose">
+							<Properties>
+								<string name="Name">RightLowerLeg</string>
+								<CoordinateFrame name="CFrame">
+									<X>0</X><Y>0</Y><Z>0</Z>
+									<R00>1.000000</R00>
+									<R01>0.000000</R01>
+									<R02>0.000000</R02>
+									<R10>0.000000</R10>
+									<R11>1.000000</R11>
+									<R12>0.000000</R12>
+									<R20>0.000000</R20>
+									<R21>0.000000</R21>
+									<R22>1.000000</R22>
+								</CoordinateFrame>
+								<float name="Weight">1</float>
+							</Properties>
+						</Item>
+					</Item>
+				</Item>
+			</Item>
+		</Item>
+		<Item class="Keyframe">
+			<Properties>
+				<string name="Name">Keyframe</string>
+				<float name="Time">0.43500000000000005</float>
+			</Properties>
+			<Item class="Pose">
+				<Properties>
+					<string name="Name">HumanoidRootPart</string>
+					<CoordinateFrame name="CFrame">
+						<X>0</X><Y>0</Y><Z>0</Z>
+						<R00>1.000000</R00>
+						<R01>0.000000</R01>
+						<R02>0.000000</R02>
+						<R10>0.000000</R10>
+						<R11>1.000000</R11>
+						<R12>0.000000</R12>
+						<R20>0.000000</R20>
+						<R21>0.000000</R21>
+						<R22>1.000000</R22>
+					</CoordinateFrame>
+					<float name="Weight">1</float>
+				</Properties>
+				<Item class="Pose">
+					<Properties>
+						<string name="Name">LowerTorso</string>
+						<CoordinateFrame name="CFrame">
+							<X>0</X><Y>0</Y><Z>0</Z>
+							<R00>1.000000</R00>
+							<R01>0.000000</R01>
+							<R02>0.000000</R02>
+							<R10>0.000000</R10>
+							<R11>0.970296</R11>
+							<R12>0.241922</R12>
+							<R20>0.000000</R20>
+							<R21>-0.241922</R21>
+							<R22>0.970296</R22>
+						</CoordinateFrame>
+						<float name="Weight">1</float>
+					</Properties>
+					<Item class="Pose">
+						<Properties>
+							<string name="Name">UpperTorso</string>
+							<CoordinateFrame name="CFrame">
+								<X>0</X><Y>0</Y><Z>0</Z>
+								<R00>0.843391</R00>
+								<R01>0.000000</R01>
+								<R02>0.537300</R02>
+								<R10>0.000000</R10>
+								<R11>1.000000</R11>
+								<R12>0.000000</R12>
+								<R20>-0.537300</R20>
+								<R21>0.000000</R21>
+								<R22>0.843391</R22>
+							</CoordinateFrame>
+							<float name="Weight">1</float>
+						</Properties>
+						<Item class="Pose">
+							<Properties>
+								<string name="Name">LeftUpperArm</string>
+								<CoordinateFrame name="CFrame">
+									<X>0</X><Y>0</Y><Z>0</Z>
+									<R00>0.994522</R00>
+									<R01>0.104528</R01>
+									<R02>0.000000</R02>
+									<R10>-0.103511</R10>
+									<R11>0.984843</R11>
+									<R12>-0.139173</R12>
+									<R20>-0.014548</R20>
+									<R21>0.138411</R21>
+									<R22>0.990268</R22>
+								</CoordinateFrame>
+								<float name="Weight">1</float>
+							</Properties>
+							<Item class="Pose">
+								<Properties>
+									<string name="Name">LeftLowerArm</string>
+									<CoordinateFrame name="CFrame">
+										<X>0</X><Y>0</Y><Z>0</Z>
+										<R00>1.000000</R00>
+										<R01>0.000000</R01>
+										<R02>0.000000</R02>
+										<R10>0.000000</R10>
+										<R11>1.000000</R11>
+										<R12>0.000000</R12>
+										<R20>0.000000</R20>
+										<R21>0.000000</R21>
+										<R22>1.000000</R22>
+									</CoordinateFrame>
+									<float name="Weight">1</float>
+								</Properties>
+							</Item>
+						</Item>
+						<Item class="Pose">
+							<Properties>
+								<string name="Name">RightUpperArm</string>
+								<CoordinateFrame name="CFrame">
+									<X>0</X><Y>0</Y><Z>0</Z>
+									<R00>0.819152</R00>
+									<R01>0.573576</R01>
+									<R02>0.000000</R02>
+									<R10>-0.422885</R10>
+									<R11>0.603942</R11>
+									<R12>-0.675590</R12>
+									<R20>-0.387503</R20>
+									<R21>0.553411</R21>
+									<R22>0.737277</R22>
+								</CoordinateFrame>
+								<float name="Weight">1</float>
+							</Properties>
+							<Item class="Pose">
+								<Properties>
+									<string name="Name">RightLowerArm</string>
+									<CoordinateFrame name="CFrame">
+										<X>0</X><Y>0</Y><Z>0</Z>
+										<R00>1.000000</R00>
+										<R01>0.000000</R01>
+										<R02>0.000000</R02>
+										<R10>0.000000</R10>
+										<R11>0.997564</R11>
+										<R12>-0.069756</R12>
+										<R20>0.000000</R20>
+										<R21>0.069756</R21>
+										<R22>0.997564</R22>
+									</CoordinateFrame>
+									<float name="Weight">1</float>
+								</Properties>
+							</Item>
+						</Item>
+					</Item>
+					<Item class="Pose">
+						<Properties>
+							<string name="Name">LeftUpperLeg</string>
+							<CoordinateFrame name="CFrame">
+								<X>0</X><Y>0</Y><Z>0</Z>
+								<R00>1.000000</R00>
+								<R01>0.000000</R01>
+								<R02>0.000000</R02>
+								<R10>0.000000</R10>
+								<R11>1.000000</R11>
+								<R12>0.000000</R12>
+								<R20>0.000000</R20>
+								<R21>0.000000</R21>
+								<R22>1.000000</R22>
+							</CoordinateFrame>
+							<float name="Weight">1</float>
+						</Properties>
+						<Item class="Pose">
+							<Properties>
+								<string name="Name">LeftLowerLeg</string>
+								<CoordinateFrame name="CFrame">
+									<X>0</X><Y>0</Y><Z>0</Z>
+									<R00>1.000000</R00>
+									<R01>0.000000</R01>
+									<R02>0.000000</R02>
+									<R10>0.000000</R10>
+									<R11>1.000000</R11>
+									<R12>0.000000</R12>
+									<R20>0.000000</R20>
+									<R21>0.000000</R21>
+									<R22>1.000000</R22>
+								</CoordinateFrame>
+								<float name="Weight">1</float>
+							</Properties>
+						</Item>
+					</Item>
+					<Item class="Pose">
+						<Properties>
+							<string name="Name">RightUpperLeg</string>
+							<CoordinateFrame name="CFrame">
+								<X>0</X><Y>0</Y><Z>0</Z>
+								<R00>1.000000</R00>
+								<R01>0.000000</R01>
+								<R02>0.000000</R02>
+								<R10>0.000000</R10>
+								<R11>1.000000</R11>
+								<R12>0.000000</R12>
+								<R20>0.000000</R20>
+								<R21>0.000000</R21>
+								<R22>1.000000</R22>
+							</CoordinateFrame>
+							<float name="Weight">1</float>
+						</Properties>
+						<Item class="Pose">
+							<Properties>
+								<string name="Name">RightLowerLeg</string>
+								<CoordinateFrame name="CFrame">
+									<X>0</X><Y>0</Y><Z>0</Z>
+									<R00>1.000000</R00>
+									<R01>0.000000</R01>
+									<R02>0.000000</R02>
+									<R10>0.000000</R10>
+									<R11>1.000000</R11>
+									<R12>0.000000</R12>
+									<R20>0.000000</R20>
+									<R21>0.000000</R21>
+									<R22>1.000000</R22>
+								</CoordinateFrame>
+								<float name="Weight">1</float>
+							</Properties>
+						</Item>
+					</Item>
+				</Item>
+			</Item>
+		</Item>
+		<Item class="Keyframe">
+			<Properties>
+				<string name="Name">Keyframe</string>
+				<float name="Time">0.55</float>
+			</Properties>
+			<Item class="Pose">
+				<Properties>
+					<string name="Name">HumanoidRootPart</string>
+					<CoordinateFrame name="CFrame">
+						<X>0</X><Y>0</Y><Z>0</Z>
+						<R00>1.000000</R00>
+						<R01>0.000000</R01>
+						<R02>0.000000</R02>
+						<R10>0.000000</R10>
+						<R11>1.000000</R11>
+						<R12>0.000000</R12>
+						<R20>0.000000</R20>
+						<R21>0.000000</R21>
+						<R22>1.000000</R22>
+					</CoordinateFrame>
+					<float name="Weight">1</float>
+				</Properties>
+				<Item class="Pose">
+					<Properties>
+						<string name="Name">LowerTorso</string>
+						<CoordinateFrame name="CFrame">
+							<X>0</X><Y>0</Y><Z>0</Z>
+							<R00>1.000000</R00>
+							<R01>0.000000</R01>
+							<R02>0.000000</R02>
+							<R10>0.000000</R10>
+							<R11>1.000000</R11>
+							<R12>0.000000</R12>
+							<R20>0.000000</R20>
+							<R21>0.000000</R21>
+							<R22>1.000000</R22>
+						</CoordinateFrame>
+						<float name="Weight">1</float>
+					</Properties>
+					<Item class="Pose">
+						<Properties>
+							<string name="Name">UpperTorso</string>
+							<CoordinateFrame name="CFrame">
+								<X>0</X><Y>0</Y><Z>0</Z>
+								<R00>1.000000</R00>
+								<R01>0.000000</R01>
+								<R02>0.000000</R02>
+								<R10>0.000000</R10>
+								<R11>1.000000</R11>
+								<R12>0.000000</R12>
+								<R20>0.000000</R20>
+								<R21>0.000000</R21>
+								<R22>1.000000</R22>
+							</CoordinateFrame>
+							<float name="Weight">1</float>
+						</Properties>
+						<Item class="Pose">
+							<Properties>
+								<string name="Name">LeftUpperArm</string>
+								<CoordinateFrame name="CFrame">
+									<X>0</X><Y>0</Y><Z>0</Z>
+									<R00>1.000000</R00>
+									<R01>0.000000</R01>
+									<R02>0.000000</R02>
+									<R10>0.000000</R10>
+									<R11>1.000000</R11>
+									<R12>0.000000</R12>
+									<R20>0.000000</R20>
+									<R21>0.000000</R21>
+									<R22>1.000000</R22>
+								</CoordinateFrame>
+								<float name="Weight">1</float>
+							</Properties>
+							<Item class="Pose">
+								<Properties>
+									<string name="Name">LeftLowerArm</string>
+									<CoordinateFrame name="CFrame">
+										<X>0</X><Y>0</Y><Z>0</Z>
+										<R00>1.000000</R00>
+										<R01>0.000000</R01>
+										<R02>0.000000</R02>
+										<R10>0.000000</R10>
+										<R11>1.000000</R11>
+										<R12>0.000000</R12>
+										<R20>0.000000</R20>
+										<R21>0.000000</R21>
+										<R22>1.000000</R22>
+									</CoordinateFrame>
+									<float name="Weight">1</float>
+								</Properties>
+							</Item>
+						</Item>
+						<Item class="Pose">
+							<Properties>
+								<string name="Name">RightUpperArm</string>
+								<CoordinateFrame name="CFrame">
+									<X>0</X><Y>0</Y><Z>0</Z>
+									<R00>1.000000</R00>
+									<R01>0.000000</R01>
+									<R02>0.000000</R02>
+									<R10>0.000000</R10>
+									<R11>1.000000</R11>
+									<R12>0.000000</R12>
+									<R20>0.000000</R20>
+									<R21>0.000000</R21>
+									<R22>1.000000</R22>
+								</CoordinateFrame>
+								<float name="Weight">1</float>
+							</Properties>
+							<Item class="Pose">
+								<Properties>
+									<string name="Name">RightLowerArm</string>
+									<CoordinateFrame name="CFrame">
+										<X>0</X><Y>0</Y><Z>0</Z>
+										<R00>1.000000</R00>
+										<R01>0.000000</R01>
+										<R02>0.000000</R02>
+										<R10>0.000000</R10>
+										<R11>1.000000</R11>
+										<R12>0.000000</R12>
+										<R20>0.000000</R20>
+										<R21>0.000000</R21>
+										<R22>1.000000</R22>
+									</CoordinateFrame>
+									<float name="Weight">1</float>
+								</Properties>
+							</Item>
+						</Item>
+					</Item>
+					<Item class="Pose">
+						<Properties>
+							<string name="Name">LeftUpperLeg</string>
+							<CoordinateFrame name="CFrame">
+								<X>0</X><Y>0</Y><Z>0</Z>
+								<R00>1.000000</R00>
+								<R01>0.000000</R01>
+								<R02>0.000000</R02>
+								<R10>0.000000</R10>
+								<R11>1.000000</R11>
+								<R12>0.000000</R12>
+								<R20>0.000000</R20>
+								<R21>0.000000</R21>
+								<R22>1.000000</R22>
+							</CoordinateFrame>
+							<float name="Weight">1</float>
+						</Properties>
+						<Item class="Pose">
+							<Properties>
+								<string name="Name">LeftLowerLeg</string>
+								<CoordinateFrame name="CFrame">
+									<X>0</X><Y>0</Y><Z>0</Z>
+									<R00>1.000000</R00>
+									<R01>0.000000</R01>
+									<R02>0.000000</R02>
+									<R10>0.000000</R10>
+									<R11>1.000000</R11>
+									<R12>0.000000</R12>
+									<R20>0.000000</R20>
+									<R21>0.000000</R21>
+									<R22>1.000000</R22>
+								</CoordinateFrame>
+								<float name="Weight">1</float>
+							</Properties>
+						</Item>
+					</Item>
+					<Item class="Pose">
+						<Properties>
+							<string name="Name">RightUpperLeg</string>
+							<CoordinateFrame name="CFrame">
+								<X>0</X><Y>0</Y><Z>0</Z>
+								<R00>1.000000</R00>
+								<R01>0.000000</R01>
+								<R02>0.000000</R02>
+								<R10>0.000000</R10>
+								<R11>1.000000</R11>
+								<R12>0.000000</R12>
+								<R20>0.000000</R20>
+								<R21>0.000000</R21>
+								<R22>1.000000</R22>
+							</CoordinateFrame>
+							<float name="Weight">1</float>
+						</Properties>
+						<Item class="Pose">
+							<Properties>
+								<string name="Name">RightLowerLeg</string>
+								<CoordinateFrame name="CFrame">
+									<X>0</X><Y>0</Y><Z>0</Z>
+									<R00>1.000000</R00>
+									<R01>0.000000</R01>
+									<R02>0.000000</R02>
+									<R10>0.000000</R10>
+									<R11>1.000000</R11>
+									<R12>0.000000</R12>
+									<R20>0.000000</R20>
+									<R21>0.000000</R21>
+									<R22>1.000000</R22>
+								</CoordinateFrame>
+								<float name="Weight">1</float>
+							</Properties>
+						</Item>
+					</Item>
+				</Item>
+			</Item>
+		</Item>
+	</Item>
+</roblox>

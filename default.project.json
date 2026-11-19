@@ -18,6 +18,9 @@
     "ServerStorage": {
       "Models": {
         "$path": "assets/models"
+      },
+      "Animations": {
+        "$path": "assets/animations"
       }
     },
 
