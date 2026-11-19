@@ -9,6 +9,9 @@ local ground = Dev.TestGround
 local material = Enum.Material[ground.Material]
 local terrain = workspace.Terrain
 
+-- Grass length is a Terrain property a game script is not allowed to change; it is set on the place in Studio instead.
+terrain:SetMaterialColor(Enum.Material.Grass, ground.GrassColor)
+
 -- Flat slab with its top surface at y = 0.
 terrain:FillBlock(CFrame.new(0, -ground.Depth / 2, 0), Vector3.new(ground.Size, ground.Depth, ground.Size), material)
 

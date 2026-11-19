@@ -22,6 +22,17 @@ end
 local swingRemote = makeRemote("Swing")
 local skillRemote = makeRemote("UseSkill") -- client -> server: skill slot number
 local skillUsedRemote = makeRemote("SkillUsed") -- server -> client: slot and cooldown, so the bar shows the real cooldown
+local waveRemote = makeRemote("WaveFired") -- server -> every client: draw a wave (shooter, start, direction, speed, range)
+
+-- Clients draw the Wave slash themselves, so they need its mesh; ServerStorage is not visible to them.
+local waveModel = ServerStorage:FindFirstChild("Models") and ServerStorage.Models:FindFirstChild(EffectStyle.Wave.Model)
+if waveModel then
+	local copy = waveModel:Clone()
+	copy.Name = "WaveSlash"
+	copy.Parent = ReplicatedStorage
+else
+	warn(`[Combat] ServerStorage.Models.{EffectStyle.Wave.Model} not found: Wave Slash will have no visual`)
+end
 
 -- A dashing player passes through mobs ("Mobs" is set on each mob's body in MobSpawner).
 PhysicsService:RegisterCollisionGroup("Dashing")
@@ -146,147 +157,34 @@ function handlers.Jump(player, character, root, skill)
 end
 
 -- Wave: a slash that flies straight ahead and cuts every mob it passes through.
--- The slash leaves the blade partway through the swing, so it looks cut out of the air, not thrown.
+-- The server only moves an invisible hit box along the path; every client draws the slash itself (client/Effects.Wave).
 function handlers.Wave(player, character, root, skill)
-	local style = EffectStyle.Wave
-	task.delay(SwingAnimations[skill.Animation].TrailStart / skill.AnimationSpeed, function()
+	local move = SwingAnimations[skill.Animation]
+	task.delay((move.Release or move.TrailStart) / skill.AnimationSpeed, function()
 		if root.Parent then
-			spawnWave(player, character, root, skill, style)
+			spawnWave(player, character, root, skill)
 		end
 	end)
 end
 
-function spawnWave(player, character, root, skill, style)
+function spawnWave(player, character, root, skill)
+	local style = EffectStyle.Wave
 	local direction = flatLook(root)
+	local start = root.Position + direction * style.SpawnForward + Vector3.new(0, style.SpawnHeight, 0)
+	waveRemote:FireAllClients(player, start, direction, skill.Speed, skill.Range)
 
-	-- Start at the blade itself, so the slash is clearly cut off the sword rather than thrown from the body.
-	local weapon = character:FindFirstChild("WeaponVisual")
-	local blade = weapon and weapon:FindFirstChild("Blade")
-	local start = if blade
-		then blade.Position + direction * 1.5
-		else root.Position + direction * style.SpawnForward + Vector3.new(0, style.SpawnHeight, 0)
-	local wave = Instance.new("Part")
-	wave.Name = "SlashWave"
-	wave.Size = Vector3.new(0.2, 0.2, 0.2)
-	wave.Transparency = 1 -- the crescent slices below do the showing; this part just carries them
-	wave.CanCollide = false
-	wave.CanQuery = false
-	wave.CanTouch = false
-	wave.Massless = true
-	wave.CFrame = CFrame.lookAt(start, start + direction) * CFrame.Angles(0, 0, math.rad(style.TiltDegrees))
-
-	-- A ready-made effect, if one is set up. It is welded on and flies with the wave.
-	local models = ServerStorage:FindFirstChild("Models")
-	local template = style.Model ~= "" and models and models:FindFirstChild(style.Model)
-	if template then
-		local visual = template:Clone()
-		local rotation = style.ModelRotation
-		local turn = CFrame.Angles(math.rad(rotation.X), math.rad(rotation.Y), math.rad(rotation.Z))
-		for _, item in visual:GetDescendants() do
-			if item:IsA("WeldConstraint") or item:IsA("JointInstance") then
-				item:Destroy() -- joints to parts that are not coming along
-			elseif item:IsA("SpecialMesh") then
-				item.Scale *= style.ModelScale
-			end
-		end
-		for _, part in (if visual:IsA("BasePart") then { visual } else visual:GetDescendants()) do
-			if part:IsA("BasePart") then
-				part.Anchored = false
-				part.CanCollide = false
-				part.CanQuery = false
-				part.CanTouch = false
-				part.Massless = true
-				part.CFrame = wave.CFrame * CFrame.new(style.ModelOffset) * turn
-				local weld = Instance.new("WeldConstraint")
-				weld.Part0, weld.Part1 = wave, part
-				weld.Parent = part
-			end
-		end
-		visual.Parent = wave
-	end
-
-	-- Otherwise: thin slices laid along an arc. Each one is turned around a point behind the wave, so
-	-- together they curve like a sword stroke, tallest in the middle and tapering to nothing at the tips.
-	local halfArc = math.rad(style.ArcDegrees) / 2
-	local sliceLength = (style.Radius * halfArc * 2 / style.Slices) * 1.2 -- a little overlap, so there are no gaps
-	for i = 1, (if template then 0 else style.Slices) do
-		local along = (i - 0.5) / style.Slices * 2 - 1 -- -1 at one tip, 1 at the other
-		local taper = math.cos(along * math.pi / 2)
-		local slice = Instance.new("Part")
-		slice.Name = "WaveSlice"
-		-- Upright: the slice spans sideways and the arc climbs. Flat: the slice stands up and the arc sweeps wide.
-		slice.Size = if style.Upright
-			then Vector3.new(style.Height * taper, style.Thickness, sliceLength)
-			else Vector3.new(style.Thickness, style.Height * taper, sliceLength)
-		slice.Color = style.Color
-		slice.Material = Enum.Material.SmoothPlastic
-		slice.Transparency = style.Transparency
-		slice.CanCollide = false
-		slice.CanQuery = false
-		slice.CanTouch = false
-		slice.Massless = true
-		local turn = if style.Upright then CFrame.Angles(along * halfArc, 0, 0) else CFrame.Angles(0, along * halfArc, 0)
-		slice.CFrame = wave.CFrame * CFrame.new(0, 0, style.Radius) * turn * CFrame.new(0, 0, -style.Radius)
-		slice.Parent = wave
-		local weld = Instance.new("WeldConstraint")
-		weld.Part0, weld.Part1 = wave, slice
-		weld.Parent = slice
-
-		if i == 1 or i == style.Slices then -- the tips smear as the crescent flies
-			local across = if style.Upright then Vector3.new(slice.Size.X / 2, 0, 0) else Vector3.new(0, slice.Size.Y / 2, 0)
-			local top = Instance.new("Attachment")
-			top.Position = across
-			top.Parent = slice
-			local bottom = Instance.new("Attachment")
-			bottom.Position = -across
-			bottom.Parent = slice
-			local trail = Instance.new("Trail")
-			trail.Attachment0, trail.Attachment1 = top, bottom
-			trail.Color = ColorSequence.new(style.Color)
-			trail.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.45), NumberSequenceKeypoint.new(1, 1) })
-			trail.Lifetime = style.TrailLifetime
-			trail.LightEmission = 0
-			trail.FaceCamera = false
-			trail.Parent = slice
-		end
-	end
-
-	local attachment = Instance.new("Attachment")
-	attachment.Parent = wave
-	local mover = Instance.new("LinearVelocity")
-	mover.Attachment0 = attachment
-	mover.MaxForce = 1e7
-	mover.VectorVelocity = direction * skill.Speed
-	mover.Parent = wave
-	wave.Parent = workspace
-	wave:SetNetworkOwner(nil)
-
-	local seen, traveled = {}, 0
-	local shown = {} -- [part] = its starting transparency, so the fade keeps each part's own look
-	for _, part in wave:GetDescendants() do
-		if part:IsA("BasePart") then
-			shown[part] = part.Transparency
-		end
-	end
-
+	local seen, startedAt, last = {}, os.clock(), 0
 	local connection
-	connection = RunService.Heartbeat:Connect(function(dt)
-		traveled += skill.Speed * dt
-
-		-- Fade out over the last part of the flight instead of blinking away at the end.
-		local gone = (traveled / skill.Range - style.FadeFrom) / (1 - style.FadeFrom)
-		if gone > 0 then
-			for part, base in shown do
-				part.Transparency = base + (1 - base) * math.min(gone, 1)
-			end
-		end
-
-		if traveled >= skill.Range or not wave.Parent then
+	connection = RunService.Heartbeat:Connect(function()
+		local traveled = math.min(skill.Speed * (os.clock() - startedAt), skill.Range)
+		-- The box covers the whole stretch flown since the last check (plus a little), so a fast wave or a laggy
+		-- server frame cannot jump over a mob.
+		local middle = start + direction * ((last + traveled) / 2)
+		hitBox(player, character, CFrame.lookAt(middle, middle + direction), Vector3.new(skill.Width, 7, traveled - last + 4), skill.Damage, seen)
+		last = traveled
+		if traveled >= skill.Range then
 			connection:Disconnect()
-			wave:Destroy()
-			return
 		end
-		hitBox(player, character, CFrame.lookAt(wave.Position, wave.Position + direction), Vector3.new(skill.Width, 7, 4), skill.Damage, seen)
 	end)
 end
 
@@ -346,7 +244,7 @@ skillRemote.OnServerEvent:Connect(function(player, slot)
 
 	skillUsedRemote:FireClient(player, slot, skill.Cooldown)
 	local move = SwingAnimations[skill.Animation]
-	WeaponVisuals.ShowTrail(character, move.TrailStart / skill.AnimationSpeed, move.TrailSeconds / skill.AnimationSpeed)
+	WeaponVisuals.ShowTrail(character, move.TrailStart / skill.AnimationSpeed, move.TrailSeconds / skill.AnimationSpeed, skill.Trail)
 	handler(player, character, root, skill)
 end)
 

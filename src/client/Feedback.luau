@@ -89,7 +89,11 @@ local function watch(humanoid)
 		local root = model and model:FindFirstChild("HumanoidRootPart")
 		if lost > 0 and root then
 			flash(model)
-			Effects.HitSpark(root)
+			local strong = lost >= Style.StrongThreshold
+			Effects.HitSpark(root, strong)
+			if strong then
+				Effects.Impact(root.Position)
+			end
 			floatNumber(root, lost)
 		end
 	end)

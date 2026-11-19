@@ -17,6 +17,7 @@ return {
 		HitDelay = 0.1, -- seconds before the cut lands, about halfway through the dash
 		Width = 7, -- width of the path that gets cut
 		Cooldown = 3, -- seconds
+		Trail = { Color = Color3.fromRGB(170, 215, 255), LightEmission = 0.6 }, -- blade trail while the skill plays; skills without one use the weapon's plain trail
 	},
 	Skyfall = {
 		Weapon = "Sword",
@@ -32,6 +33,7 @@ return {
 		Range = 10,
 		ArcDegrees = 180,
 		Cooldown = 6,
+		Trail = { Color = Color3.fromRGB(255, 190, 110), LightEmission = 0.6 },
 	},
 	WaveSlash = {
 		Weapon = "Sword",
@@ -41,9 +43,10 @@ return {
 		AnimationSpeed = 1,
 		Damage = 45,
 		Range = 45, -- how far the wave travels
-		Speed = 70, -- studs per second
+		Speed = 95, -- studs per second
 		Width = 6, -- width of the wave
 		Cooldown = 8,
+		Trail = { Color = Color3.fromRGB(190, 225, 255), LightEmission = 0.7 },
 	},
 	Whirlwind = {
 		Weapon = "Sword",
@@ -56,5 +59,6 @@ return {
 		Range = 10,
 		ArcDegrees = 360,
 		Cooldown = 12,
+		Trail = { Color = Color3.fromRGB(215, 235, 255), LightEmission = 0.7 },
 	},
 }

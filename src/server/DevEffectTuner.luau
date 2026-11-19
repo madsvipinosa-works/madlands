@@ -1,6 +1,7 @@
--- Dev only: stands four copies of the Wave effect in a row near the spawn, each turned a different way, each
--- with a yellow arrow showing the direction the wave flies. Stand behind them and look at which one has its
--- curve opening toward the arrow's far end. Its label gives the number for ModelRotation in Config/Effects.
+-- Dev only: stands copies of the Wave effect in a row near the spawn, each turned a different amount about the
+-- vertical, each with a yellow arrow showing the direction the wave flies. They use the TiltDegrees in Config/Effects.
+-- Look at them from straight above (or behind): pick the one whose crescent sits squarely on its arrow, with both
+-- tips level. Its label gives the number for the Y in ModelRotation in Config/Effects.
 -- Does nothing once DEV_MODE is off.
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
@@ -12,9 +13,9 @@ if not Dev.DEV_MODE then
 	return true
 end
 
-local FIRST = Vector3.new(-30, 4, -14) -- the first copy; the rest stand beside it
-local SPACING = 14
-local TURNS = { 80, 90, 100, 110 } -- degrees about the vertical, tried one per copy
+local FIRST = Vector3.new(-20, 4, -14) -- the first copy; the rest stand beside it
+local SPACING = 13
+local TURNS = { 0, 90, 180, 270 } -- degrees about the vertical, tried one per copy
 
 local function label(parent, text)
 	local gui = Instance.new("BillboardGui")
@@ -61,6 +62,11 @@ local function preview(style, index, turn)
 			item:Destroy()
 		elseif item:IsA("SpecialMesh") then
 			item.Scale *= style.ModelScale
+			item.VertexColor = style.Tint
+		elseif item:IsA("MeshPart") then -- an imported slash
+			item.Size *= style.ModelScale
+			item.Color = Color3.new(1, 1, 1)
+			item.Material = Enum.Material.Neon
 		end
 	end
 	visual.Parent = holder
@@ -68,7 +74,8 @@ local function preview(style, index, turn)
 		if part:IsA("BasePart") and part ~= arrow then
 			part.Anchored = true
 			part.CanCollide = false
-			part.CFrame = CFrame.new(at) * CFrame.Angles(0, math.rad(turn), 0)
+			local rotation = style.ModelRotation
+			part.CFrame = CFrame.new(at) * CFrame.Angles(0, 0, math.rad(style.TiltDegrees)) * CFrame.Angles(math.rad(rotation.X), math.rad(turn), math.rad(rotation.Z))
 		end
 	end
 	holder.Parent = workspace
@@ -77,6 +84,6 @@ end
 for index, turn in TURNS do
 	preview(EffectStyle.Wave, index, turn)
 end
-print("[EffectTuner] four Wave previews stand left of the spawn; stand behind them and pick the one whose curve opens the way the arrow points")
+print("[EffectTuner] four Wave previews stand across the spawn; look from above and pick the Y whose crescent sits squarely on its arrow")
 
 return true

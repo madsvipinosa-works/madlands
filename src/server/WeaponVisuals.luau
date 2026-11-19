@@ -13,7 +13,8 @@ local effects = setmetatable({}, { __mode = "k" }) -- [character] = { trail, tok
 local WeaponVisuals = {}
 
 -- Shows the blade trail for the part of a move where the blade is cutting (called by Combat).
-function WeaponVisuals.ShowTrail(character, delay, seconds)
+-- `style` ({ Color, LightEmission }, optional) tints this one move; without it the weapon's plain trail shows.
+function WeaponVisuals.ShowTrail(character, delay, seconds, style)
 	local fx = effects[character]
 	if not (fx and fx.trail.Parent) then
 		return
@@ -24,6 +25,8 @@ function WeaponVisuals.ShowTrail(character, delay, seconds)
 		if fx.token ~= token or not fx.trail.Parent then
 			return
 		end
+		fx.trail.Color = if style then ColorSequence.new(style.Color) else fx.color
+		fx.trail.LightEmission = if style then style.LightEmission else fx.emission
 		fx.trail.Enabled = true
 		task.wait(seconds)
 		if fx.token == token and fx.trail.Parent then
@@ -59,7 +62,7 @@ local function addTrail(character, model, visual)
 	trail.Enabled = false
 	trail.Parent = blade
 
-	effects[character] = { trail = trail, token = 0 }
+	effects[character] = { trail = trail, token = 0, color = trail.Color, emission = trail.LightEmission }
 end
 
 -- Returns the weapon's parts, positioned relative to each other. Uses the imported mesh, or plain stand-in parts if it is missing.
