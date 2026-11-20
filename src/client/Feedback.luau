@@ -9,6 +9,8 @@ local Weapons = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("C
 local Style = require(ReplicatedStorage.Shared.Config:WaitForChild("DamageNumbers"))
 
 local Animations = require(script.Parent.Animations)
+local SwingAnimations = require(ReplicatedStorage.Shared.Config:WaitForChild("SwingAnimations"))
+local Players = game:GetService("Players")
 local Effects = require(script.Parent.Effects)
 
 local Feedback = {}
@@ -19,8 +21,22 @@ function Feedback.PlaySwing(comboIndex)
 	sound.SoundId = Weapons.Sword.SwingSound
 	sound.Parent = SoundService
 	sound:Play()
-	Animations.Play(Weapons.Sword.SwingCombo[comboIndex] or Weapons.Sword.SwingCombo[1])
+	local name = Weapons.Sword.SwingCombo[comboIndex] or Weapons.Sword.SwingCombo[1]
+	Animations.Play(name)
 	Debris:AddItem(sound, 2)
+
+	-- The crescent of the cut, in front of you, tilted the way the blade travels.
+	local fx = SwingAnimations[name].Slash
+	if fx then
+		task.delay(fx.Delay, function()
+			local root = Players.LocalPlayer.Character and Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+			if root then
+				-- The crescent mesh (the same as the Wave Slash), tilted to the cut, with its curved edge toward you and the tips pointing out, like the Wave Slash.
+				local tilt = CFrame.Angles(0, 0, math.rad(fx.Angle))
+				Effects.CutMark(root.CFrame * CFrame.new(0, fx.Height, -fx.Ahead) * tilt, fx.Size / 6, 0.3)
+			end
+		end)
+	end
 end
 
 local function flash(model)

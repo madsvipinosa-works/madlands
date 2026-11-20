@@ -18,7 +18,7 @@ return {
 		-- The slash's look: a single Part with a SpecialMesh in ServerStorage.Models (saved as assets/models/<Model>.rbxm).
 		-- The server copies it to ReplicatedStorage.WaveSlash on start so clients can draw it.
 		Model = "Slash",
-		ModelScale = 1.5, -- multiplies the effect's own size (the imported slash is 6 studs wide at 1)
+		ModelScale = 2.2, -- multiplies the effect's own size (the imported slash is 6 studs wide at 1, so about 13 studs now)
 		-- The mesh's color multiplier. 1, 1, 1 shows its texture as is; bigger numbers glow brighter; uneven ones tint it
 		-- (the premade slash was 2, 1, 5: purple). 2, 2, 2 is a bright white.
 		Tint = Vector3.new(2, 2, 2),
@@ -72,24 +72,45 @@ return {
 		},
 		Jump = {
 			StartDustSize = 6,
+			StreakSeconds = 0.45, -- ribbons behind the body through the whole leap
+			StreakColor = Color3.fromRGB(255, 225, 180),
+			StreakHeight = 4,
+			StreakSpread = 1.2,
+			-- The downward chop: the crescent stood upright in front of you, just before you land.
+			ChopMarkScale = 2.2, -- times its native size (6 studs wide)
+			ChopMarkAhead = 5, -- studs in front of you
+			ChopMarkLead = 0.07, -- seconds before the landing
+			-- Everything below happens at the skill's HitDelay.
 			LandingDustSize = 12,
 			ShockwaveSize = 22,
 			SecondRingSize = 32, -- a slower, wider ring right behind the first
-			ShakeAmplitude = 0.9,
-			ShakeSeconds = 0.4, -- happens at the skill's HitDelay
+			CrackCount = 9, -- glowing cracks running out from the impact
+			CrackLength = 13, -- studs
+			CrackColor = Color3.fromRGB(255, 120, 40), -- glowing orange
+			RockCount = 14, -- chunks thrown up from the ground
+			LandingFovKick = 8, -- degrees the camera widens for a moment
+			ShakeAmplitude = 1.1,
+			ShakeSeconds = 0.45,
 			FlashColor = Color3.fromRGB(255, 185, 110),
 			FlashSize = 14,
-			EmberCount = 26, -- glowing chips thrown up from the ground
+			EmberCount = 30, -- glowing chips thrown up from the ground
 		},
 		Arc = {
 			StartDustSize = 8,
+			-- On every hit of the spin: a ring on the ground, the crescent flashing where the blade is, and a jolt.
 			SpinRingSize = 11,
+			TickMarkScale = 1.4, -- the crescent, times its native size (6 studs wide). It lies along the blade, from you outward
+			TickMarkRadius = 5.2, -- studs out from you: its middle, so it spans about 1 to 9 studs from you
+			TickMarkSeconds = 0.3,
+			SpinDustSize = 3, -- a puff of dust at your feet every 0.08 s through the spin
 			ShakeAmplitude = 0.25,
 			ShakeSeconds = 0.5,
 			WhirlDelay = 0.12, -- seconds after the key press, when the spin itself starts
-			WhirlSeconds = 0.7, -- how long the wind ribbons spin around you
-			WhirlRadius = 5.5,
-			WhirlColor = Color3.fromRGB(215, 235, 255),
+			WhirlSeconds = 0.7, -- how long the crescents of wind circle you
+			WhirlBlades = 3, -- how many crescents
+			WhirlScale = 1.4, -- each, times its native size (6 studs wide). Each lies from you outward, like a blade
+			WhirlRadius = 5.2, -- studs out from you: its middle, so it spans about 1 to 9 studs from you
+			WhirlHeights = { -0.2, 0.7, 1.6 }, -- height of each crescent, from your middle
 		},
 		Wave = {},
 	},

@@ -1,0 +1,201 @@
+<roblox xmlns:xmime="http://www.w3.org/2005/05/xmlmime" version="4"><Item class="ModuleScript" referent="RBX0"><Properties><string name="Name">SlashVFX</string><ProtectedString name="Source"><![CDATA[--[[
+	SlashVFX  (Legends of Madlands)
+	Crescent slash arc + weapon swing trail + hit spark burst.
+	Built only from Beams, Trails and ParticleEmitters, so no texture uploads are needed.
+
+	SETUP
+	  Put this ModuleScript in ReplicatedStorage (keep the "Assets" folder inside it).
+	  Play effects on the CLIENT for smooth visuals. Use a RemoteEvent so other players see them too.
+
+	API
+	  SlashVFX.slash(cframe, opts?)   -- crescent arc in front of cframe (arc bulges toward cframe.LookVector)
+	      opts.color    Color3    arc colour            (default soft white)
+	      opts.size     number    arc width in studs    (default 7)
+	      opts.angle    number    roll in degrees: 0 flat, 45 diagonal, 90 vertical (default 0)
+	      opts.flip     boolean   sweep right-to-left instead of left-to-right
+	      opts.duration number    seconds               (default 0.25)
+	      opts.sparks   number    spark count           (default 14)
+
+	  SlashVFX.hit(position, opts?)   -- spark burst + flash where a hit lands
+	      opts.color Color3, opts.scale number (default 1)
+
+	  SlashVFX.attachTrail(part, tipOffset, baseOffset, color?) -> Trail
+	      adds a trail between two points of the weapon (offsets in the part's local space)
+	  SlashVFX.swing(trail, duration?)  -- shows the trail for one swing (default 0.3 s)
+
+	WITH AN ANIMATION
+	  In the Animation Editor add a marker named "Slash" at the frame where the blade swings.
+
+	  local SlashVFX = require(game.ReplicatedStorage.SlashVFX)
+	  local trail = SlashVFX.attachTrail(sword.Handle, Vector3.new(0, 3, 0), Vector3.new(0, 0.6, 0))
+	  local track = animator:LoadAnimation(swingAnimation)
+	  track:GetMarkerReachedSignal("Slash"):Connect(function()
+	      local root = character.HumanoidRootPart
+	      SlashVFX.slash(root.CFrame * CFrame.new(0, 0.5, -2.5), { angle = 30, color = Color3.fromRGB(255, 160, 60) })
+	  end)
+	  SlashVFX.swing(trail, 0.35)
+	  track:Play()
+
+	QUICK TEST  (press Play, then paste into the command bar)
+	  local S = require(game.ReplicatedStorage.SlashVFX)
+	  local cf = workspace.CurrentCamera.CFrame * CFrame.new(0, 0, -12)
+	  S.slash(cf, { angle = 25 }) task.wait(0.12) S.hit(cf.Position)
+]]
+
+local RunService = game:GetService("RunService")
+local Debris = game:GetService("Debris")
+
+local SlashVFX = {}
+SlashVFX.DefaultColor = Color3.fromRGB(235, 240, 245) -- soft white
+
+local Assets = script:WaitForChild("Assets")
+local WHITE = Color3.new(1, 1, 1)
+local SAMPLES = 10
+
+local function vfxFolder(): Folder
+	local f = workspace:FindFirstChild("VFX")
+	if not f then
+		f = Instance.new("Folder")
+		f.Name = "VFX"
+		f.Parent = workspace
+	end
+	return f :: Folder
+end
+
+local function scaleSequence(seq: NumberSequence, k: number): NumberSequence
+	local kps = {}
+	for _, kp in seq.Keypoints do
+		table.insert(kps, NumberSequenceKeypoint.new(kp.Time, kp.Value * k, kp.Envelope * k))
+	end
+	return NumberSequence.new(kps)
+end
+
+-- Transparency along one half of the crescent. u runs 0..1 across the whole arc.
+-- head = how far the sweep has travelled, fade = overall fade-out (0..1).
+local function arcTransparency(u0: number, u1: number, head: number, fade: number, flip: boolean, base: number): NumberSequence
+	local kps = table.create(SAMPLES + 1)
+	for i = 0, SAMPLES do
+		local a = i / SAMPLES
+		local u = u0 + (u1 - u0) * a
+		if flip then
+			u = 1 - u
+		end
+		local ahead = math.clamp((u - head) / 0.08 + 1, 0, 1) -- not reached by the sweep yet
+		local age = math.clamp(head - u, 0, 1) * fade * 1.5 -- older part of the arc fades first
+		local t = math.clamp(math.max(ahead, fade, age, base), 0, 1)
+		kps[i + 1] = NumberSequenceKeypoint.new(a, t)
+	end
+	return NumberSequence.new(kps)
+end
+
+function SlashVFX.slash(cframe: CFrame, opts: { [string]: any }?)
+	local o = opts or {}
+	local color: Color3 = o.color or SlashVFX.DefaultColor
+	local size: number = o.size or 7
+	local duration: number = o.duration or 0.25
+	local flip: boolean = o.flip == true
+
+	local fx = Assets.SlashArc:Clone()
+	fx.CFrame = cframe * CFrame.Angles(0, 0, math.rad(o.angle or 0))
+	fx.L.Position = Vector3.new(-size / 2, 0, 0)
+	fx.M.Position = Vector3.new(0, 0, -size * 0.42)
+	fx.R.Position = Vector3.new(size / 2, 0, 0)
+
+	local glowWidth, coreWidth = size * 0.16, size * 0.06
+	local soft = color:Lerp(WHITE, 0.35)
+	local beams = {}
+	-- name, start u, end u, width, minimum transparency
+	for _, spec in { { "GlowA", 0, 0.5, glowWidth, 0.15 }, { "GlowB", 0.5, 1, glowWidth, 0.15 }, { "CoreA", 0, 0.5, coreWidth, 0 }, { "CoreB", 0.5, 1, coreWidth, 0 } } do
+		local beam = fx:FindFirstChild(spec[1]) :: Beam
+		local first = spec[2] == 0
+		beam.Width0 = if first then 0 else spec[4]
+		beam.Width1 = if first then spec[4] else 0
+		beam.CurveSize0 = if first then size * 0.35 else size * 0.28
+		beam.CurveSize1 = if first then size * 0.28 else size * 0.35
+		if string.sub(spec[1], 1, 4) == "Glow" then
+			beam.Color = if first then ColorSequence.new(color, soft) else ColorSequence.new(soft, color)
+		end
+		beam.Transparency = NumberSequence.new(1)
+		table.insert(beams, { beam = beam, u0 = spec[2], u1 = spec[3], base = spec[5] })
+	end
+
+	local sparks = fx.M:FindFirstChild("Sparks") :: ParticleEmitter
+	sparks.Color = ColorSequence.new(WHITE, color)
+	fx.Parent = vfxFolder()
+	sparks:Emit(o.sparks or 14)
+
+	local t0 = os.clock()
+	local conn: RBXScriptConnection
+	conn = RunService.Heartbeat:Connect(function()
+		local t = (os.clock() - t0) / duration
+		if t >= 1 then
+			conn:Disconnect()
+			for _, b in beams do
+				b.beam.Enabled = false
+			end
+			Debris:AddItem(fx, 1) -- let the sparks finish
+			return
+		end
+		local head = math.min(t / 0.4, 1) * 1.1
+		local fade = math.clamp((t - 0.3) / 0.7, 0, 1)
+		for _, b in beams do
+			b.beam.Transparency = arcTransparency(b.u0, b.u1, head, fade, flip, b.base)
+		end
+		fx.M.Position = Vector3.new(0, 0, -size * (0.42 + 0.1 * t)) -- arc pushes outward as it plays
+	end)
+	return fx
+end
+
+function SlashVFX.hit(position: Vector3, opts: { [string]: any }?)
+	local o = opts or {}
+	local color: Color3 = o.color or SlashVFX.DefaultColor
+	local scale: number = o.scale or 1
+
+	local fx = Assets.HitBurst:Clone()
+	fx.CFrame = CFrame.new(position)
+	local sparks = fx.Center:FindFirstChild("Sparks") :: ParticleEmitter
+	local flash = fx.Center:FindFirstChild("Flash") :: ParticleEmitter
+	sparks.Color = ColorSequence.new(WHITE, color)
+	flash.Color = ColorSequence.new(WHITE:Lerp(color, 0.4))
+	if scale ~= 1 then
+		sparks.Size = scaleSequence(sparks.Size, scale)
+		flash.Size = scaleSequence(flash.Size, scale)
+		sparks.Speed = NumberRange.new(sparks.Speed.Min * scale, sparks.Speed.Max * scale)
+	end
+	fx.Parent = vfxFolder()
+	sparks:Emit(math.floor(18 * scale + 0.5))
+	flash:Emit(1)
+	Debris:AddItem(fx, 1)
+	return fx
+end
+
+function SlashVFX.attachTrail(part: BasePart, tipOffset: Vector3, baseOffset: Vector3, color: Color3?): Trail
+	local tip = Instance.new("Attachment")
+	tip.Name = "TrailTip"
+	tip.Position = tipOffset
+	tip.Parent = part
+	local base = Instance.new("Attachment")
+	base.Name = "TrailBase"
+	base.Position = baseOffset
+	base.Parent = part
+
+	local trail = Assets.WeaponTrail:Clone() :: Trail
+	trail.Attachment0 = tip
+	trail.Attachment1 = base
+	trail.Color = ColorSequence.new(WHITE, color or SlashVFX.DefaultColor)
+	trail.Enabled = false
+	trail.Parent = part
+	return trail
+end
+
+function SlashVFX.swing(trail: Trail, duration: number?)
+	trail.Enabled = true
+	task.delay(duration or 0.3, function()
+		if trail.Parent then
+			trail.Enabled = false
+		end
+	end)
+end
+
+return SlashVFX
+]]></ProtectedString></Properties><Item class="Folder" referent="RBX1"><Properties><string name="Name">Assets</string></Properties><Item class="Trail" referent="RBX2"><Properties><string name="Name">WeaponTrail</string><Ref name="Attachment0">null</Ref><Ref name="Attachment1">null</Ref><ColorSequence name="Color">0 1 1 1 0 1 0.9215686274509803 0.9411764705882353 0.9607843137254902 0 </ColorSequence><NumberSequence name="Transparency">0 0.45 0 0.5 0.75 0 1 1 0 </NumberSequence><NumberSequence name="WidthScale">0 1 0 1 0.3 0 </NumberSequence><float name="Lifetime">0.18</float><float name="MinLength">0.02</float><float name="MaxLength">0</float><bool name="FaceCamera">false</bool><float name="LightEmission">0.25</float><float name="LightInfluence">0.2</float><float name="Brightness">1</float><bool name="Enabled">false</bool></Properties></Item><Item class="Part" referent="RBX3"><Properties><string name="Name">SlashArc</string><bool name="Anchored">true</bool><bool name="CanCollide">false</bool><bool name="CanTouch">false</bool><bool name="CanQuery">false</bool><bool name="CastShadow">false</bool><bool name="Massless">true</bool><bool name="Locked">true</bool><float name="Transparency">1</float><Vector3 name="size"><X>0.2</X><Y>0.2</Y><Z>0.2</Z></Vector3><CoordinateFrame name="CFrame"><X>0</X><Y>0</Y><Z>0</Z><R00>1</R00><R01>0</R01><R02>0</R02><R10>0</R10><R11>1</R11><R12>0</R12><R20>0</R20><R21>0</R21><R22>1</R22></CoordinateFrame></Properties><Item class="Attachment" referent="RBX4"><Properties><string name="Name">L</string><CoordinateFrame name="CFrame"><X>-3.5</X><Y>0</Y><Z>0</Z><R00>0</R00><R01>0</R01><R02>1</R02><R10>0</R10><R11>1</R11><R12>0</R12><R20>-1</R20><R21>0</R21><R22>0</R22></CoordinateFrame></Properties></Item><Item class="Attachment" referent="RBX5"><Properties><string name="Name">M</string><CoordinateFrame name="CFrame"><X>0</X><Y>0</Y><Z>-2.9</Z><R00>1</R00><R01>0</R01><R02>0</R02><R10>0</R10><R11>1</R11><R12>0</R12><R20>0</R20><R21>0</R21><R22>1</R22></CoordinateFrame></Properties><Item class="ParticleEmitter" referent="RBX6"><Properties><string name="Name">Sparks</string><bool name="Enabled">false</bool><float name="Rate">0</float><NumberRange name="Lifetime">0.2 0.45 </NumberRange><NumberRange name="Speed">10 24 </NumberRange><Vector2 name="SpreadAngle"><X>40</X><Y>40</Y></Vector2><token name="EmissionDirection">5</token><Vector3 name="Acceleration"><X>0</X><Y>-25</Y><Z>0</Z></Vector3><float name="Drag">3</float><NumberSequence name="Size">0 0.18 0 1 0 0 </NumberSequence><NumberSequence name="Transparency">0 0 0 1 0.5 0 </NumberSequence><NumberSequence name="Squash">0 0 0 1 0 0 </NumberSequence><ColorSequence name="Color">0 1 1 1 0 1 0.43137254901960786 0.7843137254901961 1 0 </ColorSequence><float name="LightEmission">1</float><float name="LightInfluence">0</float><float name="Brightness">3</float><token name="Orientation">2</token><NumberRange name="Rotation">0 0 </NumberRange><NumberRange name="RotSpeed">0 0 </NumberRange><float name="ZOffset">0.5</float><bool name="LockedToPart">false</bool></Properties></Item></Item><Item class="Attachment" referent="RBX7"><Properties><string name="Name">R</string><CoordinateFrame name="CFrame"><X>3.5</X><Y>0</Y><Z>0</Z><R00>0</R00><R01>0</R01><R02>-1</R02><R10>0</R10><R11>1</R11><R12>0</R12><R20>1</R20><R21>0</R21><R22>0</R22></CoordinateFrame></Properties></Item><Item class="Beam" referent="RBX8"><Properties><string name="Name">GlowA</string><Ref name="Attachment0">RBX4</Ref><Ref name="Attachment1">RBX5</Ref><ColorSequence name="Color">0 0.43137254901960786 0.7843137254901961 1 0 1 0.43137254901960786 0.7843137254901961 1 0 </ColorSequence><NumberSequence name="Transparency">0 1 0 1 1 0 </NumberSequence><float name="Width0">0</float><float name="Width1">1.1</float><float name="CurveSize0">2.4</float><float name="CurveSize1">2</float><bool name="FaceCamera">true</bool><int name="Segments">20</int><float name="LightEmission">1</float><float name="LightInfluence">0</float><float name="Brightness">2</float><float name="ZOffset">0</float><bool name="Enabled">true</bool></Properties></Item><Item class="Beam" referent="RBX9"><Properties><string name="Name">GlowB</string><Ref name="Attachment0">RBX5</Ref><Ref name="Attachment1">RBX7</Ref><ColorSequence name="Color">0 0.43137254901960786 0.7843137254901961 1 0 1 0.43137254901960786 0.7843137254901961 1 0 </ColorSequence><NumberSequence name="Transparency">0 1 0 1 1 0 </NumberSequence><float name="Width0">0</float><float name="Width1">1.1</float><float name="CurveSize0">2.4</float><float name="CurveSize1">2</float><bool name="FaceCamera">true</bool><int name="Segments">20</int><float name="LightEmission">1</float><float name="LightInfluence">0</float><float name="Brightness">2</float><float name="ZOffset">0</float><bool name="Enabled">true</bool></Properties></Item><Item class="Beam" referent="RBX10"><Properties><string name="Name">CoreA</string><Ref name="Attachment0">RBX4</Ref><Ref name="Attachment1">RBX5</Ref><ColorSequence name="Color">0 1 1 1 0 1 1 1 1 0 </ColorSequence><NumberSequence name="Transparency">0 1 0 1 1 0 </NumberSequence><float name="Width0">0</float><float name="Width1">0.42</float><float name="CurveSize0">2.4</float><float name="CurveSize1">2</float><bool name="FaceCamera">true</bool><int name="Segments">20</int><float name="LightEmission">1</float><float name="LightInfluence">0</float><float name="Brightness">4</float><float name="ZOffset">0.2</float><bool name="Enabled">true</bool></Properties></Item><Item class="Beam" referent="RBX11"><Properties><string name="Name">CoreB</string><Ref name="Attachment0">RBX5</Ref><Ref name="Attachment1">RBX7</Ref><ColorSequence name="Color">0 1 1 1 0 1 1 1 1 0 </ColorSequence><NumberSequence name="Transparency">0 1 0 1 1 0 </NumberSequence><float name="Width0">0</float><float name="Width1">0.42</float><float name="CurveSize0">2.4</float><float name="CurveSize1">2</float><bool name="FaceCamera">true</bool><int name="Segments">20</int><float name="LightEmission">1</float><float name="LightInfluence">0</float><float name="Brightness">4</float><float name="ZOffset">0.2</float><bool name="Enabled">true</bool></Properties></Item></Item><Item class="Part" referent="RBX12"><Properties><string name="Name">HitBurst</string><bool name="Anchored">true</bool><bool name="CanCollide">false</bool><bool name="CanTouch">false</bool><bool name="CanQuery">false</bool><bool name="CastShadow">false</bool><bool name="Massless">true</bool><bool name="Locked">true</bool><float name="Transparency">1</float><Vector3 name="size"><X>0.2</X><Y>0.2</Y><Z>0.2</Z></Vector3><CoordinateFrame name="CFrame"><X>0</X><Y>0</Y><Z>0</Z><R00>1</R00><R01>0</R01><R02>0</R02><R10>0</R10><R11>1</R11><R12>0</R12><R20>0</R20><R21>0</R21><R22>1</R22></CoordinateFrame></Properties><Item class="Attachment" referent="RBX13"><Properties><string name="Name">Center</string><CoordinateFrame name="CFrame"><X>0</X><Y>0</Y><Z>0</Z><R00>1</R00><R01>0</R01><R02>0</R02><R10>0</R10><R11>1</R11><R12>0</R12><R20>0</R20><R21>0</R21><R22>1</R22></CoordinateFrame></Properties><Item class="ParticleEmitter" referent="RBX14"><Properties><string name="Name">Sparks</string><bool name="Enabled">false</bool><float name="Rate">0</float><NumberRange name="Lifetime">0.15 0.35 </NumberRange><NumberRange name="Speed">18 34 </NumberRange><Vector2 name="SpreadAngle"><X>180</X><Y>180</Y></Vector2><token name="EmissionDirection">1</token><Vector3 name="Acceleration"><X>0</X><Y>-40</Y><Z>0</Z></Vector3><float name="Drag">5</float><NumberSequence name="Size">0 0.25 0 1 0 0 </NumberSequence><NumberSequence name="Transparency">0 0 0 1 0.5 0 </NumberSequence><NumberSequence name="Squash">0 0 0 1 0 0 </NumberSequence><ColorSequence name="Color">0 1 1 1 0 1 0.43137254901960786 0.7843137254901961 1 0 </ColorSequence><float name="LightEmission">1</float><float name="LightInfluence">0</float><float name="Brightness">3</float><token name="Orientation">2</token><NumberRange name="Rotation">0 0 </NumberRange><NumberRange name="RotSpeed">0 0 </NumberRange><float name="ZOffset">0</float><bool name="LockedToPart">false</bool></Properties></Item><Item class="ParticleEmitter" referent="RBX15"><Properties><string name="Name">Flash</string><bool name="Enabled">false</bool><float name="Rate">0</float><NumberRange name="Lifetime">0.12 0.14 </NumberRange><NumberRange name="Speed">0 0 </NumberRange><Vector2 name="SpreadAngle"><X>0</X><Y>0</Y></Vector2><token name="EmissionDirection">1</token><Vector3 name="Acceleration"><X>0</X><Y>0</Y><Z>0</Z></Vector3><float name="Drag">0</float><NumberSequence name="Size">0 1 0 0.3 3.5 0 1 4.5 0 </NumberSequence><NumberSequence name="Transparency">0 0.1 0 1 1 0 </NumberSequence><NumberSequence name="Squash">0 0 0 1 0 0 </NumberSequence><ColorSequence name="Color">0 1 1 1 0 1 1 1 1 0 </ColorSequence><float name="LightEmission">1</float><float name="LightInfluence">0</float><float name="Brightness">3</float><token name="Orientation">0</token><NumberRange name="Rotation">0 360 </NumberRange><NumberRange name="RotSpeed">0 0 </NumberRange><float name="ZOffset">1</float><bool name="LockedToPart">false</bool></Properties></Item></Item></Item></Item></Item></roblox>

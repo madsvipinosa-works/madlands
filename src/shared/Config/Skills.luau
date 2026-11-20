@@ -24,18 +24,22 @@ return {
 	Skyfall = {
 		Weapon = "Sword",
 		Name = "Sky Slam",
-		Type = "Jump", -- leap up and forward, slam the sword down on landing
+		Type = "Jump", -- crouch, leap, then dive and chop the sword down into the ground
 		Animation = "Skyfall",
 		AnimationSpeed = 1,
 		Damage = 45,
-		JumpSpeed = 32, -- studs per second upward at the start
-		JumpTime = 0.15, -- seconds that upward push lasts, then gravity takes over
-		Forward = 10, -- studs per second forward during the push
-		HitDelay = 0.62, -- seconds until the slam lands, about when you touch down
+		JumpDelay = 0.06, -- seconds of crouch before the leap
+		JumpSpeed = 38, -- studs per second upward at the start
+		JumpTime = 0.12, -- seconds that upward push lasts, then gravity takes over
+		DiveHang = 0.05, -- seconds at the top before the dive starts
+		DiveAccel = 700, -- extra downward acceleration in the dive, on top of gravity (196): gravity alone is slow and floaty
+		Forward = 20, -- studs per second forward
+		ForwardTime = 0.45, -- seconds the forward push lasts, so you travel Forward x ForwardTime studs through the air
+		HitDelay = 0.54, -- seconds until the slam lands: must match when you touch down (measure it if you change the numbers above)
 		Range = 10,
 		ArcDegrees = 180,
 		Cooldown = 6,
-		Trail = { Color = Color3.fromRGB(255, 190, 110), LightEmission = 0.6 },
+		Trail = { Color = Color3.fromRGB(255, 190, 110), LightEmission = 0.85, Lifetime = 0.3, MaxLength = 14 },
 	},
 	WaveSlash = {
 		Weapon = "Sword",
@@ -53,14 +57,16 @@ return {
 	Whirlwind = {
 		Weapon = "Sword",
 		Name = "Whirlwind",
-		Type = "Arc", -- spin with the sword and cut everything around you
+		Type = "Arc", -- spin with the sword and cut everything around you, again and again
 		Animation = "Whirlwind",
 		AnimationSpeed = 1,
-		Damage = 40,
-		HitDelay = 0.35,
+		Damage = 12, -- per hit
+		Hits = 4, -- the spin cuts this many times (every half turn), so 4 x Damage in total
+		HitDelay = 0.2, -- seconds until the first cut
+		HitInterval = 0.17, -- seconds between cuts
 		Range = 10,
 		ArcDegrees = 360,
 		Cooldown = 12,
-		Trail = { Color = Color3.fromRGB(215, 235, 255), LightEmission = 0.7 },
+		Trail = { Color = Color3.fromRGB(225, 240, 255), LightEmission = 0.9, Lifetime = 0.28, MaxLength = 30 }, -- long enough to draw the whole circle
 	},
 }

@@ -99,17 +99,25 @@ local function hitBox(player, character, cframe, size, damage, seen)
 	end
 end
 
--- Pushes the player at a fixed velocity for a short time. The velocity is built here from config, not from the client.
-local function push(root, velocity, seconds)
+-- Holds the player to a velocity for a short time. `configure(mover)` sets the velocity (built here from config,
+-- never from the client).
+local function pushWith(root, seconds, configure)
 	local attachment = Instance.new("Attachment")
 	attachment.Parent = root
 	local mover = Instance.new("LinearVelocity")
 	mover.Attachment0 = attachment
 	mover.MaxForce = 1e7
-	mover.VectorVelocity = velocity
+	configure(mover)
 	mover.Parent = root
 	Debris:AddItem(mover, seconds)
 	Debris:AddItem(attachment, seconds)
+	return mover
+end
+
+local function push(root, velocity, seconds)
+	pushWith(root, seconds, function(mover)
+		mover.VectorVelocity = velocity
+	end)
 end
 
 local function flatLook(root)
@@ -145,10 +153,53 @@ function handlers.Dash(player, character, root, skill)
 	end)
 end
 
--- Jump: leap up and forward, then slam the ground in front of you when you land.
+-- Jump: crouch, leap up and forward, then slam the ground in front of you when you land.
 function handlers.Jump(player, character, root, skill)
 	local direction = flatLook(root)
-	push(root, Vector3.new(direction.X * skill.Forward, skill.JumpSpeed, direction.Z * skill.Forward), skill.JumpTime)
+	task.delay(skill.JumpDelay or 0, function() -- the crouch before the leap
+		if not root.Parent then
+			return
+		end
+		-- Up and forward are pushed separately: the upward push is short, the forward one lasts through the leap,
+		-- and neither holds the other back.
+		pushWith(root, skill.JumpTime, function(mover)
+			mover.VelocityConstraintMode = Enum.VelocityConstraintMode.Line
+			mover.LineDirection = Vector3.yAxis
+			mover.LineVelocity = skill.JumpSpeed
+		end)
+		pushWith(root, skill.ForwardTime, function(mover)
+			mover.VelocityConstraintMode = Enum.VelocityConstraintMode.Plane
+			mover.PrimaryTangentAxis = Vector3.xAxis
+			mover.SecondaryTangentAxis = Vector3.zAxis
+			mover.PlaneVelocity = Vector2.new(direction.X * skill.Forward, direction.Z * skill.Forward)
+		end)
+		-- At the top, a short beat, then dive: ordinary gravity makes the way down slow and floaty.
+		local gravity = workspace.Gravity
+		task.delay(skill.JumpTime + skill.JumpSpeed / gravity + skill.DiveHang, function()
+			local humanoid = character:FindFirstChildOfClass("Humanoid")
+			if not (root.Parent and humanoid) then
+				return
+			end
+			-- A strong extra downward force, like heavy gravity: you drop fast and the ground stops you the normal way.
+			-- (Holding a fixed speed instead drives you into the ground and the physics fires you back up.)
+			local params = RaycastParams.new()
+			params.FilterType = Enum.RaycastFilterType.Exclude
+			params.FilterDescendantsInstances = { character }
+			local hit = workspace:Raycast(root.Position, Vector3.new(0, -300, 0), params)
+			local fall = if hit then hit.Distance - humanoid.HipHeight - root.Size.Y / 2 else 0 -- how far the body still has to drop
+			local seconds = math.sqrt(2 * math.max(fall, 0) / (gravity + skill.DiveAccel)) + 0.06 -- the fall, plus a moment
+			local attachment = Instance.new("Attachment")
+			attachment.Parent = root
+			local force = Instance.new("VectorForce")
+			force.Attachment0 = attachment
+			force.RelativeTo = Enum.ActuatorRelativeTo.World
+			force.ApplyAtCenterOfMass = true
+			force.Force = Vector3.new(0, -root.AssemblyMass * skill.DiveAccel, 0)
+			force.Parent = root
+			Debris:AddItem(force, seconds)
+			Debris:AddItem(attachment, seconds)
+		end)
+	end)
 	task.delay(skill.HitDelay, function()
 		if root.Parent then
 			hitArc(player, character, root, skill.Damage, skill.Range, skill.ArcDegrees)
@@ -188,13 +239,16 @@ function spawnWave(player, character, root, skill)
 	end)
 end
 
--- Arc: hit everything in a front arc (360 = all around you), after an optional delay.
+-- Arc: hit everything in a front arc (360 = all around you), after an optional delay. A skill can hit several times
+-- (Hits, HitInterval seconds apart), like a spin that cuts every mob around you again and again.
 function handlers.Arc(player, character, root, skill)
-	task.delay(skill.HitDelay or 0, function()
-		if root.Parent then
-			hitArc(player, character, root, skill.Damage, skill.Range, skill.ArcDegrees)
-		end
-	end)
+	for i = 1, skill.Hits or 1 do
+		task.delay((skill.HitDelay or 0) + (i - 1) * (skill.HitInterval or 0), function()
+			if root.Parent then
+				hitArc(player, character, root, skill.Damage, skill.Range, skill.ArcDegrees)
+			end
+		end)
+	end
 end
 
 swingRemote.OnServerEvent:Connect(function(player) -- extra arguments are ignored on purpose
@@ -216,7 +270,12 @@ swingRemote.OnServerEvent:Connect(function(player) -- extra arguments are ignore
 	swingRemote:FireClient(player, index) -- the client animates only what the server accepted
 	local swing = SwingAnimations[weapon.SwingCombo[index]]
 	WeaponVisuals.ShowTrail(character, swing.TrailStart, swing.TrailSeconds)
-	hitArc(player, character, root, weapon.Damage, weapon.Range, weapon.ArcDegrees)
+	-- The hit lands as the blade crosses in front of you (HitDelay), not the instant you click.
+	task.delay(swing.HitDelay or 0, function()
+		if root.Parent then
+			hitArc(player, character, root, weapon.Damage, weapon.Range, weapon.ArcDegrees)
+		end
+	end)
 end)
 
 skillRemote.OnServerEvent:Connect(function(player, slot)

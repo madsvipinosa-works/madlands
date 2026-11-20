@@ -29,6 +29,9 @@ local PART_OF = {
 	LeftKnee = "LeftLowerLeg",
 	RightKnee = "RightLowerLeg",
 }
+-- "Shift" is not a rotation: a Vector3 in studs that moves the whole body (the lower torso) off its resting spot,
+-- so a swing can lunge forward and sink. Forward is -Z, up is +Y.
+local SHIFT = "Shift"
 local JOINT_OF = {}
 for joint, part in PART_OF do
 	JOINT_OF[part] = joint
@@ -63,6 +66,7 @@ local function poseAt(def, t)
 			for joint in PART_OF do
 				pose[joint] = (from[joint] or ZERO):Lerp(key.Pose[joint] or ZERO, a) -- joints left out go back to rest
 			end
+			pose[SHIFT] = (from[SHIFT] or ZERO):Lerp(key.Pose[SHIFT] or ZERO, a)
 			return pose
 		end
 		from, fromT = key.Pose, key.T
@@ -85,6 +89,9 @@ local function buildSequence(def)
 			local v = pose[JOINT_OF[item.name]]
 			if v then
 				p.CFrame = CFrame.Angles(math.rad(v.X), math.rad(v.Y), math.rad(v.Z))
+			end
+			if item.name == "LowerTorso" then
+				p.CFrame = CFrame.new(pose[SHIFT]) * p.CFrame
 			end
 			p.Parent = parent
 			for _, child in item.children do

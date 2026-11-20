@@ -168,46 +168,6 @@ function Effects.SlashMark(position, length, color, degrees)
 	Debris:AddItem(mark, 0.3)
 end
 
--- Ribbons that circle you while you spin, so the whole turn leaves a visible wind.
-function Effects.Whirl(root, style)
-	local orbiters = {}
-	for i = 1, 3 do
-		local part = anchorAt(root.CFrame)
-		local top = Instance.new("Attachment")
-		top.Position = Vector3.new(0, 0.7, 0)
-		top.Parent = part
-		local bottom = Instance.new("Attachment")
-		bottom.Position = Vector3.new(0, -0.7, 0)
-		bottom.Parent = part
-		local ribbon = Instance.new("Trail")
-		ribbon.Attachment0, ribbon.Attachment1 = top, bottom
-		ribbon.Color = ColorSequence.new(style.WhirlColor)
-		ribbon.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.35), NumberSequenceKeypoint.new(1, 1) })
-		ribbon.Lifetime = 0.3
-		ribbon.LightEmission = 0.7
-		ribbon.FaceCamera = false
-		ribbon.Parent = part
-		orbiters[i] = { part = part, height = (i - 2) * 1.7, phase = (i - 1) * math.pi * 2 / 3 }
-		Debris:AddItem(part, style.WhirlSeconds + 0.5) -- stays a moment after, so the ribbon fades instead of vanishing
-	end
-
-	local start = os.clock()
-	local connection
-	connection = RunService.RenderStepped:Connect(function()
-		local t = os.clock() - start
-		if t >= style.WhirlSeconds or not root.Parent then
-			connection:Disconnect()
-			return
-		end
-		local angle = t * math.rad(1100) -- about the speed of the spin animation
-		for _, o in orbiters do
-			o.part.CFrame = CFrame.new(root.Position + Vector3.new(0, o.height, 0))
-				* CFrame.Angles(0, angle + o.phase, 0)
-				* CFrame.new(0, 0, style.WhirlRadius)
-		end
-	end)
-end
-
 -- A fresh, white, anchored copy of the crescent mesh, and how to resize it: slash, the thing to resize, its
 -- property ("Scale" or "Size") and the full size it comes at. Nil if the mesh is not there.
 local function newSlash()
@@ -253,6 +213,58 @@ function Effects.CutMark(cframe, scale, seconds)
 	tween(sized, seconds * 0.5, { [property] = native * scale }, Enum.EasingStyle.Back)
 	tween(slash, seconds, { Transparency = 1 }, Enum.EasingStyle.Quad)
 	Debris:AddItem(slash, seconds + 0.1)
+end
+
+-- Crescents that circle you at the speed of the spin: blades of wind cutting around you. Meshes, so they stay
+-- smooth at any frame rate, and they turn the same way you do.
+function Effects.Whirl(root, style)
+	local blades = {}
+	for i = 1, style.WhirlBlades do
+		local slash, sized, property, native = newSlash()
+		if not slash then
+			return
+		end
+		sized[property] = native * style.WhirlScale
+		slash.Transparency = 0.1
+		slash.Parent = workspace
+		blades[i] = { part = slash, phase = (i - 1) * math.pi * 2 / style.WhirlBlades, height = style.WhirlHeights[i] }
+	end
+
+	local start = os.clock()
+	local connection
+	connection = RunService.RenderStepped:Connect(function()
+		local t = os.clock() - start
+		if t >= style.WhirlSeconds or not root.Parent then
+			connection:Disconnect()
+			for _, b in blades do
+				tween(b.part, 0.15, { Transparency = 1 })
+				Debris:AddItem(b.part, 0.25)
+			end
+			return
+		end
+		local angle = t * math.rad(1100) -- about the speed of the spin animation
+		for _, b in blades do
+			-- Its tips point the way it is turning (the same turn as your spin) and its curve trails behind, so it
+			-- reads as the swept path of a blade: the cutting line runs from you outward.
+			b.part.CFrame = CFrame.new(root.Position + Vector3.new(0, b.height, 0))
+				* CFrame.Angles(0, angle + b.phase, 0)
+				* CFrame.new(0, 0, -style.WhirlRadius)
+				* CFrame.Angles(0, math.rad(90), 0)
+		end
+	end)
+end
+
+-- The crescent flashing around you where the blade is, so each hit of a spin reads as a cut.
+function Effects.SpinCut(root, style)
+	local weapon = player.Character and player.Character:FindFirstChild("WeaponVisual")
+	local blade = weapon and weapon:FindFirstChild("Blade")
+	local out = if blade then (blade.Position - root.Position) * Vector3.new(1, 0, 1) else Vector3.zero
+	out = if out.Magnitude > 0.5 then out.Unit else root.CFrame.LookVector * Vector3.new(1, 0, 1)
+	local at = root.Position + out * style.TickMarkRadius + Vector3.new(0, 0.5, 0)
+	-- Tips pointing the way the blade is turning, curve trailing behind it, like the Wave Slash. The spin turns
+	-- left (counter-clockwise seen from above), so "ahead" is the outward direction turned a quarter to the left.
+	local ahead = Vector3.new(out.Z, 0, -out.X)
+	Effects.CutMark(CFrame.lookAt(at, at + ahead), style.TickMarkScale, style.TickMarkSeconds)
 end
 
 -- The flying slash of a Wave skill, drawn here on every client. The server sends where it starts and how it
@@ -318,6 +330,70 @@ function Effects.Wave(shooter, start, direction, speed, range)
 		local gone = math.clamp((traveled / range - c.FadeFrom) / (1 - c.FadeFrom), 0, 1)
 		slash.Transparency = baseTransparency + (1 - baseTransparency) * gone
 	end)
+end
+
+-- Glowing cracks running out from a point along the ground: each is a zigzag of short pieces that appear one after
+-- the other (so it looks like it is splitting the ground), with a side branch now and then. They fade after a moment.
+function Effects.Cracks(position, count, length, color)
+	local pieces = 5
+	local function piece(from, direction, size, delay)
+		task.delay(delay, function()
+			local crack = Instance.new("Part")
+			crack.Anchored = true
+			crack.CanCollide = false
+			crack.CanQuery = false
+			crack.CanTouch = false
+			crack.CastShadow = false
+			crack.Material = Enum.Material.Neon
+			crack.Color = color
+			crack.Size = size
+			crack.CFrame = CFrame.lookAt(from, from + direction) * CFrame.new(0, 0, -size.Z / 2)
+			crack.Parent = workspace
+			task.delay(0.35, tween, crack, 0.7, { Transparency = 1 })
+			Debris:AddItem(crack, 1.2)
+		end)
+	end
+
+	local base = position + Vector3.new(0, 0.25, 0) -- pieces stand 0.5 tall on the ground, enough to show over grass
+	for i = 1, count do
+		local heading = (i + math.random() * 0.6) / count * math.pi * 2
+		local step = length * (0.55 + math.random() * 0.45) / pieces
+		local point = base
+		for n = 1, pieces do
+			heading += (math.random() - 0.5) * 0.8 -- the zigzag
+			local direction = Vector3.new(math.cos(heading), 0, math.sin(heading))
+			local width = 0.45 * (1 - 0.65 * n / pieces) -- thins out toward the end
+			piece(point, direction, Vector3.new(width, 0.5, step * 1.2), (n - 1) * 0.03)
+			if n == 3 and math.random() < 0.5 then -- a short branch
+				local side = heading + (if math.random() < 0.5 then 0.9 else -0.9)
+				piece(point + direction * step, Vector3.new(math.cos(side), 0, math.sin(side)), Vector3.new(0.22, 0.4, step * 1.4), n * 0.03)
+			end
+			point += direction * step
+		end
+	end
+end
+
+-- Chunks of ground thrown up and outward; they shrink away before they fall through the terrain.
+function Effects.Rocks(position, count)
+	for _ = 1, count do
+		local angle = math.random() * math.pi * 2
+		local sideways = 8 + math.random() * 14
+		local rock = Instance.new("Part")
+		rock.CanCollide = false
+		rock.CanQuery = false
+		rock.CanTouch = false
+		rock.CastShadow = false
+		rock.Material = Enum.Material.Slate
+		rock.Color = Color3.fromRGB(88, 82, 74)
+		local size = 0.5 + math.random() * 0.8
+		rock.Size = Vector3.new(size, size * 0.8, size * 1.2)
+		rock.CFrame = CFrame.new(position + Vector3.new(math.cos(angle) * 1.5, 0.6, math.sin(angle) * 1.5)) * CFrame.Angles(math.random() * 6, math.random() * 6, 0)
+		rock.Parent = workspace
+		rock.AssemblyLinearVelocity = Vector3.new(math.cos(angle) * sideways, 22 + math.random() * 18, math.sin(angle) * sideways)
+		rock.AssemblyAngularVelocity = Vector3.new(math.random() * 14 - 7, math.random() * 14 - 7, math.random() * 14 - 7)
+		task.delay(0.35, tween, rock, 0.4, { Size = Vector3.one * 0.05, Transparency = 1 })
+		Debris:AddItem(rock, 0.9)
+	end
 end
 
 -- A strong hit: a pop of light, a slash line across the target and a spray of sparks.
@@ -397,8 +473,13 @@ function Effects.FovKick(degrees, seconds)
 	end)
 end
 
+-- The ground under you. The ray starts inside your body, so your own character must be ignored, or it hits your
+-- legs and every ground effect floats a few studs too high.
+local groundParams = RaycastParams.new()
+groundParams.FilterType = Enum.RaycastFilterType.Exclude
 local function groundBelow(root)
-	local hit = workspace:Raycast(root.Position, Vector3.new(0, -12, 0))
+	groundParams.FilterDescendantsInstances = { player.Character }
+	local hit = workspace:Raycast(root.Position, Vector3.new(0, -12, 0), groundParams)
 	return hit and hit.Position or root.Position - Vector3.new(0, 3, 0)
 end
 
@@ -452,18 +533,37 @@ function Effects.SkillStarted(skill)
 		later(e.WhirlDelay, function(now)
 			Effects.Whirl(now, e)
 		end)
+		for i = 0, math.floor(e.WhirlSeconds / 0.08) do -- dust kicked up at your feet through the spin
+			later(e.WhirlDelay + i * 0.08, function(now)
+				Effects.Puff(groundBelow(now), e.SpinDustSize)
+			end)
+		end
 	end
-	if e.SpinRingSize then -- a ring sweeping out around the spin
-		later(skill.HitDelay or 0, function(now)
-			Effects.Ring(groundBelow(now), e.SpinRingSize, 0.45)
-		end)
+	if e.SpinRingSize then -- every hit of the spin: a ring on the ground, the crescent where the blade is, a jolt
+		for i = 1, skill.Hits or 1 do
+			later((skill.HitDelay or 0) + (i - 1) * (skill.HitInterval or 0), function(now)
+				Effects.Ring(groundBelow(now), e.SpinRingSize, 0.4)
+				Effects.SpinCut(now, e)
+				Effects.Shake(0.2, 0.12)
+			end)
+		end
 	end
 	if e.ShakeAmplitude and not e.LandingDustSize then
 		Effects.Shake(e.ShakeAmplitude, e.ShakeSeconds)
 	end
+	if e.ChopMarkScale then -- the downward chop, just before the landing: the crescent stood upright, curved edge leading
+		later(skill.HitDelay - e.ChopMarkLead, function(now)
+			local look = now.CFrame.LookVector
+			local at = groundBelow(now) + look * e.ChopMarkAhead + Vector3.new(0, 2.5, 0)
+			Effects.CutMark(CFrame.lookAt(at, at + look) * CFrame.Angles(0, math.rad(180), math.rad(90)), e.ChopMarkScale, 0.35)
+		end)
+	end
 	if e.LandingDustSize then
 		later(skill.HitDelay, function(now)
 			local ground = groundBelow(now)
+			Effects.Cracks(ground, e.CrackCount, e.CrackLength, e.CrackColor)
+			Effects.Rocks(ground, e.RockCount)
+			Effects.FovKick(e.LandingFovKick, 0.35)
 			Effects.Dust(ground, e.LandingDustSize)
 			Effects.Ring(ground, e.ShockwaveSize, 0.35) -- the slam snaps out faster than the dust
 			task.delay(0.08, Effects.Ring, ground, e.SecondRingSize, 0.6)
