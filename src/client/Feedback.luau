@@ -1,7 +1,6 @@
 -- Visual/audio feedback only. Reads Humanoid health the server already replicated; changes no rules.
 local Debris = game:GetService("Debris")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local SoundService = game:GetService("SoundService")
 local TweenService = game:GetService("TweenService")
 
 local Weapons = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"):WaitForChild("Weapons"))
@@ -12,18 +11,15 @@ local Animations = require(script.Parent.Animations)
 local SwingAnimations = require(ReplicatedStorage.Shared.Config:WaitForChild("SwingAnimations"))
 local Players = game:GetService("Players")
 local Effects = require(script.Parent.Effects)
+local Sounds = require(script.Parent.Sounds)
 
 local Feedback = {}
 
 function Feedback.PlaySwing(comboIndex)
-	-- shortcut: always the Sword sound, the client doesn't know the equipped weapon yet; fix in build step 5
-	local sound = Instance.new("Sound")
-	sound.SoundId = Weapons.Sword.SwingSound
-	sound.Parent = SoundService
-	sound:Play()
+	-- shortcut: always the Sword's swings, the client doesn't know the equipped weapon yet; fix in build step 5
 	local name = Weapons.Sword.SwingCombo[comboIndex] or Weapons.Sword.SwingCombo[1]
 	Animations.Play(name)
-	Debris:AddItem(sound, 2)
+	Sounds.Play(name, Players.LocalPlayer.Character) -- a cue named like the swing: Swing1, Swing2, Swing3
 
 	-- The crescent of the cut, in front of you, tilted the way the blade travels.
 	local fx = SwingAnimations[name].Slash
@@ -107,6 +103,7 @@ local function watch(humanoid)
 			flash(model)
 			local strong = lost >= Style.StrongThreshold
 			Effects.HitSpark(root, strong)
+			Sounds.Play(if model == Players.LocalPlayer.Character then "PlayerHurt" elseif strong then "HitStrong" else "Hit", root)
 			if strong then
 				Effects.Impact(root.Position)
 			end

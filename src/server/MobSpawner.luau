@@ -158,9 +158,9 @@ local function reward(def, model)
 		return
 	end
 	local gold = rng:NextInteger(def.GoldMin, def.GoldMax)
-	data.Gold += gold
-	data.Xp += def.Xp
-	print(`[Mob] {player.Name} killed {model.Name}: +{gold} gold, +{def.Xp} XP (Gold {data.Gold}, XP {data.Xp})`)
+	PlayerData.AddGold(player, gold)
+	local levels = PlayerData.AddXp(player, def.Xp)
+	print(`[Mob] {player.Name} killed {model.Name}: +{gold} gold, +{def.Xp} XP (Gold {data.Gold}, Level {data.Level}, XP {data.Xp}){levels > 0 and " LEVEL UP" or ""}`)
 end
 
 local function spawnMob(name, def, position)

@@ -3,11 +3,13 @@
 -- The server checks the equipped weapon, the cooldown and all damage and movement using these values.
 -- Type picks how the skill works (see handlers in server/Combat): Dash, Jump, Wave or Arc.
 -- Animation is a name in Config/SwingAnimations (client feedback only); AnimationSpeed 2 plays it twice as fast.
+-- Sounds = { { Cue, At } }: sound cues from Config/Sounds, each At this many seconds after the key press.
 return {
 	-- Sword base skills
 	DashSlash = {
 		Weapon = "Sword",
 		Name = "Dash Slash",
+		Description = "Rush forward through your enemies in a single, flat cut.", -- shown in the skill's tooltip
 		Type = "Dash", -- rush forward through the target and cut everything in the path
 		Animation = "DashSlash",
 		AnimationSpeed = 1,
@@ -20,10 +22,12 @@ return {
 		-- Blade trail while the skill plays. Color and LightEmission tint it; Lifetime (seconds it lingers) and MaxLength
 		-- (studs it can stretch) are optional and default to the weapon's. Skills without a Trail use the weapon's plain one.
 		Trail = { Color = Color3.fromRGB(170, 215, 255), LightEmission = 0.85, Lifetime = 0.32, MaxLength = 16 },
+		Sounds = { { Cue = "DashWhoosh", At = 0 } },
 	},
 	Skyfall = {
 		Weapon = "Sword",
 		Name = "Sky Slam",
+		Description = "Leap into the air, then dive down and chop the ground, hitting everything around where you land.", -- shown in the skill's tooltip
 		Type = "Jump", -- crouch, leap, then dive and chop the sword down into the ground
 		Animation = "Skyfall",
 		AnimationSpeed = 1,
@@ -40,10 +44,12 @@ return {
 		ArcDegrees = 180,
 		Cooldown = 6,
 		Trail = { Color = Color3.fromRGB(255, 190, 110), LightEmission = 0.85, Lifetime = 0.3, MaxLength = 14 },
+		Sounds = { { Cue = "LeapWhoosh", At = 0.06 }, { Cue = "DiveWhoosh", At = 0.38 } },
 	},
 	WaveSlash = {
 		Weapon = "Sword",
 		Name = "Wave Slash",
+		Description = "Cut the air and send a wave of force flying forward, slicing through every enemy in its path.", -- shown in the skill's tooltip
 		Type = "Wave", -- a slash that flies straight ahead
 		Animation = "WaveSlash",
 		AnimationSpeed = 1,
@@ -53,10 +59,12 @@ return {
 		Width = 6, -- width of the wave
 		Cooldown = 8,
 		Trail = { Color = Color3.fromRGB(190, 225, 255), LightEmission = 0.7 },
+		Sounds = { { Cue = "WaveRelease", At = 0.26 } },
 	},
 	Whirlwind = {
 		Weapon = "Sword",
 		Name = "Whirlwind",
+		Description = "Spin with your blade out and cut everything around you, again and again.", -- shown in the skill's tooltip
 		Type = "Arc", -- spin with the sword and cut everything around you, again and again
 		Animation = "Whirlwind",
 		AnimationSpeed = 1,
@@ -68,5 +76,6 @@ return {
 		ArcDegrees = 360,
 		Cooldown = 12,
 		Trail = { Color = Color3.fromRGB(225, 240, 255), LightEmission = 0.9, Lifetime = 0.28, MaxLength = 30 }, -- long enough to draw the whole circle
+		Sounds = { { Cue = "WhirlSpin", At = 0.1 }, { Cue = "WhirlTick", At = 0.2 }, { Cue = "WhirlTick", At = 0.37 }, { Cue = "WhirlTick", At = 0.54 }, { Cue = "WhirlTick", At = 0.71 } },
 	},
 }

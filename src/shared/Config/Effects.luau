@@ -71,6 +71,7 @@ return {
 			FovKick = 9,
 		},
 		Jump = {
+			LandingCue = "SlamLand", -- the sound cue played the instant you touch down (Config/Sounds)
 			UseSkySlam = true, -- take-off, dive trail and landing slam come from the SkySlamVFX module
 			SkySlamScale = 1, -- overall size of the module's effects
 			MinAirTime = 0.3, -- seconds in the air before the module starts watching for the ground

@@ -2,6 +2,9 @@
 -- Read-only data. The server decides all damage using these values.
 return {
 	Sword = {
+		Name = "Sword", -- shown in the profile screen
+		Description = "A balanced blade: quick swings, and four skills of its own.",
+		Rarity = "Common", -- Common, Uncommon, Rare, Epic or Legendary: the colour of its card
 		Damage = 20,
 		Range = 7, -- studs, measured from the player's root part
 		ArcDegrees = 120, -- total width of the swing in front of the player
@@ -10,7 +13,6 @@ return {
 		SwingCombo = { "Swing1", "Swing2", "Swing3" }, -- names in Config/SwingAnimations
 		ComboResetSeconds = 1.4,
 		Skills = { "DashSlash", "Skyfall", "WaveSlash", "Whirlwind" }, -- base skills, in hotkey order (1 to 4); see Config/Skills
-		SwingSound = "rbxasset://sounds/swordslash.wav", -- client feedback only
 		-- Model held in the right hand. The mesh comes from ServerStorage.Models.<Model>, saved from Studio as
 		-- assets/models/<Model>.rbxm (import assets/models/sword.glb first). Until then, plain Parts below are used.
 		Visual = {

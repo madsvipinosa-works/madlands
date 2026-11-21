@@ -5,6 +5,9 @@ local Feedback = require(script.Feedback)
 local Effects = require(script.Effects)
 require(script.MobAnimation)
 require(script.SkillBar)
+require(script.Hud)
+require(script.Sounds)
+require(script.Menu)
 
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
 	if not gameProcessed and input.UserInputType == Enum.UserInputType.MouseButton1 then

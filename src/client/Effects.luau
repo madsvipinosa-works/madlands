@@ -7,6 +7,7 @@ local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 
 local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"):WaitForChild("Effects"))
+local Sounds = require(script.Parent.Sounds)
 local SkySlam = require(ReplicatedStorage.Shared:WaitForChild("SkySlamVFX")) -- take-off, dive trail and landing slam of the Sky Slam
 local player = Players.LocalPlayer
 
@@ -478,6 +479,11 @@ function Effects.SkillStarted(skill)
 	if not (e and root) then
 		return
 	end
+	for _, sound in skill.Sounds or {} do -- the skill's sounds, each at its own moment (Config/Skills)
+		later(sound.At, function(now)
+			Sounds.Play(sound.Cue, now)
+		end)
+	end
 	if e.StartDustSize and not e.UseSkySlam then
 		Effects.Dust(groundBelow(root), e.StartDustSize)
 	end
@@ -552,6 +558,7 @@ function Effects.SkillStarted(skill)
 					Effects.Cracks(ground, e.CrackCount, e.CrackLength, e.CrackColor) -- these stand up over the grass
 					Effects.FovKick(e.LandingFovKick, 0.35)
 					Effects.Shake(e.ShakeAmplitude, e.ShakeSeconds)
+					Sounds.Play(e.LandingCue, now)
 				end,
 			})
 		end)
