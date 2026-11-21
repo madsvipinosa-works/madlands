@@ -7,6 +7,7 @@ local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 
 local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"):WaitForChild("Effects"))
+local SkySlam = require(ReplicatedStorage.Shared:WaitForChild("SkySlamVFX")) -- take-off, dive trail and landing slam of the Sky Slam
 local player = Players.LocalPlayer
 
 local Effects = {}
@@ -373,29 +374,6 @@ function Effects.Cracks(position, count, length, color)
 	end
 end
 
--- Chunks of ground thrown up and outward; they shrink away before they fall through the terrain.
-function Effects.Rocks(position, count)
-	for _ = 1, count do
-		local angle = math.random() * math.pi * 2
-		local sideways = 8 + math.random() * 14
-		local rock = Instance.new("Part")
-		rock.CanCollide = false
-		rock.CanQuery = false
-		rock.CanTouch = false
-		rock.CastShadow = false
-		rock.Material = Enum.Material.Slate
-		rock.Color = Color3.fromRGB(88, 82, 74)
-		local size = 0.5 + math.random() * 0.8
-		rock.Size = Vector3.new(size, size * 0.8, size * 1.2)
-		rock.CFrame = CFrame.new(position + Vector3.new(math.cos(angle) * 1.5, 0.6, math.sin(angle) * 1.5)) * CFrame.Angles(math.random() * 6, math.random() * 6, 0)
-		rock.Parent = workspace
-		rock.AssemblyLinearVelocity = Vector3.new(math.cos(angle) * sideways, 22 + math.random() * 18, math.sin(angle) * sideways)
-		rock.AssemblyAngularVelocity = Vector3.new(math.random() * 14 - 7, math.random() * 14 - 7, math.random() * 14 - 7)
-		task.delay(0.35, tween, rock, 0.4, { Size = Vector3.one * 0.05, Transparency = 1 })
-		Debris:AddItem(rock, 0.9)
-	end
-end
-
 -- A strong hit: a pop of light, a slash line across the target and a spray of sparks.
 function Effects.Impact(position)
 	local c = Config.Impact
@@ -500,7 +478,7 @@ function Effects.SkillStarted(skill)
 	if not (e and root) then
 		return
 	end
-	if e.StartDustSize then
+	if e.StartDustSize and not e.UseSkySlam then
 		Effects.Dust(groundBelow(root), e.StartDustSize)
 	end
 	if e.StreakSeconds then
@@ -548,7 +526,7 @@ function Effects.SkillStarted(skill)
 			end)
 		end
 	end
-	if e.ShakeAmplitude and not e.LandingDustSize then
+	if e.ShakeAmplitude and not e.UseSkySlam then
 		Effects.Shake(e.ShakeAmplitude, e.ShakeSeconds)
 	end
 	if e.ChopMarkScale then -- the downward chop, just before the landing: the crescent stood upright, curved edge leading
@@ -558,18 +536,24 @@ function Effects.SkillStarted(skill)
 			Effects.CutMark(CFrame.lookAt(at, at + look) * CFrame.Angles(0, math.rad(180), math.rad(90)), e.ChopMarkScale, 0.35)
 		end)
 	end
-	if e.LandingDustSize then
-		later(skill.HitDelay, function(now)
-			local ground = groundBelow(now)
-			Effects.Cracks(ground, e.CrackCount, e.CrackLength, e.CrackColor)
-			Effects.Rocks(ground, e.RockCount)
-			Effects.FovKick(e.LandingFovKick, 0.35)
-			Effects.Dust(ground, e.LandingDustSize)
-			Effects.Ring(ground, e.ShockwaveSize, 0.35) -- the slam snaps out faster than the dust
-			task.delay(0.08, Effects.Ring, ground, e.SecondRingSize, 0.6)
-			Effects.Flash(ground + Vector3.new(0, 1, 0), e.FlashSize, e.FlashColor)
-			Effects.Sparks(ground, Vector3.yAxis, { Count = e.EmberCount, Color = e.FlashColor, Speed = 40, Size = 0.7, Lifetime = 0.9, Spread = 55, Gravity = 70 })
-			Effects.Shake(e.ShakeAmplitude, e.ShakeSeconds)
+	if e.UseSkySlam then
+		-- Take-off puff at the end of the crouch, then the dive trail from the same moment. The module watches the
+		-- ground itself and fires the slam the instant you touch down, so it cannot drift from the real landing.
+		later(skill.JumpDelay or 0, function(now)
+			local look = { color = e.FlashColor, scale = e.SkySlamScale }
+			SkySlam.jump(now, look)
+			SkySlam.dive(now, {
+				color = e.FlashColor,
+				scale = e.SkySlamScale,
+				shake = false, -- Effects.Shake does the camera
+				minAirTime = e.MinAirTime,
+				onImpact = function()
+					local ground = groundBelow(now)
+					Effects.Cracks(ground, e.CrackCount, e.CrackLength, e.CrackColor) -- these stand up over the grass
+					Effects.FovKick(e.LandingFovKick, 0.35)
+					Effects.Shake(e.ShakeAmplitude, e.ShakeSeconds)
+				end,
+			})
 		end)
 	end
 end

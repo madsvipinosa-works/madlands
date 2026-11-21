@@ -71,7 +71,9 @@ return {
 			FovKick = 9,
 		},
 		Jump = {
-			StartDustSize = 6,
+			UseSkySlam = true, -- take-off, dive trail and landing slam come from the SkySlamVFX module
+			SkySlamScale = 1, -- overall size of the module's effects
+			MinAirTime = 0.3, -- seconds in the air before the module starts watching for the ground
 			StreakSeconds = 0.45, -- ribbons behind the body through the whole leap
 			StreakColor = Color3.fromRGB(255, 225, 180),
 			StreakHeight = 4,
@@ -80,20 +82,14 @@ return {
 			ChopMarkScale = 2.2, -- times its native size (6 studs wide)
 			ChopMarkAhead = 5, -- studs in front of you
 			ChopMarkLead = 0.07, -- seconds before the landing
-			-- Everything below happens at the skill's HitDelay.
-			LandingDustSize = 12,
-			ShockwaveSize = 22,
-			SecondRingSize = 32, -- a slower, wider ring right behind the first
+			-- On landing, besides the module's slam:
 			CrackCount = 9, -- glowing cracks running out from the impact
 			CrackLength = 13, -- studs
 			CrackColor = Color3.fromRGB(255, 120, 40), -- glowing orange
-			RockCount = 14, -- chunks thrown up from the ground
 			LandingFovKick = 8, -- degrees the camera widens for a moment
 			ShakeAmplitude = 1.1,
 			ShakeSeconds = 0.45,
-			FlashColor = Color3.fromRGB(255, 185, 110),
-			FlashSize = 14,
-			EmberCount = 30, -- glowing chips thrown up from the ground
+			FlashColor = Color3.fromRGB(255, 185, 110), -- the colour of the module's effects
 		},
 		Arc = {
 			StartDustSize = 8,
