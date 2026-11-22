@@ -15,11 +15,25 @@ local Sounds = require(script.Parent.Sounds)
 
 local Feedback = {}
 
+-- The swing sound starts on the click, not when the server answers. This guesses the combo the way the server counts it
+-- (shortcut: if the server refuses a swing, the sound still played; it only plays once per Cooldown).
+local lastClick, guess, guessExpires = 0, 0, 0
+function Feedback.ClickSound()
+	local weapon = Weapons.Sword -- shortcut: always the Sword, see PlaySwing
+	local now = os.clock()
+	if now - lastClick < weapon.Cooldown + 0.02 then
+		return
+	end
+	lastClick = now
+	guess = if now < guessExpires then guess % #weapon.SwingCombo + 1 else 1
+	guessExpires = now + weapon.ComboResetSeconds
+	Sounds.Play(weapon.SwingCombo[guess], Players.LocalPlayer.Character)
+end
+
 function Feedback.PlaySwing(comboIndex)
 	-- shortcut: always the Sword's swings, the client doesn't know the equipped weapon yet; fix in build step 5
 	local name = Weapons.Sword.SwingCombo[comboIndex] or Weapons.Sword.SwingCombo[1]
 	Animations.Play(name)
-	Sounds.Play(name, Players.LocalPlayer.Character) -- a cue named like the swing: Swing1, Swing2, Swing3
 
 	-- The crescent of the cut, in front of you, tilted the way the blade travels.
 	local fx = SwingAnimations[name].Slash

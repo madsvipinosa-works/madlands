@@ -38,6 +38,9 @@ local function playLayer(layer, parent, volumeScale)
 		eq.HighGain = layer.Eq.High or 0
 		eq.Parent = sound
 	end
+	if layer.Start then
+		sound.TimePosition = layer.Start
+	end
 	sound.Parent = parent or SoundService
 	sound:Play()
 	sound.Ended:Once(function()
@@ -67,6 +70,9 @@ function Sounds.Play(cueName, where, volumeScale)
 		parent = parent:FindFirstChild("HumanoidRootPart")
 	end
 	for _, layer in cue do
+		if layer.Id == "" then
+			continue -- no sound set yet
+		end
 		if (layer.Delay or 0) > 0 then
 			task.delay(layer.Delay, playLayer, layer, parent, volumeScale)
 		else
@@ -80,7 +86,7 @@ task.spawn(function()
 	local wanted, seen = {}, {}
 	for _, cue in Config.Cues do
 		for _, layer in cue do
-			if not seen[layer.Id] then
+			if layer.Id ~= "" and not seen[layer.Id] then
 				seen[layer.Id] = true
 				local sound = Instance.new("Sound")
 				sound.SoundId = layer.Id

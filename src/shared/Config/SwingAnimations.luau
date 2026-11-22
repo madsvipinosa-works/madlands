@@ -128,17 +128,17 @@ return {
 			{ T = 0.78, Ease = "InOut", Pose = {} },
 		},
 	},
-	Whirlwind = { -- crouch and counter-wind, then two steady full spins, leaning into them, with the sword held straight out
+	Whirlwind = { -- crouch and counter-wind, then three steady full spins, leaning into them, with the sword held straight out
 		AssetId = "",
 		TrailStart = 0.16, -- seconds into the move when the blade starts cutting
-		TrailSeconds = 0.66,
-		Duration = 1.1,
+		TrailSeconds = 1.06,
+		Duration = 1.5,
 		Keyframes = {
 			{ T = 0.12, Ease = "InOut", Pose = { RightShoulder = V(10, 0, 85), LeftShoulder = V(10, 0, -75), RightElbow = V(5, 0, 0), Root = V(-14, -35, 0), RightHip = V(20, 0, 0), LeftHip = V(20, 0, 0), RightKnee = V(-40, 0, 0), LeftKnee = V(-40, 0, 0) } }, -- crouch, wound back
-			{ T = 0.46, Ease = "Linear", Pose = { RightShoulder = V(10, 0, 85), LeftShoulder = V(10, 0, -75), RightElbow = V(5, 0, 0), Root = V(-16, 330, 0), RightKnee = V(-15, 0, 0), LeftKnee = V(-15, 0, 0) } },
-			{ T = 0.8, Ease = "Linear", Pose = { RightShoulder = V(10, 0, 85), LeftShoulder = V(10, 0, -75), RightElbow = V(5, 0, 0), Root = V(-16, 720, 0), RightKnee = V(-15, 0, 0), LeftKnee = V(-15, 0, 0) } },
-			{ T = 0.92, Pose = { RightShoulder = V(30, 0, 40), LeftShoulder = V(30, 0, -35), Root = V(-22, 720, 0), RightHip = V(18, 0, 0), LeftHip = V(18, 0, 0), RightKnee = V(-35, 0, 0), LeftKnee = V(-35, 0, 0) } }, -- land from the spin
-			{ T = 1.1, Ease = "InOut", Pose = { Root = V(0, 720, 0) } }, -- 720 is facing the same way again
+			{ T = 0.66, Ease = "Linear", Pose = { RightShoulder = V(10, 0, 85), LeftShoulder = V(10, 0, -75), RightElbow = V(5, 0, 0), Root = V(-16, 540, 0), RightKnee = V(-15, 0, 0), LeftKnee = V(-15, 0, 0) } },
+			{ T = 1.2, Ease = "Linear", Pose = { RightShoulder = V(10, 0, 85), LeftShoulder = V(10, 0, -75), RightElbow = V(5, 0, 0), Root = V(-16, 1080, 0), RightKnee = V(-15, 0, 0), LeftKnee = V(-15, 0, 0) } },
+			{ T = 1.32, Pose = { RightShoulder = V(30, 0, 40), LeftShoulder = V(30, 0, -35), Root = V(-22, 1080, 0), RightHip = V(18, 0, 0), LeftHip = V(18, 0, 0), RightKnee = V(-35, 0, 0), LeftKnee = V(-35, 0, 0) } }, -- land from the spin
+			{ T = 1.5, Ease = "InOut", Pose = { Root = V(0, 1080, 0) } }, -- 1080 is facing the same way again
 		},
 	},
 }

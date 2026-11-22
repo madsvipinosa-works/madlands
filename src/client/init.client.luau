@@ -12,6 +12,7 @@ require(script.Menu)
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
 	if not gameProcessed and input.UserInputType == Enum.UserInputType.MouseButton1 then
 		swingRemote:FireServer()
+		Feedback.ClickSound()
 	end
 end)
 

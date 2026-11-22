@@ -103,7 +103,7 @@ return {
 			ShakeAmplitude = 0.25,
 			ShakeSeconds = 0.5,
 			WhirlDelay = 0.12, -- seconds after the key press, when the spin itself starts
-			WhirlSeconds = 0.7, -- how long the crescents of wind circle you
+			WhirlSeconds = 1.1, -- how long the crescents of wind circle you
 			WhirlBlades = 3, -- how many crescents
 			WhirlScale = 1.4, -- each, times its native size (6 studs wide). Each lies from you outward, like a blade
 			WhirlRadius = 5.2, -- studs out from you: its middle, so it spans about 1 to 9 studs from you

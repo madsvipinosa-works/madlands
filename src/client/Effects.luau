@@ -472,17 +472,21 @@ local function later(seconds, act)
 	end)
 end
 
+-- Called the moment you press a skill's key (if it is off cooldown), so the sound is instant, not after the server's answer.
+function Effects.SkillSounds(skill)
+	for _, sound in skill.Sounds or {} do -- each at its own moment (Config/Skills)
+		later(sound.At, function(now)
+			Sounds.Play(sound.Cue, now)
+		end)
+	end
+end
+
 -- Called when the server accepts a skill; picks the effects for its Type.
 function Effects.SkillStarted(skill)
 	local e = Config.Types[skill.Type]
 	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 	if not (e and root) then
 		return
-	end
-	for _, sound in skill.Sounds or {} do -- the skill's sounds, each at its own moment (Config/Skills)
-		later(sound.At, function(now)
-			Sounds.Play(sound.Cue, now)
-		end)
 	end
 	if e.StartDustSize and not e.UseSkySlam then
 		Effects.Dust(groundBelow(root), e.StartDustSize)

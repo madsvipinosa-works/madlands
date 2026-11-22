@@ -115,6 +115,10 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
 	for i, key in KEYS do
 		if input.KeyCode == key then
 			skillRemote:FireServer(i)
+			local s = slots[i]
+			if s and os.clock() >= s.endTime and skillIds[i] then -- ready: the sound starts now; the server still decides
+				Effects.SkillSounds(Skills[skillIds[i]])
+			end
 		end
 	end
 end)

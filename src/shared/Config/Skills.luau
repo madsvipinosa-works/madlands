@@ -59,7 +59,7 @@ return {
 		Width = 6, -- width of the wave
 		Cooldown = 8,
 		Trail = { Color = Color3.fromRGB(190, 225, 255), LightEmission = 0.7 },
-		Sounds = { { Cue = "WaveRelease", At = 0.26 } },
+		Sounds = { { Cue = "WaveRelease", At = 0.2 } },
 	},
 	Whirlwind = {
 		Weapon = "Sword",
@@ -68,14 +68,14 @@ return {
 		Type = "Arc", -- spin with the sword and cut everything around you, again and again
 		Animation = "Whirlwind",
 		AnimationSpeed = 1,
-		Damage = 12, -- per hit
-		Hits = 4, -- the spin cuts this many times (every half turn), so 4 x Damage in total
+		Damage = 8, -- per hit
+		Hits = 6, -- the spin cuts this many times (every half turn), so 6 x Damage in total
 		HitDelay = 0.2, -- seconds until the first cut
-		HitInterval = 0.17, -- seconds between cuts
+		HitInterval = 0.18, -- seconds between cuts
 		Range = 10,
 		ArcDegrees = 360,
 		Cooldown = 12,
 		Trail = { Color = Color3.fromRGB(225, 240, 255), LightEmission = 0.9, Lifetime = 0.28, MaxLength = 30 }, -- long enough to draw the whole circle
-		Sounds = { { Cue = "WhirlSpin", At = 0.1 }, { Cue = "WhirlTick", At = 0.2 }, { Cue = "WhirlTick", At = 0.37 }, { Cue = "WhirlTick", At = 0.54 }, { Cue = "WhirlTick", At = 0.71 } },
+		Sounds = { { Cue = "WhirlSpin", At = 0 } },
 	},
 }
