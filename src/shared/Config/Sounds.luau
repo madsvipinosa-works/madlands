@@ -17,6 +17,7 @@ local DASH = "rbxassetid://109570025444455" -- skill 1 sword dash.mp3: 2.19 s, s
 local WAVE = "rbxassetid://137534802780457" -- wave slash skill 3.mp3: 1.75 s, loud from the start
 local WHIRLWIND = "rbxassetid://90083794106814" -- whirlwind skill 4.mp3: 13.4 s, so it is cut short
 local HIT_FLESH = "rbxassetid://103504644351165" -- hit-flesh: a blow landing on flesh
+local WOLF_BITE = "rbxassetid://103342523319170" -- bite wolf.mp3: 2.1 s, silent until 0.45 s, loudest at 0.65 s
 local WOOSH_SHORT = "rbxassetid://74248579135630" -- "Short Woosh4": 0.36 s, one sharp swish, a little bright
 local WOOSH_HEAVY = "rbxassetid://9120629501" -- Pro Sound Effects "Web Whoosh Fast Heavy Swooshes": 0.85 s, warm and weighty
 local WHIRL = "rbxassetid://118431566107728" -- "whirlwind swing": 0.54 s, a double swish
@@ -39,6 +40,9 @@ return {
 		Swing1 = { { Id = SWORD_SWING, Volume = 0.9, Speed = { 0.97, 1.05 }, Start = 0.09 } },
 		Swing2 = { { Id = SWORD_SWING, Volume = 0.9, Speed = { 1.03, 1.12 }, Start = 0.09 } }, -- the backhand: a touch higher
 		Swing3 = { { Id = SWORD_SWING, Volume = 1, Speed = { 0.85, 0.92 }, Start = 0.05 } }, -- the finisher: lower and heavier
+
+		-- The wolf's bite. The jaws snap shut 0.3 s after it starts, so the clip's silent lead-in is skipped.
+		WolfBite = { { Id = WOLF_BITE, Volume = 1, Speed = { 0.95, 1.05 }, Start = 0.4, Seconds = 1.1 } },
 
 		-- A hit landing on something.
 		Hit = {

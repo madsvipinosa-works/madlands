@@ -26,15 +26,29 @@ return {
 			Legs = { FrontLeg_L = 1, HindLeg_R = 1, FrontLeg_R = -1, HindLeg_L = -1 }, -- mesh name = swing direction (diagonals match)
 			Tail = "Tail",
 			-- The head swings on the neck, and these parts ride along with it.
-			Head = { Part = "Neck", Follows = { "Head", "Ear_L", "Ear_R", "Eye_L", "Eye_R", "Nose" } },
-			-- The bite: rear back, snap the head down and forward, then recover.
+			Head = { Part = "Neck", Follows = {} }, -- the neck swings from the shoulders...
+			-- ...and the skull swings on its own joint at the back of the head (Pivot is in the head's own space; +Z is toward the neck)
+			Skull = { Part = "Head", Follows = { "Ear_L", "Ear_R", "Eye_L", "Eye_R", "Nose" }, Pivot = Vector3.new(0, 0, 0.85) },
+			-- The bite. Every part of the body has its own curve of { seconds, degrees } rows (studs for Lunge), blended smoothly,
+			-- so the neck leads, the head whips a beat later, the legs brace then push, and the tail streams behind.
+			-- Positive = nose down / foot forward. The damage, the fang effect's closing and the sound land when the snap ends:
+			-- WindSeconds + SnapSeconds. Rear back (to 0.22), snap (to 0.30), hold, recover (to Duration).
 			Bite = {
-				Duration = 0.55, -- seconds for the whole move
-				RearDegrees = 14, -- how far the body pulls back first
-				PitchDegrees = 22, -- how far it drops into the bite
-				HeadUpDegrees = 12, -- head lifts during the wind-up
-				HeadDropDegrees = 32, -- head snaps down this far
-				LungeStuds = 1, -- how far the body shoves forward on the bite
+				WindSeconds = 0.22,
+				SnapSeconds = 0.08,
+				Duration = 0.7,
+				Tracks = {
+					Body = { { 0, 0 }, { 0.22, -12 }, { 0.30, 16 }, { 0.42, 16 }, { 0.7, 0 } }, -- the whole body rocks back, then pitches into it
+					Lunge = { { 0, 0 }, { 0.22, -0.5 }, { 0.30, 1.8 }, { 0.42, 1.8 }, { 0.7, 0 } }, -- studs forward
+					Neck = { { 0, 0 }, { 0.12, -8 }, { 0.2, -24 }, { 0.3, 26 }, { 0.44, 24 }, { 0.7, 0 } }, -- arches up, then thrusts first
+					Skull = { { 0, 0 }, { 0.14, -6 }, { 0.22, -16 }, { 0.3, 30 }, { 0.35, 44 }, { 0.44, 34 }, { 0.7, 0 } }, -- the head lags, then whips past the neck
+					FrontLegs = { { 0, 0 }, { 0.22, -14 }, { 0.3, 24 }, { 0.42, 24 }, { 0.7, 0 } }, -- dig in, then reach
+					HindLegs = { { 0, 0 }, { 0.22, 14 }, { 0.3, -20 }, { 0.42, -20 }, { 0.7, 0 } }, -- gather, then push off
+					Tail = { { 0, 0 }, { 0.22, 12 }, { 0.32, -24 }, { 0.5, -10 }, { 0.7, 0 } }, -- lifts and streams out behind
+				},
+				Sound = "WolfBite", -- cue in Config/Sounds, starts with the move
+				Color = Color3.fromRGB(255, 200, 200), -- tint of the fang effect (client/WolfAttackVFX)
+				EffectScale = 1.3, -- size of the fangs and the lunge streak
 			},
 			-- Roblox's importer drops the colors saved in the .glb, so they are set here. Default is used for any piece not listed.
 			Colors = {

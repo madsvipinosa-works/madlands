@@ -114,6 +114,13 @@ local function buildModel(name, def, position)
 	end
 	if look.Head then
 		attach(look.Head.Part, look.Head.Follows) -- the head group rides on the neck
+		local skull = look.Skull and byName[look.Skull.Part]
+		if skull then -- the head has its own joint on the neck, so it can move separately
+			local joint = skull.CFrame * CFrame.new(look.Skull.Pivot)
+			hinge(byName[look.Head.Part], skull, byName[look.Head.Part].CFrame:ToObjectSpace(joint), skull.CFrame:ToObjectSpace(joint), "Skull", "Skull", 1)
+			moving[skull] = true
+			attach(look.Skull.Part, look.Skull.Follows)
+		end
 	end
 	for carrierName, followerNames in look.Attach or {} do
 		attach(carrierName, followerNames)
@@ -229,7 +236,12 @@ local function step(s)
 					end)
 				end
 			else
-				strike()
+				local bite = def.Look.Bite
+				task.delay(if bite then bite.WindSeconds + bite.SnapSeconds else 0, function() -- the bite lands when the jaws snap shut
+					if humanoid.Health > 0 and targetHumanoid.Health > 0 and (target.Position - s.root.Position).Magnitude <= def.AttackRange + 2 then
+						strike()
+					end
+				end)
 			end
 		end
 	else
