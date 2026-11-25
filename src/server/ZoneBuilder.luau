@@ -62,10 +62,41 @@ end
 
 -- The canyon: every cell of a ring outside the zone gets a full-height column of dirt. The inner face is vertical,
 -- wobbles in and out around the circle, and the top rises and falls, so it reads as a canyon and cannot be climbed.
+local function smooth(t)
+	t = math.clamp(t, 0, 1)
+	return t * t * (3 - 2 * t)
+end
+
+-- How far the canyon's face is moved in or out at this angle around the circle (see buildCanyon).
+local function faceOffset(zone, angle)
+	local c = zone.Canyon
+	local seed = c.Seed
+	local ux, uy = math.cos(angle), math.sin(angle)
+	local n = math.noise(ux * 3 + seed, uy * 3 + seed, 0.5) + 0.5 * math.noise(ux * 9 + seed, uy * 9 + seed, 1.5) + 0.25 * math.noise(ux * 24 + seed, uy * 24 + seed, 2.5)
+	local fromNorth = math.abs((angle - math.pi / 2 + math.pi) % (2 * math.pi) - math.pi) -- 0 right at the gate
+	local calm = smooth((fromNorth - c.GateCalm[1]) / (c.GateCalm[2] - c.GateCalm[1]))
+	return math.clamp(n * 1.3, -1, 1) * c.EdgeWobble * calm
+end
+
+-- The canyon: every cell of a ring outside the zone gets a column of dirt. Seen from inside it is not one straight wall but
+-- a rough cliff: the face wanders in and out (three scales of noise, so there are bays and headlands as well as crags), the
+-- ground rises in two ledges and then a ragged top, and the ledges change width along the way. Each step up is taller than a
+-- player can jump (and an invisible barrier, buildBarrier, keeps fast runners off it). Near the gate the wandering fades out, so the cliff meets the gate's walls
+-- cleanly, and the cut where the gate takes over is ragged.
 local function buildCanyon(zone)
 	local c = zone.Canyon
 	local material = Enum.Material[c.Material]
 	terrain:SetMaterialColor(material, c.Color)
+	local seed = c.Seed
+
+	-- The height of the top of the cliff at a spot: broad swells plus small bumps, and now and then a crag one step higher.
+	local function topAt(x, z)
+		local n = math.noise(x / 70 + seed, z / 70 + seed, 4.5) + 0.5 * math.noise(x / 20 + seed, z / 20 + seed, 6.5)
+		local top = c.Height + n * c.HeightVariation
+		local crag = 4 * math.max(0, math.floor(math.noise(x / 7 + seed, z / 7 + seed, 7.5) * 2 + 0.5))
+		return math.clamp(top + crag, c.MinHeight, c.MaxHeight)
+	end
+
 	local outer = zone.Radius + c.Thickness + c.EdgeWobble
 	local cells = math.ceil(outer / CELL)
 	local work = 0
@@ -74,19 +105,57 @@ local function buildCanyon(zone)
 			local x, z = (i + 0.5) * CELL, (j + 0.5) * CELL
 			local distance = math.sqrt(x * x + z * z)
 			local angle = math.atan2(z, x)
-			local wobble = math.noise(math.cos(angle) * 3 + c.Seed, math.sin(angle) * 3 + c.Seed, 0.5) * c.EdgeWobble * 2
-			local face = zone.Radius + wobble
+			local depth = distance - (zone.Radius + faceOffset(zone, angle)) -- how far in from the face this cell is
 			-- Along the north edge the gate's walls take the canyon's place (Gate.CanyonGap = half the width of that stretch).
-			local underGate = z > 0 and math.abs(x) < zone.Gate.CanyonGap
-			if distance >= face and distance <= zone.Radius + c.Thickness + wobble and not underGate then
-				local variation = 1 + math.noise(x / 40 + c.Seed, z / 40 + c.Seed, 1.5) * c.HeightVariation * 2
-				local height = math.max(math.floor(c.Height * variation / CELL) * CELL, 3 * CELL)
+			local gapEdge = zone.Gate.CanyonGap + 8 * math.noise(z / 14 + seed, 0.5, 3.5)
+			local underGate = z > 0 and math.abs(x) < gapEdge
+			if depth >= 0 and depth <= c.Thickness and not underGate then
+				local ux, uy = math.cos(angle), math.sin(angle)
+				local w1 = 4 + 5 * (math.noise(ux * 6 + seed, uy * 6 + seed, 8.5) + 0.5) -- width of the first and second ledge
+				local w2 = 4 + 5 * (math.noise(ux * 8 + seed, uy * 8 + seed, 9.5) + 0.5)
+				local height
+				if depth < w1 then
+					height = c.Ledges[1]
+				elseif depth < w1 + w2 then
+					height = c.Ledges[2]
+				else
+					height = topAt(x, z)
+				end
+				height = math.max(math.floor(height / CELL) * CELL, CELL)
 				terrain:FillBlock(CFrame.new(x, (height - zone.Depth) / 2, z), Vector3.new(CELL, height + zone.Depth, CELL), material)
 				work += 1
 				if work % 400 == 0 then
 					task.wait() -- spread the work over a few frames; the middle of the zone is already solid
 				end
 			end
+		end
+	end
+end
+
+-- Smooth terrain turns the steps of the canyon into slopes a player can run up at speed, so an invisible wall stands along
+-- its face: short straight pieces, each just in front of the rock where it is, tall enough to stop any jump. Nothing is
+-- needed where the gate's walls take the canyon's place.
+local function buildBarrier(zone)
+	local folder = Instance.new("Folder")
+	folder.Name = "CanyonBarrier"
+	folder.Parent = workspace
+	local count = 240
+	local step = math.pi * 2 / count
+	for i = 0, count - 1 do
+		local angle = i * step
+		local radius = zone.Radius + faceOffset(zone, angle) - 1.5
+		local x, z = math.cos(angle) * radius, math.sin(angle) * radius
+		if not (z > 0 and math.abs(x) < zone.Gate.CanyonGap + 14) then
+			local piece = Instance.new("Part")
+			piece.Name = "Barrier"
+			piece.Anchored = true
+			piece.CanQuery = false
+			piece.CanTouch = false
+			piece.CastShadow = false
+			piece.Transparency = 1
+			piece.Size = Vector3.new(2, 90, radius * step + 2) -- long enough to overlap its neighbours
+			piece.CFrame = CFrame.new(x, 40, z) * CFrame.Angles(0, -angle, 0) -- its long side runs around the circle
+			piece.Parent = folder
 		end
 	end
 end
@@ -424,6 +493,26 @@ local function placeSpawn()
 end
 
 local zone = Zones.OutsideZone1
+
+-- Smooth terrain turns the step between two ledges into a steep slope, and a Humanoid walks up any slope below its MaxSlopeAngle
+-- (89 degrees by default), which would let players walk up the canyon. So players are limited to zone.MaxWalkSlope, set as soon
+-- as they spawn (the zone takes a while to build, and people can join before it is done).
+local function limitSlope(character)
+	local humanoid = character:WaitForChild("Humanoid", 10)
+	if humanoid then
+		humanoid.MaxSlopeAngle = zone.MaxWalkSlope
+	end
+end
+local function watch(player)
+	player.CharacterAdded:Connect(limitSlope)
+	if player.Character then
+		task.spawn(limitSlope, player.Character)
+	end
+end
+game:GetService("Players").PlayerAdded:Connect(watch)
+for _, player in game:GetService("Players"):GetPlayers() do
+	watch(player)
+end
 -- Grass length is a Terrain property a game script is not allowed to change; it is set on the place in Studio instead.
 buildGround(zone)
 placeSpawn()
@@ -442,6 +531,7 @@ end
 table.insert(keepClear, { Position = Vector3.new(0, 0, zone.Gate.Z - 40 * zone.Gate.Scale), Radius = 44 * zone.Gate.Scale }) -- the gate's forecourt
 buildTrees(zone, points, keepClear)
 buildCanyon(zone)
+buildBarrier(zone)
 -- (the canyon is the last and slowest step; it waits between batches, but everything the player stands on is already built)
 
 print(`[Zone] {zone.Name} (levels {zone.LevelRange[1]}-{zone.LevelRange[2]}): radius {zone.Radius}, canyon wall built`)

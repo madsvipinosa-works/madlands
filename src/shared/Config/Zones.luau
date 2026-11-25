@@ -9,19 +9,24 @@ return {
 		-- Size: Radius is the zone's size. When you change it, also move Gate.Z (about Radius - 20), the trail's last waypoint (about
 		-- 60 studs in front of the gate) and the camps, which are placed in studs from the spawn.
 		Radius = 420, -- studs from the spawn to the foot of the canyon wall
+		MaxWalkSlope = 50, -- degrees: players cannot walk up anything steeper (hills are gentle; the canyon's ledges are far steeper)
 		Depth = 16, -- studs of terrain below the surface (the top surface is at y = 0)
 		Material = "Grass", -- any Enum.Material name
 		GrassColor = Color3.fromRGB(62, 86, 42), -- Roblox's default grass is 111, 126, 62; lower numbers = darker
 
-		-- The wall around the zone: a dirt canyon with a vertical face that cannot be climbed or jumped. Terrain is built
-		-- from 4-stud cells, so the face is a little ragged, which suits a canyon.
+		-- The wall around the zone: a dirt canyon that cannot be climbed or jumped: its face wanders in and out, and it rises in
+		-- two ledges (each step up is taller than a jump) to a ragged top. Terrain is built from 4-stud cells, so everything is blocky.
 		Canyon = {
 			Material = "Mud", -- dark packed dirt (the trail uses Ground, and a terrain material has one color for the whole map)
 			Color = Color3.fromRGB(98, 72, 50),
 			Thickness = 32, -- studs deep, from the face outward
-			Height = 36, -- studs above the ground at its average (the gate walls are a bit taller: 40 x Gate.Scale)
-			HeightVariation = 0.12, -- 0.12 = the top varies up to 12% higher or lower
-			EdgeWobble = 12, -- studs the face moves in and out around the circle
+			Ledges = { 12, 24 }, -- heights of the two ledges below the top: steps of 12 are too tall to jump
+			Height = 38, -- studs above the ground at the top, on average
+			HeightVariation = 8, -- the top rises and falls this many studs...
+			MinHeight = 34, -- ...but never below this (keeps every step up taller than a jump)...
+			MaxHeight = 44, -- ...or above this: the gate walls (40 x Gate.Scale) are taller than every peak
+			EdgeWobble = 22, -- most studs the face moves in or out around the circle
+			GateCalm = { 0.12, 0.5 }, -- the wobble fades out within this many radians of the gate, so the cliff meets its walls cleanly
 			Seed = 11,
 		},
 
@@ -45,7 +50,7 @@ return {
 				Vector3.new(-10, 0, 232),
 				Vector3.new(12, 0, 268),
 				Vector3.new(-4, 0, 300),
-				Vector3.new(0, 0, 330),
+				Vector3.new(0, 0, 322),
 			},
 			Width = 18, -- studs wide (it varies a little along the way, so the edges look worn)
 			Material = "Ground", -- the path
@@ -63,9 +68,9 @@ return {
 		Gate = {
 			Name = "Starter Town",
 			Model = "StarterTownGateCurve", -- ServerStorage.Models.StarterTownGateCurve, from assets/models/StarterTownGateCurve.rbxm
-			Scale = 1.1, -- how big the gate is built (1 = as the model was saved). Its walls are 40 x Scale tall (44): a bit above the canyon (Canyon.Height)
+			Scale = 1.2, -- how big the gate is built (1 = as the model was saved). Its walls are 40 x Scale tall (48): above the canyon's highest peak (Canyon.MaxHeight)
 			Z = 400, -- how far north its middle stands (x = 0); the wall ends must reach into the canyon at x = +-CanyonGap or a little beyond
-			CanyonGap = 102, -- half the width of the stretch of canyon replaced by the gate
+			CanyonGap = 104, -- half the width of the stretch of canyon replaced by the gate
 			DestinationPlaceId = 0, -- the Roblox place id of the Starter Town; 0 = not connected yet
 			AutoOpen = false, -- true: the gate opens by itself when a player is OpenDistance close (false: only when entering)
 			OpenDistance = 70,
@@ -163,7 +168,7 @@ return {
 				ClearAroundMobs = 14, -- studs kept open around each mob camp group (on top of its radius)
 				ClearAroundCampfires = 18, -- studs kept open around each campfire
 				ClearAroundTrail = 20, -- studs kept open beyond the trail's edge
-				EdgeMargin = 12, -- studs kept clear in front of the canyon wall
+				EdgeMargin = 34, -- studs kept clear in front of the canyon wall (more than its wobble)
 			},
 			-- The tree is the model in assets/models/Tree.rbxm. It is about 13 studs tall at scale 1.
 			Scale = { 1.6, 2.6 }, -- every tree is randomly scaled between these (so about 21 to 35 studs tall)
