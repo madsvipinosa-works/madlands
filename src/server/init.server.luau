@@ -11,6 +11,7 @@ require(script.Combat)
 require(script.WeaponVisuals)
 require(script.DevEffectTuner)
 require(script.ZoneBuilder) -- the ground, canyon wall, trail and trees; must load before the dummy and mobs, which stand on it
+require(script.GateBuilder) -- the Starter Town gate at the end of the trail; needs the canyon wall from ZoneBuilder
 require(script.DevDummy)
 require(script.MobSpawner)
 

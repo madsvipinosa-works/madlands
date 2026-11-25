@@ -31,8 +31,7 @@ return {
 		},
 
 		-- The trail from spawn to the town gate: a winding dirt path. Waypoints are x, z on the ground; the path curves
-		-- smoothly through them. The last one is the gate site: a stone apron where the way to the Starter Town (a separate
-		-- place, build step 7) will stand.
+		-- smoothly through them. The last one is just in front of the gate (see Gate below), on a stone apron.
 		Trail = {
 			Waypoints = {
 				Vector3.new(0, 0, 0),
@@ -40,8 +39,8 @@ return {
 				Vector3.new(-10, 0, 90),
 				Vector3.new(10, 0, 135),
 				Vector3.new(-6, 0, 180),
-				Vector3.new(8, 0, 225),
-				Vector3.new(0, 0, 262),
+				Vector3.new(4, 0, 205),
+				Vector3.new(0, 0, 216),
 			},
 			Width = 18, -- studs wide (it varies a little along the way, so the edges look worn)
 			Material = "Ground", -- the path
@@ -50,6 +49,40 @@ return {
 			GateColor = Color3.fromRGB(110, 108, 104),
 			GateRadius = 14, -- studs
 			Seed = 3,
+		},
+
+		-- The Starter Town gate, at the end of the trail. The town itself is a separate place: pressing F at the gate, or walking
+		-- into its passage, fades the screen and teleports the player to DestinationPlaceId. While that is 0 (no town place yet),
+		-- the player is put back in front of the gate after the fade.
+		Gate = {
+			Name = "Starter Town",
+			Model = "StarterTownGate", -- ServerStorage.Models.StarterTownGate, from assets/models/StarterTownGate.rbxm
+			Z = 248, -- how far north the gate stands (x = 0); its back must stay inside the canyon, so do not push it much further
+			DestinationPlaceId = 0, -- the Roblox place id of the Starter Town; 0 = not connected yet
+			OpenDistance = 55, -- the gate opens when a player is this close
+			OpenSeconds = 2.6, -- how long it takes to open fully
+			DoorOpenDegrees = 95,
+			PromptKey = Enum.KeyCode.F,
+			PromptDistance = 24, -- studs from the gate at which "Enter" shows
+			FadeSeconds = 1.2, -- the screen fades to black this fast, then the teleport happens
+			ReturnDistance = 46, -- studs in front of the gate where the player is put back if the town is not connected
+			-- The town you can see behind the wall: houses in a row, and a hall at the end of the road.
+			Backdrop = {
+				Seed = 31,
+				Reach = 100, -- houses are placed from -Reach to +Reach across
+				Row = 24, -- studs behind the gate's middle
+				WallGap = 3, -- studs between the wall's back and the houses
+				RoadClear = 16, -- studs kept open at the middle for the road behind the passage
+				MaxRadius = 280, -- houses stay inside this distance from the zone's middle (the canyon starts around 290)
+				Width = { 12, 18 },
+				Depth = { 11, 15 },
+				Height = { 18, 28 }, -- wall height, before the roof (the gate wall is 28 high, so these show over it)
+				Gap = { 3, 8 }, -- studs between houses
+				RoofRise = 0.55, -- roof height as a share of the house's depth
+				WallColors = { Color3.fromRGB(214, 198, 168), Color3.fromRGB(205, 176, 140), Color3.fromRGB(196, 190, 176) },
+				RoofColors = { Color3.fromRGB(150, 70, 52), Color3.fromRGB(104, 78, 58), Color3.fromRGB(86, 92, 104) },
+				Hall = { Z = 40, Width = 36, Depth = 18, Height = 30 }, -- the building at the end of the road
+			},
 		},
 
 		-- Mob camps: where the mobs live. A camp is one kind of mob in one or more groups; each group is a number of mobs
