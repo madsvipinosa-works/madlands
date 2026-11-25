@@ -9,7 +9,6 @@ local TeleportService = game:GetService("TeleportService")
 local TweenService = game:GetService("TweenService")
 
 local Zones = require(ReplicatedStorage.Shared.Config.Zones)
-local CanyonShape = require(ReplicatedStorage.Shared.CanyonShape)
 local zone = Zones.OutsideZone1
 local config = zone.Gate
 local K = config.Scale -- how much bigger than the model was saved (1 = as saved)
@@ -181,83 +180,6 @@ local function setOpen(open)
 end
 progress.Changed:Connect(apply)
 apply(0)
-
--- Rampart ---------------------------------------------------------------------------------------------------------------
--- Beside the gate the canyon is topped with the hand-made WallPiece (Gate.Flank): a battlement running along the cliff's top edge,
--- on both sides, in one smooth curve like the gate's own walls. It starts inside the gate's walls, where the two overlap, and
--- sinks back into the rock where the cliff has risen as far as it will, so the gate's masonry fades into the canyon.
--- The canyon is built to match (ZoneBuilder: Canyon.GateLift): its top beside the gate is Flank.Show studs below the gate's walls.
-do
-	local flank = config.Flank
-	local piece = ServerStorage.Models:FindFirstChild(flank.Model)
-	if piece then
-		local folderFlank = Instance.new("Folder")
-		folderFlank.Name = "Rampart"
-		folderFlank.Parent = folder
-		local base = piece:GetPivot()
-		local pieceLo, pieceHi = Vector3.new(1e9, 1e9, 1e9), Vector3.new(-1e9, -1e9, -1e9)
-		for _, part in piece:GetDescendants() do
-			if part:IsA("MeshPart") then
-				local cf = base:Inverse() * part.CFrame
-				local half = part.Size / 2
-				local r = cf:VectorToWorldSpace(Vector3.new(half.X, 0, 0)):Abs() + cf:VectorToWorldSpace(Vector3.new(0, half.Y, 0)):Abs() + cf:VectorToWorldSpace(Vector3.new(0, 0, half.Z)):Abs()
-				pieceLo = Vector3.new(math.min(pieceLo.X, cf.X - r.X), math.min(pieceLo.Y, cf.Y - r.Y), math.min(pieceLo.Z, cf.Z - r.Z))
-				pieceHi = Vector3.new(math.max(pieceHi.X, cf.X + r.X), math.max(pieceHi.Y, cf.Y + r.Y), math.max(pieceHi.Z, cf.Z + r.Z))
-			end
-		end
-		local scale = flank.Scale
-		local length, depth, height = (pieceHi.X - pieceLo.X) * scale, (pieceHi.Z - pieceLo.Z) * scale, (pieceHi.Y - pieceLo.Y) * scale
-		local fromX = config.CanyonGap - 14 -- inside the gate's own wall
-		local toX = config.CanyonGap + zone.Canyon.GateLift + flank.Extra
-		local fade = flank.Fade
-		local placed = 0
-
-		-- The face of the canyon, smoothed, so the rampart is one clean curve and not a copy of every bump in the cliff.
-		local function smoothFace(angle)
-			local sum = 0
-			for k = -3, 3 do
-				sum += CanyonShape.faceOffset(zone, angle + k * 0.02)
-			end
-			return zone.Radius + sum / 7
-		end
-
-		for _, side in { -1, 1 } do
-			local angle = math.asin(fromX / zone.Radius) -- from north
-			while true do
-				local worldAngle = math.pi / 2 - side * angle
-				local radius = smoothFace(worldAngle) + flank.Inset + depth / 2
-				local x, z = math.cos(worldAngle) * radius, math.sin(worldAngle) * radius
-				local ax = math.abs(x)
-				if ax > toX then
-					break
-				end
-				local top = groundAt(x, z) -- the top of the canyon here
-				-- the further out, the deeper it sinks: the last stretch disappears into the rock
-				local show = flank.Show * (1 - CanyonShape.smooth((ax - (toX - fade)) / fade))
-				local bottom = top - (height - show)
-				local copy = piece:Clone()
-				copy:ScaleTo(copy:GetScale() * scale)
-				copy:PivotTo(CFrame.lookAt(Vector3.new(x, bottom - pieceLo.Y * scale, z), Vector3.new(0, bottom - pieceLo.Y * scale, 0))) -- faces the middle of the zone
-				for _, part in copy:GetDescendants() do
-					if part:IsA("BasePart") then
-						part.Anchored = true
-						part.CanCollide = false -- on top of a cliff nobody can reach
-						part.CanQuery = false
-						part.CanTouch = false
-						part.Material = Enum.Material.Slate
-						part.Color = Color3.new(1, 1, 1)
-					end
-				end
-				copy.Parent = folderFlank
-				placed += 1
-				angle += (length * 0.94) / radius -- slightly overlapped, so there is no crack between pieces
-			end
-		end
-		print(`[Gate] {placed} rampart pieces on the canyon, scale {scale}`)
-	else
-		warn(`[Gate] ServerStorage.Models.{flank.Model} not found: save it as assets/models/{flank.Model}.rbxm`)
-	end
-end
 
 -- Light: braziers in front and lanterns up on the gatehouse.
 for _, spot in { Vector3.new(15, 11, -17), Vector3.new(-15, 11, -17), Vector3.new(17, 18, 14), Vector3.new(-17, 18, 14) } do

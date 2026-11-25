@@ -75,7 +75,6 @@ local function buildCanyon(zone)
 	local seed = c.Seed
 
 	-- The height of the top of the cliff at a spot: broad swells plus small bumps, and now and then a crag one step higher.
-	local wallTop = 40 * zone.Gate.Scale -- how tall the gate's walls are; the rampart on the canyon (Gate.Flank.Show) makes up the difference
 	local function topAt(x, z)
 		local n = math.noise(x / 70 + seed, z / 70 + seed, 4.5) + 0.5 * math.noise(x / 20 + seed, z / 20 + seed, 6.5)
 		local top = c.Height + n * c.HeightVariation
@@ -84,7 +83,7 @@ local function buildCanyon(zone)
 		-- Next to the gate the cliff rises to meet its walls, so the walls do not stand up out of a much lower cliff.
 		local beyondGap = math.abs(x) - zone.Gate.CanyonGap
 		if z > 0 and beyondGap < c.GateLift then
-			top += (wallTop - zone.Gate.Flank.Show - top) * (1 - smooth(beyondGap / c.GateLift))
+			top += (c.GateHeight - top) * (1 - smooth(beyondGap / c.GateLift))
 		end
 		return top
 	end
@@ -671,38 +670,100 @@ local function buildTownBackdrop(zone)
 		local hit = workspace:Raycast(Vector3.new(x, 500, z), Vector3.new(0, -800, 0), params)
 		return hit and hit.Position.Y
 	end
-	local function placement(radius, angle)
-		local x, z = math.cos(angle) * radius, math.sin(angle) * radius
-		local y = ground(x, z)
-		if not y then
-			return nil
-		end
-		-- the front faces the zone: toward the middle of the circle
-		return CFrame.new(x, y - 1, z) * CFrame.Angles(0, math.pi / 2 - angle, 0), x, z
-	end
 	local count = 0
 
-	-- Rows of houses climbing the hill.
-	for _, radius in t.Rows do
-		local angle = math.pi / 2 - t.Spread
-		while angle < math.pi / 2 + t.Spread do
-			local jitter = rng:NextNumber(-0.012, 0.012)
-			local base = placement(radius + rng:NextNumber(-5, 5), angle + jitter)
-			-- a street up the middle, between the gate and the keep
-			local lane = math.abs(math.cos(angle)) * radius < t.LaneHalfWidth
-			if base and not lane and rng:NextNumber() > t.Gaps then
-				local w, d, h = rng:NextNumber(t.Width[1], t.Width[2]), rng:NextNumber(t.Depth[1], t.Depth[2]), rng:NextNumber(t.Height[1], t.Height[2])
-				townHouse(folder, base, w, d, h, rng, t)
+	-- The town wall: the hand-made WallPiece tiled along a curve (Town.Wall.Path) that starts at the ends of the gate's walls and
+	-- bends round behind the town, so the houses stand inside a walled enclosure on the terraces beyond the canyon.
+	local wall = t.Wall
+	local wallPoints = trailPoints(wall.Path)
+	local piece = ServerStorage.Models:FindFirstChild(wall.Model)
+	local function inside(x, z, margin)
+		-- even-odd test against the wall's outline, closed across the gate side
+		local isIn = false
+		local n = #wallPoints
+		for i = 1, n do
+			local a, b = wallPoints[i], wallPoints[i % n + 1]
+			if (a.Z > z) ~= (b.Z > z) and x < a.X + (z - a.Z) / (b.Z - a.Z) * (b.X - a.X) then
+				isIn = not isIn
+			end
+		end
+		return isIn and nearest(Vector3.new(x, 0, z), wallPoints) > margin
+	end
+	local wallPieces = 0
+	if piece then
+		local wallFolder = Instance.new("Folder")
+		wallFolder.Name = "TownWall"
+		wallFolder.Parent = folder
+		local base = piece:GetPivot()
+		local lo, hi = Vector3.new(1e9, 1e9, 1e9), Vector3.new(-1e9, -1e9, -1e9)
+		for _, part in piece:GetDescendants() do
+			if part:IsA("MeshPart") then
+				local cf = base:Inverse() * part.CFrame
+				local half = part.Size / 2
+				local r = cf:VectorToWorldSpace(Vector3.new(half.X, 0, 0)):Abs() + cf:VectorToWorldSpace(Vector3.new(0, half.Y, 0)):Abs() + cf:VectorToWorldSpace(Vector3.new(0, 0, half.Z)):Abs()
+				lo = Vector3.new(math.min(lo.X, cf.X - r.X), math.min(lo.Y, cf.Y - r.Y), math.min(lo.Z, cf.Z - r.Z))
+				hi = Vector3.new(math.max(hi.X, cf.X + r.X), math.max(hi.Y, cf.Y + r.Y), math.max(hi.Z, cf.Z + r.Z))
+			end
+		end
+		local scale = wall.Scale
+		local length = (hi.X - lo.X) * scale
+		local travelled = length -- so the first piece goes right at the start
+		for i = 1, #wallPoints - 1 do
+			travelled += (wallPoints[i + 1] - wallPoints[i]).Magnitude
+			if travelled >= length * 0.94 then -- a little overlap, so there is no crack between pieces
+				travelled = 0
+				local a, b = wallPoints[i], wallPoints[math.min(i + 4, #wallPoints)]
+				local tangent = (b - a).Unit
+				local middle = (a + b) / 2
+				local normal = Vector3.new(-tangent.Z, 0, tangent.X)
+				local lowest = math.huge
+				for _, offset in { -0.5, 0, 0.5 } do -- the lowest ground under it, so the terraces never leave a gap beneath
+					lowest = math.min(lowest, ground(middle.X + tangent.X * length * offset, middle.Z + tangent.Z * length * offset) or lowest)
+				end
+				if lowest < math.huge then
+					local copy = piece:Clone()
+					copy:ScaleTo(copy:GetScale() * scale)
+					local y = lowest - wall.Sink - lo.Y * scale
+					copy:PivotTo(CFrame.lookAt(Vector3.new(middle.X, y, middle.Z), Vector3.new(middle.X, y, middle.Z) + normal))
+					for _, part in copy:GetDescendants() do
+						if part:IsA("BasePart") then
+							part.Anchored = true
+							part.CanCollide = false -- beyond the canyon, where nobody goes
+							part.CanQuery = false
+							part.CanTouch = false
+							part.Material = Enum.Material.Slate
+							part.Color = Color3.new(1, 1, 1)
+						end
+					end
+					copy.Parent = wallFolder
+					wallPieces += 1
+				end
+			end
+		end
+	else
+		warn(`[Zone] ServerStorage.Models.{wall.Model} not found: save it as assets/models/{wall.Model}.rbxm`)
+	end
+
+	-- Rows of houses inside the wall, facing the gate.
+	for _, z in t.RowsZ do
+		local x = -t.HalfWidth
+		while x <= t.HalfWidth do
+			local w, d, h = rng:NextNumber(t.Width[1], t.Width[2]), rng:NextNumber(t.Depth[1], t.Depth[2]), rng:NextNumber(t.Height[1], t.Height[2])
+			local px, pz = x + rng:NextNumber(-4, 4), z + rng:NextNumber(-5, 5)
+			local y = ground(px, pz)
+			if y and math.abs(px) > t.LaneHalfWidth + w / 2 and rng:NextNumber() > t.Gaps and inside(px, pz, t.WallMargin + w / 2) then
+				townHouse(folder, CFrame.new(px, y - 1, pz), w, d, h, rng, t)
 				count += 1
 			end
-			angle += t.Step + rng:NextNumber(0, t.Step * 0.5)
+			x += w + rng:NextNumber(t.Gap[1], t.Gap[2])
 		end
 	end
 
 	-- The town hall at the top of the street, straight behind the gate: a long hall with a pitched roof, columns and steps along the
 	-- front, and a clock tower rising from the middle.
 	local hall = t.Hall
-	local base, hx, hz = placement(hall.Radius, math.pi / 2)
+	local hy = ground(0, hall.Z)
+	local base = hy and CFrame.new(0, hy - 1, hall.Z)
 	if base then
 		local model = Instance.new("Model")
 		model.Name = "TownHall"
@@ -750,7 +811,7 @@ local function buildTownBackdrop(zone)
 		light.Parent = clock
 		count += 1
 	end
-	print(`[Zone] town backdrop: {count} buildings behind the gate`)
+	print(`[Zone] town backdrop: {count} buildings inside {wallPieces} wall pieces`)
 end
 
 -- Trees on the far terraces, big enough to read from inside the zone. Their heights come from a raycast onto the new terrain.

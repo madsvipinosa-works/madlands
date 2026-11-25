@@ -26,6 +26,7 @@ return {
 			MinHeight = 34, -- ...but never below this (keeps every step up taller than a jump)...
 			MaxHeight = 44, -- ...or above this: the gate walls (40 x Gate.Scale) are taller than every peak
 			EdgeWobble = 22, -- most studs the face moves in or out around the circle
+			GateHeight = 40, -- the canyon's top beside the gate is this high (the gate's walls are 40 x Gate.Scale), eased in over GateLift
 			GateLift = 110, -- the cliff rises to the height of the gate's walls over this many studs beside the gate
 			GateCalm = { 0.12, 0.5 }, -- the wobble fades out within this many radians of the gate, so the cliff meets its walls cleanly
 			Seed = 11,
@@ -54,24 +55,38 @@ return {
 			AltColor = Color3.fromRGB(106, 146, 60),
 			EdgeMaterial = "Ground", -- the dirt edge of each terrace and the soil below
 			Trees = { Count = 170, Scale = { 2.6, 4.2 }, Edge = 50 }, -- big trees on the far terraces; Edge = studs left bare at the rim
-			-- The town beyond the gate is only hinted at: a few roofs, chimney smoke, warm windows and a clock tower showing over the gate's
-			-- walls, so it feels like a town is there without showing it all. It stands on low ground behind the walls (scenery only).
+			-- The town beyond the gate is only hinted at: it stands inside a wall (the hand-made WallPiece) that starts at the ends of the
+			-- gate's walls and bends round behind the town, on the terraces beyond the canyon. Over the walls you see rooftops, chimney smoke,
+			-- warm windows and a clock tower, so it feels like a town is there without showing it all (scenery only).
 			Town = {
 				Seed = 23,
-				Spread = 0.5, -- radians either side of straight behind the gate that it fills (0.5 = about 29 degrees)
-				Bump = 0, -- extra height of its ground (0 = none: the ground behind the gate stays low, below the walls)
+				Spread = 0.5, -- radians either side of straight behind the gate that the ground is raised and smoothed for the town
+				Bump = 0, -- extra height of its ground (0 = none)
 				Lower = 0.6, -- how much lower than the other land it starts, right behind the gate (0 = not lower)
-				Rows = { 458, 484, 510 }, -- distance from the spawn of each row of houses, close behind the gate's walls
-				Step = 0.07, -- radians between houses along a row (about 33 studs)
-				Gaps = 0.3, -- chance that a house is left out
-				LaneHalfWidth = 24, -- a street up the middle, from the gate to the hall
+				Wall = {
+					Model = "WallPiece", -- assets/models/WallPiece.rbxm
+					Scale = 2.4, -- size of each piece (1 = as saved): it stands about 40 studs tall, like the gate's walls
+					Sink = 3, -- studs it is set into the ground
+					-- x, z of the wall's path: from the end of the gate's right wall, round the back of the town, to the end of the left wall
+					Path = {
+						Vector3.new(150, 0, 446), Vector3.new(184, 0, 484), Vector3.new(194, 0, 536), Vector3.new(162, 0, 586),
+						Vector3.new(92, 0, 616), Vector3.new(0, 0, 626), Vector3.new(-92, 0, 616), Vector3.new(-162, 0, 586),
+						Vector3.new(-194, 0, 536), Vector3.new(-184, 0, 484), Vector3.new(-150, 0, 446),
+					},
+				},
+				RowsZ = { 516, 548, 580 }, -- z of each row of houses inside the wall
+				HalfWidth = 190, -- houses are tried from -HalfWidth to +HalfWidth across
+				WallMargin = 14, -- studs kept between a house and the wall
+				Gap = { 6, 16 }, -- studs between houses along a row
+				Gaps = 0.25, -- chance that a house is left out
+				LaneHalfWidth = 22, -- a street up the middle, from the gate to the hall
 				Width = { 18, 26 },
 				Depth = { 14, 20 },
-				Height = { 16, 28 }, -- wall height, before the roof; the tallest peek over the gate's walls
+				Height = { 14, 22 }, -- wall height, before the roof: lower than the town wall, so the wall hides them
 				WallColors = { Color3.fromRGB(216, 200, 170), Color3.fromRGB(206, 178, 142), Color3.fromRGB(198, 192, 178) },
 				RoofColors = { Color3.fromRGB(152, 68, 52), Color3.fromRGB(104, 78, 58), Color3.fromRGB(88, 94, 106) },
 				StoneColor = Color3.fromRGB(150, 146, 138),
-				Hall = { Radius = 536, Width = 60, Depth = 28, Height = 26, TowerWidth = 14, TowerHeight = 50 }, -- its clock tower is what you see from afar
+				Hall = { Z = 474, Width = 60, Depth = 28, Height = 30, TowerWidth = 16, TowerHeight = 92 }, -- right behind the gate: its clock tower peeks over the gatehouse, the one thing you see from the trail
 			},
 			Haze = {
 				Density = 0.3,
@@ -133,11 +148,6 @@ return {
 			PromptDistance = 46, -- studs from the gate at which "Enter" shows
 			FadeSeconds = 1.2, -- the screen fades to black this fast, then the teleport happens
 			ReturnDistance = 70, -- studs in front of the gate where the player is put back if the town is not connected
-			-- The hand-made WallPiece (assets/models/WallPiece.rbxm) is tiled along the TOP of the canyon beside the gate, as a battlement
-			-- that follows the cliff's edge in one smooth curve. Scale = size of each piece (1 = as saved); Show = studs of it standing above
-			-- the rock (the rest sinks into it, so the canyon top plus Show reaches the gate's wall top); Inset = studs back from the cliff's
-			-- edge; Extra = how far past the canyon's rise (GateLift) it keeps going; Fade = studs over which it sinks away at the end.
-			Flank = { Model = "WallPiece", Scale = 2.2, Show = 22, Inset = 5, Extra = 40, Fade = 70 },
 		},
 
 		-- Mob camps: where the mobs live. A camp is one kind of mob in one or more groups; each group is a number of mobs
