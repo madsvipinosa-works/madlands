@@ -19,7 +19,7 @@ return {
 			Material = "Mud", -- dark packed dirt (the trail uses Ground, and a terrain material has one color for the whole map)
 			Color = Color3.fromRGB(98, 72, 50),
 			Thickness = 32, -- studs deep, from the face outward
-			Height = 36, -- studs above the ground at its average (the gate's walls are as tall: 40 x Gate.Scale)
+			Height = 36, -- studs above the ground at its average (the gate walls are a bit taller: 40 x Gate.Scale)
 			HeightVariation = 0.12, -- 0.12 = the top varies up to 12% higher or lower
 			EdgeWobble = 12, -- studs the face moves in and out around the circle
 			Seed = 11,
@@ -45,7 +45,7 @@ return {
 				Vector3.new(-10, 0, 232),
 				Vector3.new(12, 0, 268),
 				Vector3.new(-4, 0, 300),
-				Vector3.new(0, 0, 340),
+				Vector3.new(0, 0, 330),
 			},
 			Width = 18, -- studs wide (it varies a little along the way, so the edges look worn)
 			Material = "Ground", -- the path
@@ -63,9 +63,9 @@ return {
 		Gate = {
 			Name = "Starter Town",
 			Model = "StarterTownGateCurve", -- ServerStorage.Models.StarterTownGateCurve, from assets/models/StarterTownGateCurve.rbxm
-			Scale = 0.9, -- how big the gate is built (1 = as the model was saved). Its walls are 40 x Scale tall: keep that level with Canyon.Height
+			Scale = 1.1, -- how big the gate is built (1 = as the model was saved). Its walls are 40 x Scale tall (44): a bit above the canyon (Canyon.Height)
 			Z = 400, -- how far north its middle stands (x = 0); the wall ends must reach into the canyon at x = +-CanyonGap or a little beyond
-			CanyonGap = 84, -- half the width of the stretch of canyon replaced by the gate
+			CanyonGap = 102, -- half the width of the stretch of canyon replaced by the gate
 			DestinationPlaceId = 0, -- the Roblox place id of the Starter Town; 0 = not connected yet
 			AutoOpen = false, -- true: the gate opens by itself when a player is OpenDistance close (false: only when entering)
 			OpenDistance = 70,
