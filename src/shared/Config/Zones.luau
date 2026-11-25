@@ -38,9 +38,9 @@ return {
 				Vector3.new(14, 0, 45),
 				Vector3.new(-10, 0, 90),
 				Vector3.new(10, 0, 135),
-				Vector3.new(-6, 0, 164),
-				Vector3.new(3, 0, 178),
-				Vector3.new(0, 0, 188),
+				Vector3.new(-6, 0, 168),
+				Vector3.new(4, 0, 188),
+				Vector3.new(0, 0, 204),
 			},
 			Width = 18, -- studs wide (it varies a little along the way, so the edges look worn)
 			Material = "Ground", -- the path
@@ -51,6 +51,19 @@ return {
 			Seed = 3,
 		},
 
+		-- A river across the whole zone in front of the gate, and the raised bank the gate stands on, beyond it. Z is the river's
+		-- near edge and Width its width (keep both multiples of 4: terrain is built from 4-stud cells). The bank is Terrace.Height
+		-- above the ground, so the river's far side is a cliff and only the bridge (Gate.Bridge) leads up to the gate.
+		River = {
+			Z = 216,
+			Width = 28,
+			LedgeWidth = 8, -- a dry ledge this wide along the near bank, so anyone who falls in can climb out (multiple of 4)
+			BedMaterial = "Sand",
+			BedColor = Color3.fromRGB(150, 132, 100),
+		},
+		Terrace = { Height = 8 },
+		Plateau = { Height = 30 }, -- earth behind the gate's wall, up to this far above the bank
+
 		-- The Starter Town gate, at the end of the trail. The town itself is a separate place: pressing F at the gate, or walking
 		-- into its passage, fades the screen and teleports the player to DestinationPlaceId. While that is 0 (no town place yet),
 		-- the player is put back in front of the gate after the fade.
@@ -58,15 +71,16 @@ return {
 			Name = "Starter Town",
 			Model = "StarterTownGate", -- ServerStorage.Models.StarterTownGate, from assets/models/StarterTownGate.rbxm
 			Scale = 1.3, -- how much bigger than the imported model the gate is built (1 = as imported)
-			Z = 236, -- how far north the gate stands (x = 0). The bigger the gate, the further forward it must stand: its road must end before the canyon
+			Z = 300, -- how far north the gate stands (x = 0): its back wall meets the canyon face, which is at about z = 312 here. Move it with the canyon (Canyon.Seed / EdgeWobble)
 			DestinationPlaceId = 0, -- the Roblox place id of the Starter Town; 0 = not connected yet
-			OpenDistance = 65, -- the gate opens when a player is this close
+			OpenDistance = 95, -- the gate opens when a player is this close
 			OpenSeconds = 2.6, -- how long it takes to open fully
 			DoorOpenDegrees = 95,
 			PromptKey = Enum.KeyCode.F,
 			PromptDistance = 32, -- studs from the gate at which "Enter" shows
 			FadeSeconds = 1.2, -- the screen fades to black this fast, then the teleport happens
-			ReturnDistance = 60, -- studs in front of the gate where the player is put back if the town is not connected
+			ReturnDistance = 50, -- studs in front of the gate where the player is put back if the town is not connected
+			Bridge = { Width = 18, Approach = 6, Landing = 8 }, -- over the river to the gate; Approach/Landing = studs it reaches onto the near/far bank
 		},
 
 		-- Mob camps: where the mobs live. A camp is one kind of mob in one or more groups; each group is a number of mobs

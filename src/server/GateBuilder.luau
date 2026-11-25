@@ -31,6 +31,7 @@ local LANTERNS = {
 	Vector3.new(11.8, 12.9, 10.8) * K, Vector3.new(-11.8, 12.9, 10.8) * K, Vector3.new(11.8, 12.9, -10.8) * K, Vector3.new(-11.8, 12.9, -10.8) * K,
 }
 
+task.wait(1.5) -- freshly built terrain cannot be raycast for a moment
 local template = ServerStorage:WaitForChild("Models"):WaitForChild(config.Model)
 local folder = Instance.new("Folder")
 folder.Name = "TownGate"
@@ -103,11 +104,19 @@ end
 -- Stone walls from the towers out to the canyon, on both sides. The model's wall pieces are copied, end to end, until a
 -- ray from the wall's end hits the canyon; the last piece reaches into the rock, so nothing can be seen or walked around.
 local wallPieces = 0
+-- Where the canyon face is (the same formula ZoneBuilder builds it with), so the wall can run exactly to it.
+local function canyonFace(x, z)
+	local c = zone.Canyon
+	local angle = math.atan2(z, x)
+	return zone.Radius + math.noise(math.cos(angle) * 3 + c.Seed, math.sin(angle) * 3 + c.Seed, 0.5) * c.EdgeWobble * 2
+end
 for _, side in { { Group = "Stone_Wall_L", Sign = 1 }, { Group = "Stone_Wall_R", Sign = -1 } } do
-	local startX = origin.X + side.Sign * (WALL_END + 0.5)
-	local hit = workspace:Raycast(Vector3.new(startX, groundY + 14, config.Z), Vector3.new(side.Sign * 260, 0, 0), terrainOnly)
-	local reach = if hit then math.abs(hit.Position.X - origin.X) + 8 else 260 -- 8 studs into the canyon
-	local tiles = math.max(math.ceil((reach - WALL_END) / WALL_LENGTH), 0)
+	local faceX = WALL_END
+	while faceX < 400 and math.sqrt(faceX ^ 2 + config.Z ^ 2) < canyonFace(side.Sign * faceX, config.Z) do
+		faceX += 2
+	end
+	-- if the wall's own end is already inside the rock there is nothing to add; otherwise run it 8 studs into the canyon
+	local tiles = if faceX <= WALL_END then 0 else math.ceil((faceX + 8 - WALL_END) / WALL_LENGTH)
 	for k = 1, tiles do
 		local shift = Vector3.new(side.Sign * WALL_LENGTH * k, 0, 0)
 		for _, part in groups[side.Group] or {} do
@@ -142,6 +151,71 @@ for _, offset in LANTERNS do
 	glow.Range = 34
 	glow.Shadows = false
 	glow.Parent = light
+end
+
+-- The bridge over the river, from the trail's bank up to the raised bank in front of the gate -------------------------
+
+local river, bridge = zone.River, config.Bridge
+do
+	local zStart, zEnd = river.Z - bridge.Approach, river.Z + river.Width + bridge.Landing
+	local y0, y1 = groundAt(0, zStart), groundAt(0, zEnd)
+	local run, rise = zEnd - zStart, y1 - y0
+	local length = math.sqrt(run ^ 2 + rise ^ 2)
+	local direction = Vector3.new(0, rise, run).Unit
+	local middle = Vector3.new(0, (y0 + y1) / 2, (zStart + zEnd) / 2)
+	local model = Instance.new("Model")
+	model.Name = "Bridge"
+	model.Parent = folder
+	local function bar(name, offset, size, material, color)
+		local cframe = CFrame.lookAt(middle + offset, middle + offset + direction)
+		local p = invisible(name, cframe, size, true)
+		p.Transparency = 0
+		p.Material = material
+		p.Color = color
+		p.CastShadow = true
+		p.Parent = model
+		return p
+	end
+	local wood, rail = Color3.fromRGB(122, 90, 60), Color3.fromRGB(92, 66, 44)
+	bar("Deck", Vector3.new(0, -0.6, 0), Vector3.new(bridge.Width, 1.2, length), Enum.Material.WoodPlanks, wood)
+	for _, side in { -1, 1 } do
+		bar("Rail", Vector3.new(side * (bridge.Width / 2 - 0.4), 3.6, 0), Vector3.new(0.8, 0.8, length), Enum.Material.Wood, rail)
+		bar("LowRail", Vector3.new(side * (bridge.Width / 2 - 0.4), 1.8, 0), Vector3.new(0.6, 0.6, length), Enum.Material.Wood, rail)
+		for i = 0, math.floor(run / 7) do -- a post every 7 studs
+			local z = zStart + i * 7
+			local y = y0 + rise * (z - zStart) / run
+			local post = invisible("Post", CFrame.new(side * (bridge.Width / 2 - 0.4), y + 2.1, z), Vector3.new(0.9, 4.4, 0.9), true)
+			post.Transparency = 0
+			post.Material = Enum.Material.Wood
+			post.Color = rail
+			post.Parent = model
+		end
+	end
+	for _, z in { zStart + run * 0.3, zStart + run * 0.7 } do -- stone piers down to the river bed
+		local deckY = y0 + rise * (z - zStart) / run
+		for _, side in { -1, 1 } do
+			local height = deckY - (-12)
+			local pier = invisible("Pier", CFrame.new(side * (bridge.Width / 2 - 1.2), -12 + height / 2 - 0.6, z), Vector3.new(2.6, height, 2.6), true)
+			pier.Transparency = 0
+			pier.Material = Enum.Material.Cobblestone
+			pier.Color = Color3.fromRGB(112, 108, 102)
+			pier.Parent = model
+		end
+	end
+	for _, end_ in { { zStart + 2, y0 }, { zEnd - 2, y1 } } do -- a lantern at each end
+		for _, side in { -1, 1 } do
+			local lamp = invisible("BridgeLamp", CFrame.new(side * (bridge.Width / 2 - 0.4), end_[2] + 5.6, end_[1]), Vector3.one * 0.8, false)
+			lamp.Transparency = 0
+			lamp.Material = Enum.Material.Neon
+			lamp.Color = Color3.fromRGB(255, 200, 120)
+			local light = Instance.new("PointLight")
+			light.Color = Color3.fromRGB(255, 176, 92)
+			light.Range = 22
+			light.Brightness = 1.6
+			light.Shadows = false
+			light.Parent = lamp
+		end
+	end
 end
 
 -- Doors and portcullis -------------------------------------------------------------------------------------------

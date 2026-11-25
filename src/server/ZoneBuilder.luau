@@ -117,6 +117,83 @@ local function paintTrail(zone, points)
 	terrain:FillCylinder(CFrame.new(last.X, -CELL / 2, last.Z), CELL, t.GateRadius, gate)
 end
 
+-- River, raised bank, rock behind the gate -----------------------------------------------------------------------------
+-- The gate stands against the canyon on a raised bank, with a river in front of it that only the bridge crosses. All of it is
+-- laid in whole 4-stud cells, one row at a time across the zone (the canyon, built last, closes both ends).
+
+-- Half the width (a multiple of CELL) of the zone at a given z, so a row never pokes out past the canyon.
+local function halfWidth(z, radius)
+	return math.floor(math.sqrt(math.max(radius ^ 2 - z ^ 2, 0)) / CELL) * CELL
+end
+
+local function row(centerY, height, zCenter, half, material)
+	if half > 0 then
+		terrain:FillBlock(CFrame.new(0, centerY, zCenter), Vector3.new(2 * half, height, CELL), material)
+	end
+end
+
+local function buildRiver(zone)
+	local r = zone.River
+	local limit = zone.Radius + zone.Canyon.EdgeWobble + CELL
+	terrain:SetMaterialColor(Enum.Material[r.BedMaterial], r.BedColor)
+	for z = r.Z, r.Z + r.Width - CELL, CELL do
+		local half = halfWidth(math.max(math.abs(z), math.abs(z + CELL)), limit)
+		local zc = z + CELL / 2
+		if z < r.Z + r.LedgeWidth then
+			-- A dry sandy ledge along the near bank, half way down: anyone who falls in can swim to it and jump up the bank.
+			row(-2, 4, zc, half, Enum.Material.Air)
+			row(-6, 4, zc, half, Enum.Material[r.BedMaterial])
+		else
+			row(-4, 8, zc, half, Enum.Material.Air) -- the channel: 8 studs below the banks
+			row(-10, 4, zc, half, Enum.Material[r.BedMaterial]) -- the river bed
+			row(-6, 4, zc, half, Enum.Material.Water) -- 4 studs of water
+		end
+	end
+end
+
+-- The bank beyond the river: dirt up to Height, with a grass top, from the river to the canyon.
+local function buildBank(zone)
+	local top = zone.Terrace.Height
+	local r = zone.River
+	local limit = zone.Radius + zone.Canyon.EdgeWobble + CELL
+	for z = r.Z + r.Width, limit, CELL do
+		local half = halfWidth(math.max(math.abs(z), math.abs(z + CELL)), limit)
+		local zc = z + CELL / 2
+		row((top - CELL - zone.Depth) / 2, top - CELL + zone.Depth, zc, half, Enum.Material.Ground) -- dirt, so the river-side cliff is dirt
+		row(top - CELL / 2, CELL, zc, half, Enum.Material[zone.Material]) -- grass on top
+	end
+end
+
+-- Earth filling the space behind the gate's wall, up to the wall's height, so the gate looks built into the cliff and there is
+-- no strip of empty ground behind it. The passage and the gatehouse behind it stay open.
+local function buildBehindGate(zone)
+	local g = zone.Gate
+	local K = g.Scale
+	local top = zone.Terrace.Height + zone.Plateau.Height
+	local limit = zone.Radius + zone.Canyon.EdgeWobble + CELL
+	local wallBack = g.Z + 5.5 * K * 1.0 + 1 -- the wall's back face (11 studs thick at scale 1)
+	local gatehouseBack = g.Z + 13.4 * K + 1 -- the gatehouse's back
+	local towerHalf = math.ceil(41 * K / CELL) * CELL -- the towers' half width: ground beside them is filled from the wall back
+	for z = math.floor(wallBack / CELL) * CELL, limit, CELL do
+		local zc = z + CELL / 2
+		local half = halfWidth(math.max(math.abs(z), math.abs(z + CELL)), limit)
+		if half > 0 then
+			local material = Enum.Material[zone.Canyon.Material]
+			local centerY, height = (top - zone.Depth) / 2, top + zone.Depth
+			if z + CELL < gatehouseBack then
+				for _, side in { -1, 1 } do -- leave the middle (the passage) open
+					if half > towerHalf then
+						local width = half - towerHalf
+						terrain:FillBlock(CFrame.new(side * (towerHalf + width / 2), centerY, zc), Vector3.new(width, height, CELL), material)
+					end
+				end
+			else
+				terrain:FillBlock(CFrame.new(0, centerY, zc), Vector3.new(2 * half, height, CELL), material)
+			end
+		end
+	end
+end
+
 -- Trees ---------------------------------------------------------------------------------------------------------
 
 local treeRay = RaycastParams.new()
@@ -427,6 +504,8 @@ placeSpawn()
 local points = trailPoints(zone.Trail.Waypoints)
 buildHills(zone, points)
 paintTrail(zone, points)
+buildRiver(zone)
+buildBank(zone)
 task.wait(1) -- new terrain cannot be raycast for a moment; the props and trees look for the ground with a raycast
 treeRay.FilterDescendantsInstances = { propsFolder }
 local keepClear = buildProps(zone, points)
@@ -438,8 +517,10 @@ for x = -200, 200, 20 do -- the gate and its walls: no trees on them
 end
 table.insert(keepClear, { Position = Vector3.new(0, 0, zone.Gate.Z + 22 * zone.Gate.Scale), Radius = 30 * zone.Gate.Scale }) -- the road behind the passage
 table.insert(keepClear, { Position = Vector3.new(0, 0, zone.Gate.Z - 30 * zone.Gate.Scale), Radius = 30 * zone.Gate.Scale }) -- the road in front
+table.insert(keepClear, { Position = Vector3.new(0, 0, zone.River.Z + zone.River.Width / 2), Radius = 42 }) -- the river and the bridge
 buildTrees(zone, points, keepClear)
-buildCanyon(zone) -- last and slowest; it waits between batches, but everything the player stands on is already built
+buildCanyon(zone)
+buildBehindGate(zone) -- after the canyon, so the new earth joins it -- last and slowest; it waits between batches, but everything the player stands on is already built
 
 print(`[Zone] {zone.Name} (levels {zone.LevelRange[1]}-{zone.LevelRange[2]}): radius {zone.Radius}, canyon wall built`)
 
