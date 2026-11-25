@@ -75,7 +75,7 @@ local function buildCanyon(zone)
 	local seed = c.Seed
 
 	-- The height of the top of the cliff at a spot: broad swells plus small bumps, and now and then a crag one step higher.
-	local wallTop = 40 * zone.Gate.Scale -- how tall the gate's walls are
+	local wallTop = 40 * zone.Gate.Scale -- how tall the gate's walls are; the rampart on the canyon (Gate.Flank.Show) makes up the difference
 	local function topAt(x, z)
 		local n = math.noise(x / 70 + seed, z / 70 + seed, 4.5) + 0.5 * math.noise(x / 20 + seed, z / 20 + seed, 6.5)
 		local top = c.Height + n * c.HeightVariation
@@ -84,7 +84,7 @@ local function buildCanyon(zone)
 		-- Next to the gate the cliff rises to meet its walls, so the walls do not stand up out of a much lower cliff.
 		local beyondGap = math.abs(x) - zone.Gate.CanyonGap
 		if z > 0 and beyondGap < c.GateLift then
-			top += (wallTop - 4 - top) * (1 - smooth(beyondGap / c.GateLift))
+			top += (wallTop - zone.Gate.Flank.Show - top) * (1 - smooth(beyondGap / c.GateLift))
 		end
 		return top
 	end
@@ -167,7 +167,7 @@ local function buildBarrier(zone)
 		local angle = i * step
 		local radius = zone.Radius + faceOffset(zone, angle) - 1.5
 		local x, z = math.cos(angle) * radius, math.sin(angle) * radius
-		if not (z > 0 and math.abs(x) < zone.Gate.CanyonGap + 14) then
+		if not (z > 0 and math.abs(x) < zone.Gate.CanyonGap - 8) then -- the barrier starts inside the gate wall, which covers the join
 			local piece = Instance.new("Part")
 			piece.Name = "Barrier"
 			piece.Anchored = true
@@ -650,9 +650,7 @@ local function townHouse(parent, base, w, d, h, rng, t)
 		townPart(model, base * CFrame.new(0, h + rise / 2, side * half / 2) * CFrame.Angles(side * tilt, 0, 0), Vector3.new(w + 3, 1.2, slab), Enum.Material.Slate, roof)
 	end
 	local chimney = townPart(model, base * CFrame.new(w * 0.28, h + rise + 3, d * 0.12), Vector3.new(3, 9, 3), Enum.Material.Cobblestone, Color3.fromRGB(104, 100, 96))
-	if rng:NextNumber() < 0.5 then
-		smoke(chimney)
-	end
+	smoke(chimney)
 	for i = 1, math.max(math.floor(w / 7), 2) do
 		local x = -w / 2 + (i - 0.5) * w / math.max(math.floor(w / 7), 2)
 		townPart(model, base * CFrame.new(x, h * 0.58, -d / 2 - 0.15), Vector3.new(2.6, 3.6, 0.3), Enum.Material.Neon, Color3.fromRGB(255, 196, 110))

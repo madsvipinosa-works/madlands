@@ -54,23 +54,24 @@ return {
 			AltColor = Color3.fromRGB(106, 146, 60),
 			EdgeMaterial = "Ground", -- the dirt edge of each terrace and the soil below
 			Trees = { Count = 170, Scale = { 2.6, 4.2 }, Edge = 50 }, -- big trees on the far terraces; Edge = studs left bare at the rim
-			-- The town you see beyond the gate: a low hill behind its walls with a few rows of houses and a town hall (scenery only).
+			-- The town beyond the gate is only hinted at: a few roofs, chimney smoke, warm windows and a clock tower showing over the gate's
+			-- walls, so it feels like a town is there without showing it all. It stands on low ground behind the walls (scenery only).
 			Town = {
 				Seed = 23,
-				Spread = 0.42, -- radians either side of straight behind the gate that the town fills (0.42 = about 24 degrees)
-				Bump = 12, -- how much higher than the other hills its hill rises
-				Lower = 0.45, -- how much lower than the other land it starts, right behind the gate (0 = not lower)
-				Rows = { 500, 538, 576 }, -- distance from the spawn of each row of houses; each row is further up the hill
-				Step = 0.075, -- radians between houses along a row (about 40 studs)
-				Gaps = 0.42, -- chance that a house is left out
-				LaneHalfWidth = 30, -- a street up the middle, from the gate to the hall
+				Spread = 0.5, -- radians either side of straight behind the gate that it fills (0.5 = about 29 degrees)
+				Bump = 0, -- extra height of its ground (0 = none: the ground behind the gate stays low, below the walls)
+				Lower = 0.6, -- how much lower than the other land it starts, right behind the gate (0 = not lower)
+				Rows = { 458, 484, 510 }, -- distance from the spawn of each row of houses, close behind the gate's walls
+				Step = 0.07, -- radians between houses along a row (about 33 studs)
+				Gaps = 0.3, -- chance that a house is left out
+				LaneHalfWidth = 24, -- a street up the middle, from the gate to the hall
 				Width = { 18, 26 },
 				Depth = { 14, 20 },
-				Height = { 14, 22 }, -- wall height, before the roof
+				Height = { 16, 28 }, -- wall height, before the roof; the tallest peek over the gate's walls
 				WallColors = { Color3.fromRGB(216, 200, 170), Color3.fromRGB(206, 178, 142), Color3.fromRGB(198, 192, 178) },
 				RoofColors = { Color3.fromRGB(152, 68, 52), Color3.fromRGB(104, 78, 58), Color3.fromRGB(88, 94, 106) },
 				StoneColor = Color3.fromRGB(150, 146, 138),
-				Hall = { Radius = 556, Width = 64, Depth = 30, Height = 24, TowerWidth = 14, TowerHeight = 42 }, -- at the top of the street, straight behind the gate
+				Hall = { Radius = 536, Width = 60, Depth = 28, Height = 26, TowerWidth = 14, TowerHeight = 50 }, -- its clock tower is what you see from afar
 			},
 			Haze = {
 				Density = 0.3,
@@ -132,9 +133,11 @@ return {
 			PromptDistance = 46, -- studs from the gate at which "Enter" shows
 			FadeSeconds = 1.2, -- the screen fades to black this fast, then the teleport happens
 			ReturnDistance = 70, -- studs in front of the gate where the player is put back if the town is not connected
-			-- The hand-made WallPiece (assets/models/WallPiece.rbxm) is tiled along the canyon beside the gate's own walls. HeightShare is
-			-- its height as a share of the gate's wall height; Extra is how far past the canyon's rise (GateLift) it keeps going.
-			Flank = { Model = "WallPiece", HeightShare = 0.92, Extra = 30 },
+			-- The hand-made WallPiece (assets/models/WallPiece.rbxm) is tiled along the TOP of the canyon beside the gate, as a battlement
+			-- that follows the cliff's edge in one smooth curve. Scale = size of each piece (1 = as saved); Show = studs of it standing above
+			-- the rock (the rest sinks into it, so the canyon top plus Show reaches the gate's wall top); Inset = studs back from the cliff's
+			-- edge; Extra = how far past the canyon's rise (GateLift) it keeps going; Fade = studs over which it sinks away at the end.
+			Flank = { Model = "WallPiece", Scale = 2.2, Show = 22, Inset = 5, Extra = 40, Fade = 70 },
 		},
 
 		-- Mob camps: where the mobs live. A camp is one kind of mob in one or more groups; each group is a number of mobs

@@ -182,18 +182,17 @@ end
 progress.Changed:Connect(apply)
 apply(0)
 
--- Flank walls ---------------------------------------------------------------------------------------------------------
--- Beyond the gate's own walls the canyon rises to meet them, but the rock there is rougher and lower than the stonework, so the
--- hand-made WallPiece (Gate.Flank) is tiled along the canyon's face from each wall end outward, scaled to the wall's height and set
--- into the rock, to carry the gate's masonry on until the cliff has risen to the wall's height.
+-- Rampart ---------------------------------------------------------------------------------------------------------------
+-- Beside the gate the canyon is topped with the hand-made WallPiece (Gate.Flank): a battlement running along the cliff's top edge,
+-- on both sides, in one smooth curve like the gate's own walls. It starts inside the gate's walls, where the two overlap, and
+-- sinks back into the rock where the cliff has risen as far as it will, so the gate's masonry fades into the canyon.
+-- The canyon is built to match (ZoneBuilder: Canyon.GateLift): its top beside the gate is Flank.Show studs below the gate's walls.
 do
 	local flank = config.Flank
 	local piece = ServerStorage.Models:FindFirstChild(flank.Model)
 	if piece then
-		local wallLo, wallHi = bounds("Stone_Wall")
-		local top = wallHi.Y -- the height of the gate's walls above its base
 		local folderFlank = Instance.new("Folder")
-		folderFlank.Name = "FlankWalls"
+		folderFlank.Name = "Rampart"
 		folderFlank.Parent = folder
 		local base = piece:GetPivot()
 		local pieceLo, pieceHi = Vector3.new(1e9, 1e9, 1e9), Vector3.new(-1e9, -1e9, -1e9)
@@ -206,44 +205,55 @@ do
 				pieceHi = Vector3.new(math.max(pieceHi.X, cf.X + r.X), math.max(pieceHi.Y, cf.Y + r.Y), math.max(pieceHi.Z, cf.Z + r.Z))
 			end
 		end
-		local pieceScale = (top * flank.HeightShare) / (pieceHi.Y - pieceLo.Y)
-		local length, depth = (pieceHi.X - pieceLo.X) * pieceScale, (pieceHi.Z - pieceLo.Z) * pieceScale
-		local fromAngle = math.atan2(math.abs(wallHi.X) * 0.78, config.Z) -- measured from north: where the gate's own wall ends
+		local scale = flank.Scale
+		local length, depth, height = (pieceHi.X - pieceLo.X) * scale, (pieceHi.Z - pieceLo.Z) * scale, (pieceHi.Y - pieceLo.Y) * scale
+		local fromX = config.CanyonGap - 14 -- inside the gate's own wall
 		local toX = config.CanyonGap + zone.Canyon.GateLift + flank.Extra
+		local fade = flank.Fade
 		local placed = 0
+
+		-- The face of the canyon, smoothed, so the rampart is one clean curve and not a copy of every bump in the cliff.
+		local function smoothFace(angle)
+			local sum = 0
+			for k = -3, 3 do
+				sum += CanyonShape.faceOffset(zone, angle + k * 0.02)
+			end
+			return zone.Radius + sum / 7
+		end
+
 		for _, side in { -1, 1 } do
-			local angle = fromAngle
+			local angle = math.asin(fromX / zone.Radius) -- from north
 			while true do
-				local face = zone.Radius + CanyonShape.faceOffset(zone, math.pi / 2 - side * angle)
-				local radius = face - 2 + depth / 2 -- its front face just proud of the cliff's, most of its body in the rock
-				local x, z = side * math.sin(angle) * radius, math.cos(angle) * radius
-				if math.abs(x) > toX then
+				local worldAngle = math.pi / 2 - side * angle
+				local radius = smoothFace(worldAngle) + flank.Inset + depth / 2
+				local x, z = math.cos(worldAngle) * radius, math.sin(worldAngle) * radius
+				local ax = math.abs(x)
+				if ax > toX then
 					break
 				end
-				local ground = groundAt(x * (face - 6) / radius, z * (face - 6) / radius)
+				local top = groundAt(x, z) -- the top of the canyon here
+				-- the further out, the deeper it sinks: the last stretch disappears into the rock
+				local show = flank.Show * (1 - CanyonShape.smooth((ax - (toX - fade)) / fade))
+				local bottom = top - (height - show)
 				local copy = piece:Clone()
-				copy:ScaleTo(copy:GetScale() * pieceScale)
-				-- the piece's own pivot sits 0.6 above its base; it faces the middle of the zone
-				copy:PivotTo(CFrame.lookAt(Vector3.new(x, ground - 3 - pieceLo.Y * pieceScale, z), Vector3.new(0, ground - 3 - pieceLo.Y * pieceScale, 0)))
+				copy:ScaleTo(copy:GetScale() * scale)
+				copy:PivotTo(CFrame.lookAt(Vector3.new(x, bottom - pieceLo.Y * scale, z), Vector3.new(0, bottom - pieceLo.Y * scale, 0))) -- faces the middle of the zone
 				for _, part in copy:GetDescendants() do
 					if part:IsA("BasePart") then
 						part.Anchored = true
+						part.CanCollide = false -- on top of a cliff nobody can reach
 						part.CanQuery = false
 						part.CanTouch = false
-						part.CanCollide = true
 						part.Material = Enum.Material.Slate
 						part.Color = Color3.new(1, 1, 1)
-						pcall(function()
-							part.CollisionFidelity = Enum.CollisionFidelity.Hull
-						end)
 					end
 				end
 				copy.Parent = folderFlank
 				placed += 1
-				angle += (length * 0.96) / radius -- slightly overlapped, so there is no crack between pieces
+				angle += (length * 0.94) / radius -- slightly overlapped, so there is no crack between pieces
 			end
 		end
-		print(`[Gate] {placed} flank wall pieces, piece scale {string.format("%.2f", pieceScale)}`)
+		print(`[Gate] {placed} rampart pieces on the canyon, scale {scale}`)
 	else
 		warn(`[Gate] ServerStorage.Models.{flank.Model} not found: save it as assets/models/{flank.Model}.rbxm`)
 	end
