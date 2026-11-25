@@ -53,23 +53,26 @@ return {
 		},
 
 		-- Mob camps: where the mobs live. A camp is one kind of mob in one or more groups; each group is a number of mobs
-		-- placed at random inside a circle (Radius) around the camp Center plus the group's Offset (x, z). A second group with
+		-- placed at random inside a circle (Radius, and optionally a hole in the middle, MinRadius) around the camp Center plus
+		-- the group's Offset (x, z). A second group with
 		-- an Offset is the part of the pack standing "beside" the main one. Placement is fixed by the camp's Seed.
 		-- The spawn is at 0, 0 and the trail runs north (+z), so camps keep well away from the trail (mobs notice you at about 30 studs).
 		Camps = {
 			{
 				Name = "Goblin Hollow", Mob = "Goblin", Seed = 21,
 				Center = Vector3.new(-85, 0, 75),
+				Campfire = true, -- a fire at the Center, with the first group gathered around it (MinRadius keeps them off the logs)
 				Groups = {
-					{ Count = 3, Radius = 7 }, -- three goblins in the middle...
+					{ Count = 3, MinRadius = 10, Radius = 15 }, -- three goblins around the fire...
 					{ Count = 2, Radius = 6, Offset = Vector3.new(-20, 0, 14) }, -- ...and two more standing nearby
 				},
 			},
 			{
 				Name = "Goblin Ridge", Mob = "Goblin", Seed = 22,
 				Center = Vector3.new(100, 0, 150),
+				Campfire = true,
 				Groups = {
-					{ Count = 2, Radius = 6 },
+					{ Count = 2, MinRadius = 10, Radius = 15 },
 					{ Count = 2, Radius = 6, Offset = Vector3.new(18, 0, -18) },
 				},
 			},
@@ -95,7 +98,9 @@ return {
 		-- stands (0 = spawn, 1 = the gate); they alternate sides, starting on the left.
 		Campfires = {
 			Along = { 0.2, 0.47, 0.74 },
-			Offset = 11, -- studs from the trail's edge to the fire
+			Stones = 7, -- stones in the ring around the fire
+			StoneRing = 3.8, -- studs from the fire to the ring (the bigger, the more space between the stones)
+			Offset = 16, -- studs from the trail's edge to the fire
 			BareRadius = 10, -- studs of bare dirt around the fire (the tall grass would hide it)
 			BareMaterial = "Ground",
 			StoneColor = Color3.fromRGB(112, 110, 106),
@@ -106,7 +111,8 @@ return {
 		-- Rocks beside the trail, alone or in small groups; now and then a big boulder.
 		Rocks = {
 			Seed = 9,
-			Every = { 8, 20 }, -- studs of trail between one group and the next (random in this range)
+			Every = { 9, 22 }, -- studs of trail between one group and the next (random in this range)
+			ClearAroundCampfires = 22, -- studs kept free of rocks around each campfire (trail ones and camp ones)
 			MinOffset = 3, -- studs from the trail's edge...
 			MaxOffset = 10, -- ...to this far out
 			Group = { 1, 3 }, -- rocks per group

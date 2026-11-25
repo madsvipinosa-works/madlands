@@ -177,7 +177,7 @@ local function spawnMob(name, def, position)
 	if not model then
 		return
 	end
-	local state = { def = def, humanoid = humanoid, root = root, home = position, lastAttack = 0, returning = false }
+	local state = { def = def, humanoid = humanoid, root = root, home = position, lastAttack = 0, returning = false, nextWander = 0 }
 	active[model] = state
 	print(`[Mob] {name} spawned at {position}, size {model:GetExtentsSize()}, yaw {def.Look.YawDegrees}`)
 
@@ -201,6 +201,7 @@ local function step(s)
 		s.returning = false
 	end
 	if s.returning then
+		humanoid.WalkSpeed = def.WalkSpeed
 		humanoid:MoveTo(s.home)
 		return
 	end
@@ -219,8 +220,23 @@ local function step(s)
 	end
 
 	if not target then
-		humanoid:MoveTo(s.home)
-	elseif targetDistance <= def.AttackRange then
+		-- Nobody near: stroll around home, standing still now and then, so the camp looks alive.
+		local now = os.clock()
+		if now >= s.nextWander then
+			s.nextWander = now + rng:NextNumber(def.WanderPause[1], def.WanderPause[2])
+			if rng:NextNumber() < def.WanderChance then
+				local angle, distance = rng:NextNumber(0, math.pi * 2), math.sqrt(rng:NextNumber()) * def.WanderRadius
+				s.wanderTo = s.home + Vector3.new(math.cos(angle) * distance, 0, math.sin(angle) * distance)
+			else
+				s.wanderTo = nil
+			end
+		end
+		humanoid.WalkSpeed = def.WalkSpeed * def.WanderSpeed
+		humanoid:MoveTo(s.wanderTo or pos)
+		return
+	end
+	humanoid.WalkSpeed = def.WalkSpeed -- hunting: full speed
+	if targetDistance <= def.AttackRange then
 		humanoid:MoveTo(pos) -- stand still and bite
 		local now = os.clock()
 		if now - s.lastAttack >= def.AttackCooldown then

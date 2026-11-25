@@ -9,6 +9,11 @@ return {
 		AggroRange = 30, -- starts chasing a player closer than this
 		LeashRange = 60, -- gives up and walks home when this far from its spawn
 		WalkSpeed = 14,
+		-- When nobody is near, the wolf strolls around its spawn instead of standing still.
+		WanderRadius = 14, -- studs from its spawn it may stroll to
+		WanderSpeed = 0.35, -- share of WalkSpeed used for strolling (the legs swing less, so it looks like a stroll)
+		WanderPause = { 2, 6 }, -- seconds between choosing a new stroll (it stands still for a moment in between)
+		WanderChance = 0.75, -- chance that it strolls instead of standing a while
 		GoldMin = 5, -- gold dropped is random between min and max
 		GoldMax = 15,
 		Xp = 20,
@@ -84,6 +89,10 @@ return {
 		AggroRange = 28,
 		LeashRange = 55,
 		WalkSpeed = 12,
+		WanderRadius = 9,
+		WanderSpeed = 0.4,
+		WanderPause = { 2, 7 },
+		WanderChance = 0.7,
 		GoldMin = 3,
 		GoldMax = 10,
 		Xp = 12,

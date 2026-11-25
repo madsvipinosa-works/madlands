@@ -15,7 +15,8 @@ function Camps.Positions(zone)
 				local position
 				for _ = 1, 40 do -- try a few spots until one is clear of the others
 					local angle = rng:NextNumber(0, math.pi * 2)
-					local distance = math.sqrt(rng:NextNumber()) * group.Radius
+					local inner = group.MinRadius or 0
+					local distance = math.sqrt(inner * inner + rng:NextNumber() * (group.Radius ^ 2 - inner * inner)) -- even spread over the ring
 					local try = center + Vector3.new(math.cos(angle) * distance, 0, math.sin(angle) * distance)
 					local clear = true
 					for _, other in placed do

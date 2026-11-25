@@ -179,10 +179,10 @@ local function campfire(parent, x, y, z, rng, c)
 	local block, cylinder = Enum.PartType.Block, Enum.PartType.Cylinder
 	local flat = CFrame.Angles(0, 0, math.pi / 2) -- a cylinder Part lies along X; this stands it up
 
-	for i = 0, 8 do -- the stone ring
-		local angle = i / 9 * math.pi * 2
+	for i = 0, c.Stones - 1 do -- the stone ring, spaced out
+		local angle = i / c.Stones * math.pi * 2 + rng:NextNumber(-0.12, 0.12)
 		local size = Vector3.new(rng:NextNumber(1.4, 2), rng:NextNumber(0.9, 1.3), rng:NextNumber(1.2, 1.7))
-		prop(model, block, base * CFrame.Angles(0, angle, 0) * CFrame.new(3, size.Y / 2 - 0.2, 0) * CFrame.Angles(0, rng:NextNumber(-0.4, 0.4), 0), size, Enum.Material.Rock, c.StoneColor:Lerp(Color3.new(0.4, 0.4, 0.4), rng:NextNumber(0, 0.25)), true)
+		prop(model, block, base * CFrame.Angles(0, angle, 0) * CFrame.new(c.StoneRing, size.Y / 2 - 0.2, 0) * CFrame.Angles(0, rng:NextNumber(-0.4, 0.4), 0), size, Enum.Material.Rock, c.StoneColor:Lerp(Color3.new(0.4, 0.4, 0.4), rng:NextNumber(0, 0.25)), true)
 	end
 	prop(model, cylinder, base * CFrame.new(0, 0.05, 0) * flat, Vector3.new(0.2, 5.2, 5.2), Enum.Material.Slate, Color3.fromRGB(40, 36, 34), false) -- the ash and embers bed
 	for i = 0, 2 do -- three logs, crossing like spokes
@@ -238,7 +238,8 @@ local function campfire(parent, x, y, z, rng, c)
 	model.Parent = parent
 end
 
--- Puts campfires and rocks along the trail. Returns the circles trees must stay out of (the fires).
+-- Puts campfires (along the trail, and at the camps that have one) and rocks along the trail. Returns the circles trees
+-- must stay out of.
 local function buildProps(zone, points)
 	local clear = {}
 	local halfWidth = zone.Trail.Width / 2 * 1.2 -- the trail's widest edge
@@ -271,8 +272,24 @@ local function buildProps(zone, points)
 		end
 	end
 
+	-- Camp fires: the middle of a camp that asks for one.
+	for _, camp in zone.Camps or {} do
+		if camp.Campfire then
+			local y = groundHeight(camp.Center.X, camp.Center.Z)
+			if y then
+				terrain:FillCylinder(CFrame.new(camp.Center.X, -CELL / 2, camp.Center.Z), CELL, fires.BareRadius, Enum.Material[fires.BareMaterial])
+				campfire(propsFolder, camp.Center.X, y, camp.Center.Z, fireRng, fires)
+				table.insert(clear, { Position = camp.Center, Radius = zone.Trees.Scattered.ClearAroundCampfires })
+			end
+		end
+	end
+
 	local r = zone.Rocks
 	local rng = Random.new(r.Seed)
+	local noRocks = {} -- circles rocks must stay out of: around every fire
+	for _, circle in clear do
+		table.insert(noRocks, { Position = circle.Position, Radius = r.ClearAroundCampfires })
+	end
 	local distance, count = rng:NextNumber(r.Every[1], r.Every[2]), 0
 	for i = 1, #points do
 		if along[i] >= distance and along[i] < total - zone.Trail.GateRadius - 4 then
@@ -281,7 +298,7 @@ local function buildProps(zone, points)
 			local boulder = rng:NextNumber() < r.BoulderChance
 			local reach = halfWidth + rng:NextNumber(r.MinOffset, r.MaxOffset) + (if boulder then r.BoulderSize[2] / 2 else 0)
 			local center = points[i] + sideOf(i) * side * reach
-			if clearOf(center, clear) then
+			if clearOf(center, noRocks) then
 				local rocksInGroup = if boulder then 1 else rng:NextInteger(r.Group[1], r.Group[2])
 				for _ = 1, rocksInGroup do
 					local spot = center + Vector3.new(rng:NextNumber(-3.5, 3.5), 0, rng:NextNumber(-3.5, 3.5))
