@@ -433,9 +433,11 @@ local keepClear = buildProps(zone, points)
 for _, area in Camps.Areas(zone) do -- the mobs' ground stays open: no trees where they walk and fight
 	table.insert(keepClear, { Position = area.Position, Radius = area.Radius + zone.Trees.Scattered.ClearAroundMobs })
 end
-for x = -160, 160, 22 do -- the gate, its walls and the town behind them: no trees there
-	table.insert(keepClear, { Position = Vector3.new(x, 0, zone.Gate.Z + 6), Radius = 36 })
+for x = -200, 200, 20 do -- the gate and its walls: no trees on them
+	table.insert(keepClear, { Position = Vector3.new(x, 0, zone.Gate.Z), Radius = 16 * zone.Gate.Scale })
 end
+table.insert(keepClear, { Position = Vector3.new(0, 0, zone.Gate.Z + 22 * zone.Gate.Scale), Radius = 30 * zone.Gate.Scale }) -- the road behind the passage
+table.insert(keepClear, { Position = Vector3.new(0, 0, zone.Gate.Z - 30 * zone.Gate.Scale), Radius = 30 * zone.Gate.Scale }) -- the road in front
 buildTrees(zone, points, keepClear)
 buildCanyon(zone) -- last and slowest; it waits between batches, but everything the player stands on is already built
 

@@ -19,14 +19,17 @@ enterRemote.Parent = ReplicatedStorage
 
 -- Measured from the imported model (assets/models/StarterTownGate.rbxm), in studs from the gate's middle (its pivot).
 -- The model is mirrored by the importer: the front, where players arrive, is -Z, so with no rotation it faces the spawn.
-local SCALE = 1.714 -- the importer made it this much bigger than the original design
-local WALL_LENGTH = 46.1 -- one stone wall piece, tower to far end
-local WALL_END = 69.8 -- where the model's own walls stop, on each side
-local WALL_HEIGHT, WALL_THICKNESS = 27.8, 11
+local K = config.Scale -- how much bigger than the imported model the gate is built (Config/Zones)
+local SCALE = 1.714 * K -- the importer already made the model this much bigger than the original design
+local WALL_LENGTH = 46.1 * K -- one stone wall piece, tower to far end
+local WALL_END = 69.8 * K -- where the model's own walls stop, on each side
+local WALL_HEIGHT, WALL_THICKNESS = 27.8 * K, 11 * K
 local PORTCULLIS_DROP = 9 * SCALE
-local DOOR_HINGE_X, DOOR_Z = 8.4, -3.15
-local PASSAGE_HALF_WIDTH = 8.5
-local LANTERNS = { Vector3.new(11.8, 12.9, 10.8), Vector3.new(-11.8, 12.9, 10.8), Vector3.new(11.8, 12.9, -10.8), Vector3.new(-11.8, 12.9, -10.8) }
+local DOOR_HINGE_X, DOOR_Z = 8.4 * K, -3.15 * K
+local PASSAGE_HALF_WIDTH = 8.5 * K
+local LANTERNS = {
+	Vector3.new(11.8, 12.9, 10.8) * K, Vector3.new(-11.8, 12.9, 10.8) * K, Vector3.new(11.8, 12.9, -10.8) * K, Vector3.new(-11.8, 12.9, -10.8) * K,
+}
 
 local template = ServerStorage:WaitForChild("Models"):WaitForChild(config.Model)
 local folder = Instance.new("Folder")
@@ -60,6 +63,7 @@ end
 local groundY = groundAt(0, config.Z)
 local gateModel = template:Clone():FindFirstChild("Gate", true)
 gateModel.Name = "Gate"
+gateModel:ScaleTo(gateModel:GetScale() * K) -- ScaleTo is absolute, and the imported model already carries its own scale
 gateModel:PivotTo(CFrame.new(0, groundY - 0.4, config.Z)) -- the road sits a hair into the ground
 gateModel.Parent = folder
 local origin = gateModel:GetPivot()
@@ -154,7 +158,7 @@ local function pivotParts(prefix)
 	return list
 end
 local leftDoor, rightDoor, portcullis = pivotParts("Door_L"), pivotParts("Door_R"), pivotParts("Portcullis")
-local passageBlock = invisible("PassageBlock", origin * CFrame.new(0, 11.5, DOOR_Z - 1.5), Vector3.new(PASSAGE_HALF_WIDTH * 2, 23, 2.5), true)
+local passageBlock = invisible("PassageBlock", origin * CFrame.new(0, 11.5 * K, DOOR_Z - 1.5 * K), Vector3.new(PASSAGE_HALF_WIDTH * 2, 23 * K, 2.5 * K), true)
 
 -- progress 0 = shut (portcullis down, doors closed), 1 = open (portcullis up, doors swung back). Opening raises the
 -- portcullis first, then swings the doors; shutting is the same thing backwards.
@@ -238,7 +242,7 @@ prompt.Triggered:Connect(enter)
 prompt.Parent = promptPart
 
 -- Walking into the passage while the gate is open.
-local doorway = invisible("Doorway", origin * CFrame.new(0, 11, 4), Vector3.new(PASSAGE_HALF_WIDTH * 2, 22, 6), false)
+local doorway = invisible("Doorway", origin * CFrame.new(0, 11 * K, 4 * K), Vector3.new(PASSAGE_HALF_WIDTH * 2, 22 * K, 6 * K), false)
 doorway.CanTouch = true
 doorway.Touched:Connect(function(other)
 	local player = Players:GetPlayerFromCharacter(other.Parent)
@@ -262,83 +266,6 @@ task.spawn(function()
 	end
 end)
 
--- The town behind the wall -------------------------------------------------------------------------------------
-
-local b = config.Backdrop
-local rng = Random.new(b.Seed)
-local townParts = 0
-
--- Ground under a building, ignoring the canyon wall if the spot happens to be against it.
-local function townGround(x, z)
-	local y = groundAt(x, z)
-	return if y > groundY + 15 then groundY else y
-end
-
-local function plain(parent, cframe, size, material, color, canCollide)
-	local p = Instance.new("Part")
-	p.Anchored = true
-	p.CanCollide = canCollide or false
-	p.CanQuery = false
-	p.CanTouch = false
-	p.Material = material
-	p.Color = color
-	p.Size = size
-	p.CFrame = cframe
-	p.Parent = parent
-	townParts += 1
-	return p
-end
-
--- A house facing the gate (door side toward -Z): plastered walls, a long pitched roof with the ridge parallel to the wall,
--- warm windows and a chimney. `at` is the ground point under the middle of the house.
-local function house(parent, x, y, z, w, d, h)
-	local model = Instance.new("Model")
-	model.Name = "House"
-	model.Parent = parent
-	local wall = b.WallColors[rng:NextInteger(1, #b.WallColors)]
-	local roof = b.RoofColors[rng:NextInteger(1, #b.RoofColors)]
-	plain(model, CFrame.new(x, y + h / 2, z), Vector3.new(w, h, d), Enum.Material.Concrete, wall)
-	-- timber band under the roof and at the base
-	plain(model, CFrame.new(x, y + h - 0.6, z), Vector3.new(w + 0.4, 1.2, d + 0.4), Enum.Material.Wood, Color3.fromRGB(92, 66, 44))
-	plain(model, CFrame.new(x, y + 0.6, z), Vector3.new(w + 0.4, 1.2, d + 0.4), Enum.Material.Cobblestone, Color3.fromRGB(110, 106, 100))
-	local rise = d * b.RoofRise
-	local half = d / 2 + 1.2
-	local tilt = math.atan2(rise, half)
-	local slab = math.sqrt(half ^ 2 + rise ^ 2) + 0.3
-	for side = -1, 1, 2 do
-		plain(model, CFrame.new(x, y + h + rise / 2, z + side * half / 2) * CFrame.Angles(side * tilt, 0, 0), Vector3.new(w + 2.4, 0.9, slab), Enum.Material.Slate, roof)
-	end
-	plain(model, CFrame.new(x + w * 0.25, y + h + rise + 1.5, z + d * 0.1), Vector3.new(2.2, 4.5, 2.2), Enum.Material.Cobblestone, Color3.fromRGB(104, 100, 96)) -- chimney
-	local windows = math.max(math.floor(w / 5), 1)
-	for i = 1, windows do
-		local wx = x - w / 2 + (i - 0.5) * w / windows
-		plain(model, CFrame.new(wx, y + h * 0.58, z - d / 2 - 0.1), Vector3.new(1.8, 2.6, 0.2), Enum.Material.Neon, Color3.fromRGB(255, 200, 120))
-	end
-	plain(model, CFrame.new(x, y + 3, z - d / 2 - 0.15), Vector3.new(3.4, 6, 0.3), Enum.Material.Wood, Color3.fromRGB(86, 60, 40)) -- door
-end
-
-local town = Instance.new("Folder")
-town.Name = "TownBehindTheWall"
-town.Parent = folder
-local houses = 0
-local x = -b.Reach
-while x <= b.Reach do
-	local w = rng:NextNumber(b.Width[1], b.Width[2])
-	local d = rng:NextNumber(b.Depth[1], b.Depth[2])
-	local h = rng:NextNumber(b.Height[1], b.Height[2])
-	-- Stay inside the zone: follow the curve of the canyon, and stay clear of the road behind the passage.
-	local farEdge = math.sqrt(math.max(b.MaxRadius ^ 2 - (math.abs(x) + w / 2) ^ 2, 0))
-	local z = math.min(config.Z + b.Row, farEdge - d / 2)
-	if z - d / 2 >= config.Z + WALL_THICKNESS / 2 + b.WallGap and math.abs(x) > b.RoadClear + w / 2 then
-		house(town, x, townGround(x, z), z, w, d, h)
-		houses += 1
-	end
-	x += w + rng:NextNumber(b.Gap[1], b.Gap[2])
-end
--- The town hall at the end of the road, so looking through the open gate shows a building, not rock.
-local hall = b.Hall
-house(town, 0, townGround(0, config.Z + 18), config.Z + hall.Z, hall.Width, hall.Depth, hall.Height)
-
-print(`[Gate] {config.Name} gate built at z={config.Z}: {wallPieces} extra wall pieces, {houses + 1} town buildings ({townParts} parts)`)
+print(`[Gate] {config.Name} gate built at z={config.Z}, scale {K}: {wallPieces} extra wall pieces`)
 
 return true

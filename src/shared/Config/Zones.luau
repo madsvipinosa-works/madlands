@@ -38,9 +38,9 @@ return {
 				Vector3.new(14, 0, 45),
 				Vector3.new(-10, 0, 90),
 				Vector3.new(10, 0, 135),
-				Vector3.new(-6, 0, 180),
-				Vector3.new(4, 0, 205),
-				Vector3.new(0, 0, 216),
+				Vector3.new(-6, 0, 164),
+				Vector3.new(3, 0, 178),
+				Vector3.new(0, 0, 188),
 			},
 			Width = 18, -- studs wide (it varies a little along the way, so the edges look worn)
 			Material = "Ground", -- the path
@@ -57,32 +57,16 @@ return {
 		Gate = {
 			Name = "Starter Town",
 			Model = "StarterTownGate", -- ServerStorage.Models.StarterTownGate, from assets/models/StarterTownGate.rbxm
-			Z = 248, -- how far north the gate stands (x = 0); its back must stay inside the canyon, so do not push it much further
+			Scale = 1.3, -- how much bigger than the imported model the gate is built (1 = as imported)
+			Z = 236, -- how far north the gate stands (x = 0). The bigger the gate, the further forward it must stand: its road must end before the canyon
 			DestinationPlaceId = 0, -- the Roblox place id of the Starter Town; 0 = not connected yet
-			OpenDistance = 55, -- the gate opens when a player is this close
+			OpenDistance = 65, -- the gate opens when a player is this close
 			OpenSeconds = 2.6, -- how long it takes to open fully
 			DoorOpenDegrees = 95,
 			PromptKey = Enum.KeyCode.F,
-			PromptDistance = 24, -- studs from the gate at which "Enter" shows
+			PromptDistance = 32, -- studs from the gate at which "Enter" shows
 			FadeSeconds = 1.2, -- the screen fades to black this fast, then the teleport happens
-			ReturnDistance = 46, -- studs in front of the gate where the player is put back if the town is not connected
-			-- The town you can see behind the wall: houses in a row, and a hall at the end of the road.
-			Backdrop = {
-				Seed = 31,
-				Reach = 100, -- houses are placed from -Reach to +Reach across
-				Row = 24, -- studs behind the gate's middle
-				WallGap = 3, -- studs between the wall's back and the houses
-				RoadClear = 16, -- studs kept open at the middle for the road behind the passage
-				MaxRadius = 280, -- houses stay inside this distance from the zone's middle (the canyon starts around 290)
-				Width = { 12, 18 },
-				Depth = { 11, 15 },
-				Height = { 18, 28 }, -- wall height, before the roof (the gate wall is 28 high, so these show over it)
-				Gap = { 3, 8 }, -- studs between houses
-				RoofRise = 0.55, -- roof height as a share of the house's depth
-				WallColors = { Color3.fromRGB(214, 198, 168), Color3.fromRGB(205, 176, 140), Color3.fromRGB(196, 190, 176) },
-				RoofColors = { Color3.fromRGB(150, 70, 52), Color3.fromRGB(104, 78, 58), Color3.fromRGB(86, 92, 104) },
-				Hall = { Z = 40, Width = 36, Depth = 18, Height = 30 }, -- the building at the end of the road
-			},
+			ReturnDistance = 60, -- studs in front of the gate where the player is put back if the town is not connected
 		},
 
 		-- Mob camps: where the mobs live. A camp is one kind of mob in one or more groups; each group is a number of mobs
