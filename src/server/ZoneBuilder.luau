@@ -5,6 +5,7 @@ local ServerStorage = game:GetService("ServerStorage")
 
 local Zones = require(ReplicatedStorage.Shared.Config.Zones)
 local Camps = require(ReplicatedStorage.Shared.Camps)
+local CanyonShape = require(ReplicatedStorage.Shared.CanyonShape)
 
 local terrain = workspace.Terrain
 local CELL = 4 -- terrain cell size in studs: only a fully covered cell changes material, so everything is laid cell by cell
@@ -60,23 +61,7 @@ local function buildHills(zone, trail)
 	end
 end
 
--- The canyon: every cell of a ring outside the zone gets a full-height column of dirt. The inner face is vertical,
--- wobbles in and out around the circle, and the top rises and falls, so it reads as a canyon and cannot be climbed.
-local function smooth(t)
-	t = math.clamp(t, 0, 1)
-	return t * t * (3 - 2 * t)
-end
-
--- How far the canyon's face is moved in or out at this angle around the circle (see buildCanyon).
-local function faceOffset(zone, angle)
-	local c = zone.Canyon
-	local seed = c.Seed
-	local ux, uy = math.cos(angle), math.sin(angle)
-	local n = math.noise(ux * 3 + seed, uy * 3 + seed, 0.5) + 0.5 * math.noise(ux * 9 + seed, uy * 9 + seed, 1.5) + 0.25 * math.noise(ux * 24 + seed, uy * 24 + seed, 2.5)
-	local fromNorth = math.abs((angle - math.pi / 2 + math.pi) % (2 * math.pi) - math.pi) -- 0 right at the gate
-	local calm = smooth((fromNorth - c.GateCalm[1]) / (c.GateCalm[2] - c.GateCalm[1]))
-	return math.clamp(n * 1.3, -1, 1) * c.EdgeWobble * calm
-end
+local smooth, faceOffset = CanyonShape.smooth, CanyonShape.faceOffset -- shared/CanyonShape: the gate's flank walls follow the same face
 
 -- The canyon: every cell of a ring outside the zone gets a column of dirt. Seen from inside it is not one straight wall but
 -- a rough cliff: the face wanders in and out (three scales of noise, so there are bays and headlands as well as crags), the
@@ -245,8 +230,9 @@ local function outsideHeight(zone, x, z)
 	local start = zone.Radius + faceOffset(zone, angle) + zone.Canyon.Thickness -- the canyon's back edge
 	local t = smooth((r - start) / s.RampLength)
 	local town = townFactor(zone, angle)
-	local hills = (math.noise(x / s.HillSize + s.Seed, z / s.HillSize + s.Seed, 0.5) * s.HillHeight + math.noise(x / 35 + s.Seed, z / 35 + s.Seed, 1.5) * 8) * t * (1 - 0.6 * town)
-	local h = s.StartHeight + s.Rise * t + hills + s.Town.Bump * town * smooth((r - start) / 120) -- the town stands on a hill of its own
+	local hills = (math.noise(x / s.HillSize + s.Seed, z / s.HillSize + s.Seed, 0.5) * s.HillHeight + math.noise(x / 35 + s.Seed, z / 35 + s.Seed, 1.5) * 8) * t * (1 - 0.7 * town)
+	-- Right behind the gate the land starts lower and rises less (Town.Lower), so the gate's walls are not dwarfed by high ground.
+	local h = s.StartHeight * (1 - s.Town.Lower * town) + s.Rise * t * (1 - 0.65 * town) + hills + s.Town.Bump * town * smooth((r - start) / 120)
 	return h * (1 - 0.45 * (1 - 0.8 * town) * smooth((r - (s.Radius - 120)) / 120)) -- a little lower toward the rim, so it sinks into the haze
 end
 
@@ -612,7 +598,7 @@ end
 
 -- The town beyond the gate ------------------------------------------------------------------------------------------------
 -- The Starter Town itself is a separate place, but from the gate it should look like a town lies behind: a hill rises behind the
--- gate's walls, and on it stand rows of houses, big towers and a keep, lit by warm windows, with smoke from the chimneys.
+-- gate's walls, and on it stand a few rows of houses and a town hall with a clock tower, lit by warm windows.
 -- This is scenery only; nobody can go there (the walls and the canyon close it off).
 
 local function townPart(parent, cframe, size, material, color, shape)
@@ -674,31 +660,6 @@ local function townHouse(parent, base, w, d, h, rng, t)
 	townPart(model, base * CFrame.new(0, 4.5, -d / 2 - 0.2), Vector3.new(4.5, 9, 0.4), Enum.Material.Wood, Color3.fromRGB(84, 58, 38)) -- door
 end
 
--- A round tower with a stepped conical roof (stacked discs, narrowing), banners and a lit window ring.
-local function townTower(parent, base, diameter, height, roofColor, t)
-	local model = Instance.new("Model")
-	model.Name = "Tower"
-	model.Parent = parent
-	local up = CFrame.Angles(0, 0, math.pi / 2) -- a cylinder Part lies along X; this stands it up
-	local cylinder = Enum.PartType.Cylinder
-	townPart(model, base * CFrame.new(0, height / 2 - 2, 0) * up, Vector3.new(height + 4, diameter, diameter), Enum.Material.Cobblestone, t.StoneColor, cylinder)
-	townPart(model, base * CFrame.new(0, height + 1, 0) * up, Vector3.new(3, diameter + 4, diameter + 4), Enum.Material.Cobblestone, t.StoneColor, cylinder) -- the overhang under the roof
-	for i = 0, 4 do -- the roof, from wide to narrow
-		local width = (diameter + 4) * (1 - i * 0.2)
-		townPart(model, base * CFrame.new(0, height + 4 + i * 5, 0) * up, Vector3.new(5, math.max(width, 2), math.max(width, 2)), Enum.Material.Slate, roofColor, cylinder)
-	end
-	townPart(model, base * CFrame.new(0, height + 4 + 5 * 5 + 3, 0), Vector3.new(1, 8, 1), Enum.Material.Metal, Color3.fromRGB(50, 50, 54)) -- spire
-	local ring = townPart(model, base * CFrame.new(0, height * 0.8, 0) * up, Vector3.new(3, diameter + 0.4, diameter + 0.4), Enum.Material.Neon, Color3.fromRGB(255, 190, 100), cylinder) -- a band of lit windows
-	ring.Transparency = 0.35
-	local light = Instance.new("PointLight")
-	light.Color = Color3.fromRGB(255, 190, 110)
-	light.Range = 45
-	light.Brightness = 1.4
-	light.Shadows = false
-	light.Parent = ring
-	return model
-end
-
 local function buildTownBackdrop(zone)
 	local t = zone.Surroundings.Town
 	local rng = Random.new(t.Seed)
@@ -740,32 +701,55 @@ local function buildTownBackdrop(zone)
 		end
 	end
 
-	-- Towers along the arc and the keep on the axis.
-	for _, tower in t.Towers do
-		local base = placement(tower.Radius, math.pi / 2 + tower.Angle)
-		if base then
-			townTower(folder, base, tower.Diameter, tower.Height, t.RoofColors[rng:NextInteger(1, #t.RoofColors)], t)
-			count += 1
-		end
-	end
-	local keep = t.Keep
-	local base, kx, kz = placement(keep.Radius, math.pi / 2)
+	-- The town hall at the top of the street, straight behind the gate: a long hall with a pitched roof, columns and steps along the
+	-- front, and a clock tower rising from the middle.
+	local hall = t.Hall
+	local base, hx, hz = placement(hall.Radius, math.pi / 2)
 	if base then
 		local model = Instance.new("Model")
-		model.Name = "Keep"
+		model.Name = "TownHall"
 		model.Parent = folder
-		townPart(model, base * CFrame.new(0, -4, 0), Vector3.new(keep.Width + 8, 14, keep.Depth + 8), Enum.Material.Cobblestone, t.StoneColor)
-		townPart(model, base * CFrame.new(0, keep.Height / 2, 0), Vector3.new(keep.Width, keep.Height, keep.Depth), Enum.Material.Cobblestone, t.StoneColor)
-		townPart(model, base * CFrame.new(0, keep.Height + 2, 0), Vector3.new(keep.Width + 6, 4, keep.Depth + 6), Enum.Material.Cobblestone, t.StoneColor) -- the battlement
-		for _, corner in { Vector3.new(1, 0, 1), Vector3.new(-1, 0, 1), Vector3.new(1, 0, -1), Vector3.new(-1, 0, -1) } do
-			townTower(model, base * CFrame.new(corner.X * keep.Width / 2, 0, corner.Z * keep.Depth / 2), 20, keep.Height + 26, Color3.fromRGB(150, 62, 50), t)
+		local stone = t.StoneColor
+		townPart(model, base * CFrame.new(0, -4, 0), Vector3.new(hall.Width + 10, 10, hall.Depth + 10), Enum.Material.Cobblestone, stone) -- the foot
+		townPart(model, base * CFrame.new(0, hall.Height / 2, 0), Vector3.new(hall.Width, hall.Height, hall.Depth), Enum.Material.Concrete, Color3.fromRGB(214, 200, 176))
+		townPart(model, base * CFrame.new(0, hall.Height - 0.8, 0), Vector3.new(hall.Width + 1, 1.6, hall.Depth + 1), Enum.Material.Wood, Color3.fromRGB(92, 66, 44))
+		local rise = hall.Depth * 0.5
+		local half = hall.Depth / 2 + 2
+		local tilt = math.atan2(rise, half)
+		local slab = math.sqrt(half ^ 2 + rise ^ 2) + 0.5
+		for side = -1, 1, 2 do
+			townPart(model, base * CFrame.new(0, hall.Height + rise / 2, side * half / 2) * CFrame.Angles(side * tilt, 0, 0), Vector3.new(hall.Width + 4, 1.4, slab), Enum.Material.Slate, Color3.fromRGB(88, 94, 106))
 		end
-		townTower(model, base * CFrame.new(0, keep.Height, 0), 26, 70, Color3.fromRGB(150, 62, 50), t) -- the great tower, rising out of the middle
-		for x = -1, 1, 2 do -- long banners down the front
-			townPart(model, base * CFrame.new(x * keep.Width * 0.22, keep.Height * 0.6, -keep.Depth / 2 - 0.4), Vector3.new(5, keep.Height * 0.5, 0.4), Enum.Material.Fabric, Color3.fromRGB(128, 22, 30))
+		for i = -3, 3 do -- columns along the front
+			townPart(model, base * CFrame.new(i * hall.Width / 7.5, hall.Height * 0.4, -hall.Depth / 2 - 2), Vector3.new(3, hall.Height * 0.8, 3), Enum.Material.Marble, Color3.fromRGB(226, 222, 212))
 		end
-		local lit = townPart(model, base * CFrame.new(0, keep.Height * 0.42, -keep.Depth / 2 - 0.3), Vector3.new(keep.Width * 0.7, 6, 0.4), Enum.Material.Neon, Color3.fromRGB(255, 190, 100)) -- a band of windows
-		lit.Transparency = 0.3
+		townPart(model, base * CFrame.new(0, hall.Height * 0.82, -hall.Depth / 2 - 2), Vector3.new(hall.Width * 0.9, 2.4, 4), Enum.Material.Marble, Color3.fromRGB(226, 222, 212)) -- the beam over them
+		for step = 0, 3 do
+			townPart(model, base * CFrame.new(0, step * 1.2 - 3, -hall.Depth / 2 - 6 - (3 - step) * 2), Vector3.new(hall.Width * 0.5, 2.4, 4), Enum.Material.Cobblestone, stone)
+		end
+		for i = -2, 2 do
+			if i ~= 0 then
+				local window = townPart(model, base * CFrame.new(i * hall.Width / 6, hall.Height * 0.5, -hall.Depth / 2 - 0.2), Vector3.new(4, 8, 0.4), Enum.Material.Neon, Color3.fromRGB(255, 196, 110))
+				window.Transparency = 0.15
+			end
+		end
+		townPart(model, base * CFrame.new(0, 6, -hall.Depth / 2 - 0.3), Vector3.new(9, 12, 0.5), Enum.Material.Wood, Color3.fromRGB(84, 58, 38)) -- the great door
+		-- the clock tower
+		local tw = hall.TowerWidth
+		townPart(model, base * CFrame.new(0, hall.Height + hall.TowerHeight / 2 - 4, 0), Vector3.new(tw, hall.TowerHeight, tw), Enum.Material.Cobblestone, stone)
+		townPart(model, base * CFrame.new(0, hall.Height + hall.TowerHeight - 2, 0), Vector3.new(tw + 4, 4, tw + 4), Enum.Material.Cobblestone, stone)
+		for i = 0, 5 do -- a stepped pyramid roof
+			local width = (tw + 4) * (1 - i / 6)
+			townPart(model, base * CFrame.new(0, hall.Height + hall.TowerHeight + 2 + i * 4, 0), Vector3.new(width, 4, width), Enum.Material.Slate, Color3.fromRGB(150, 62, 50))
+		end
+		local clock = townPart(model, base * CFrame.new(0, hall.Height + hall.TowerHeight * 0.7, -tw / 2 - 0.3), Vector3.new(tw * 0.6, tw * 0.6, 0.5), Enum.Material.Neon, Color3.fromRGB(255, 240, 200), Enum.PartType.Cylinder)
+		clock.CFrame = base * CFrame.new(0, hall.Height + hall.TowerHeight * 0.7, -tw / 2 - 0.3) * CFrame.Angles(0, math.pi / 2, 0)
+		local light = Instance.new("PointLight")
+		light.Color = Color3.fromRGB(255, 200, 120)
+		light.Range = 50
+		light.Brightness = 1.2
+		light.Shadows = false
+		light.Parent = clock
 		count += 1
 	end
 	print(`[Zone] town backdrop: {count} buildings behind the gate`)

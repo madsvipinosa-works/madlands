@@ -43,7 +43,7 @@ return {
 		Surroundings = {
 			Radius = 640, -- studs from the spawn to the outer rim of the hills
 			StartHeight = 40, -- height of the land right behind the canyon (about the canyon's top)
-			Rise = 75, -- how much higher the land is by the end of the ramp
+			Rise = 60, -- how much higher the land is by the end of the ramp
 			RampLength = 170, -- studs from the canyon to where it has risen fully
 			HillSize = 95, -- bigger = broader hills
 			HillHeight = 32, -- how much the hills roll up and down
@@ -54,28 +54,23 @@ return {
 			AltColor = Color3.fromRGB(106, 146, 60),
 			EdgeMaterial = "Ground", -- the dirt edge of each terrace and the soil below
 			Trees = { Count = 170, Scale = { 2.6, 4.2 }, Edge = 50 }, -- big trees on the far terraces; Edge = studs left bare at the rim
-			-- The town you see beyond the gate: a hill behind its walls, with houses in rows, big towers and a keep (scenery only).
+			-- The town you see beyond the gate: a low hill behind its walls with a few rows of houses and a town hall (scenery only).
 			Town = {
 				Seed = 23,
-				Spread = 0.5, -- radians either side of straight behind the gate that the town fills (0.5 = about 29 degrees)
-				Bump = 55, -- how much higher than the other hills its hill rises
-				Rows = { 500, 526, 552, 578, 604 }, -- distance from the spawn of each row of houses; each row is further up the hill
-				Step = 0.062, -- radians between houses along a row (about 36 studs)
-				Gaps = 0.2, -- chance that a house is left out
-				LaneHalfWidth = 26, -- a street up the middle, from the gate to the keep
-				Width = { 20, 30 },
-				Depth = { 16, 22 },
-				Height = { 18, 30 }, -- wall height, before the roof
+				Spread = 0.42, -- radians either side of straight behind the gate that the town fills (0.42 = about 24 degrees)
+				Bump = 12, -- how much higher than the other hills its hill rises
+				Lower = 0.45, -- how much lower than the other land it starts, right behind the gate (0 = not lower)
+				Rows = { 500, 538, 576 }, -- distance from the spawn of each row of houses; each row is further up the hill
+				Step = 0.075, -- radians between houses along a row (about 40 studs)
+				Gaps = 0.42, -- chance that a house is left out
+				LaneHalfWidth = 30, -- a street up the middle, from the gate to the hall
+				Width = { 18, 26 },
+				Depth = { 14, 20 },
+				Height = { 14, 22 }, -- wall height, before the roof
 				WallColors = { Color3.fromRGB(216, 200, 170), Color3.fromRGB(206, 178, 142), Color3.fromRGB(198, 192, 178) },
 				RoofColors = { Color3.fromRGB(152, 68, 52), Color3.fromRGB(104, 78, 58), Color3.fromRGB(88, 94, 106) },
 				StoneColor = Color3.fromRGB(150, 146, 138),
-				Towers = { -- Angle is radians from straight behind the gate
-					{ Radius = 520, Angle = -0.4, Diameter = 24, Height = 80 },
-					{ Radius = 520, Angle = 0.4, Diameter = 24, Height = 80 },
-					{ Radius = 566, Angle = -0.22, Diameter = 22, Height = 100 },
-					{ Radius = 566, Angle = 0.22, Diameter = 22, Height = 100 },
-				},
-				Keep = { Radius = 600, Width = 80, Depth = 56, Height = 80 }, -- the big building on top, straight behind the gate
+				Hall = { Radius = 556, Width = 64, Depth = 30, Height = 24, TowerWidth = 14, TowerHeight = 42 }, -- at the top of the street, straight behind the gate
 			},
 			Haze = {
 				Density = 0.3,
@@ -137,6 +132,9 @@ return {
 			PromptDistance = 46, -- studs from the gate at which "Enter" shows
 			FadeSeconds = 1.2, -- the screen fades to black this fast, then the teleport happens
 			ReturnDistance = 70, -- studs in front of the gate where the player is put back if the town is not connected
+			-- The hand-made WallPiece (assets/models/WallPiece.rbxm) is tiled along the canyon beside the gate's own walls. HeightShare is
+			-- its height as a share of the gate's wall height; Extra is how far past the canyon's rise (GateLift) it keeps going.
+			Flank = { Model = "WallPiece", HeightShare = 0.92, Extra = 30 },
 		},
 
 		-- Mob camps: where the mobs live. A camp is one kind of mob in one or more groups; each group is a number of mobs

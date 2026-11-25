@@ -9,6 +9,7 @@ local TeleportService = game:GetService("TeleportService")
 local TweenService = game:GetService("TweenService")
 
 local Zones = require(ReplicatedStorage.Shared.Config.Zones)
+local CanyonShape = require(ReplicatedStorage.Shared.CanyonShape)
 local zone = Zones.OutsideZone1
 local config = zone.Gate
 local K = config.Scale -- how much bigger than the model was saved (1 = as saved)
@@ -180,6 +181,73 @@ local function setOpen(open)
 end
 progress.Changed:Connect(apply)
 apply(0)
+
+-- Flank walls ---------------------------------------------------------------------------------------------------------
+-- Beyond the gate's own walls the canyon rises to meet them, but the rock there is rougher and lower than the stonework, so the
+-- hand-made WallPiece (Gate.Flank) is tiled along the canyon's face from each wall end outward, scaled to the wall's height and set
+-- into the rock, to carry the gate's masonry on until the cliff has risen to the wall's height.
+do
+	local flank = config.Flank
+	local piece = ServerStorage.Models:FindFirstChild(flank.Model)
+	if piece then
+		local wallLo, wallHi = bounds("Stone_Wall")
+		local top = wallHi.Y -- the height of the gate's walls above its base
+		local folderFlank = Instance.new("Folder")
+		folderFlank.Name = "FlankWalls"
+		folderFlank.Parent = folder
+		local base = piece:GetPivot()
+		local pieceLo, pieceHi = Vector3.new(1e9, 1e9, 1e9), Vector3.new(-1e9, -1e9, -1e9)
+		for _, part in piece:GetDescendants() do
+			if part:IsA("MeshPart") then
+				local cf = base:Inverse() * part.CFrame
+				local half = part.Size / 2
+				local r = cf:VectorToWorldSpace(Vector3.new(half.X, 0, 0)):Abs() + cf:VectorToWorldSpace(Vector3.new(0, half.Y, 0)):Abs() + cf:VectorToWorldSpace(Vector3.new(0, 0, half.Z)):Abs()
+				pieceLo = Vector3.new(math.min(pieceLo.X, cf.X - r.X), math.min(pieceLo.Y, cf.Y - r.Y), math.min(pieceLo.Z, cf.Z - r.Z))
+				pieceHi = Vector3.new(math.max(pieceHi.X, cf.X + r.X), math.max(pieceHi.Y, cf.Y + r.Y), math.max(pieceHi.Z, cf.Z + r.Z))
+			end
+		end
+		local pieceScale = (top * flank.HeightShare) / (pieceHi.Y - pieceLo.Y)
+		local length, depth = (pieceHi.X - pieceLo.X) * pieceScale, (pieceHi.Z - pieceLo.Z) * pieceScale
+		local fromAngle = math.atan2(math.abs(wallHi.X) * 0.78, config.Z) -- measured from north: where the gate's own wall ends
+		local toX = config.CanyonGap + zone.Canyon.GateLift + flank.Extra
+		local placed = 0
+		for _, side in { -1, 1 } do
+			local angle = fromAngle
+			while true do
+				local face = zone.Radius + CanyonShape.faceOffset(zone, math.pi / 2 - side * angle)
+				local radius = face - 2 + depth / 2 -- its front face just proud of the cliff's, most of its body in the rock
+				local x, z = side * math.sin(angle) * radius, math.cos(angle) * radius
+				if math.abs(x) > toX then
+					break
+				end
+				local ground = groundAt(x * (face - 6) / radius, z * (face - 6) / radius)
+				local copy = piece:Clone()
+				copy:ScaleTo(copy:GetScale() * pieceScale)
+				-- the piece's own pivot sits 0.6 above its base; it faces the middle of the zone
+				copy:PivotTo(CFrame.lookAt(Vector3.new(x, ground - 3 - pieceLo.Y * pieceScale, z), Vector3.new(0, ground - 3 - pieceLo.Y * pieceScale, 0)))
+				for _, part in copy:GetDescendants() do
+					if part:IsA("BasePart") then
+						part.Anchored = true
+						part.CanQuery = false
+						part.CanTouch = false
+						part.CanCollide = true
+						part.Material = Enum.Material.Slate
+						part.Color = Color3.new(1, 1, 1)
+						pcall(function()
+							part.CollisionFidelity = Enum.CollisionFidelity.Hull
+						end)
+					end
+				end
+				copy.Parent = folderFlank
+				placed += 1
+				angle += (length * 0.96) / radius -- slightly overlapped, so there is no crack between pieces
+			end
+		end
+		print(`[Gate] {placed} flank wall pieces, piece scale {string.format("%.2f", pieceScale)}`)
+	else
+		warn(`[Gate] ServerStorage.Models.{flank.Model} not found: save it as assets/models/{flank.Model}.rbxm`)
+	end
+end
 
 -- Light: braziers in front and lanterns up on the gatehouse.
 for _, spot in { Vector3.new(15, 11, -17), Vector3.new(-15, 11, -17), Vector3.new(17, 18, 14), Vector3.new(-17, 18, 14) } do
