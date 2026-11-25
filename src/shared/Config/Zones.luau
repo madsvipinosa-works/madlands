@@ -6,8 +6,8 @@ return {
 		Name = "Outside Zone 1",
 		LevelRange = { 1, 15 }, -- Greenfields in DESIGN.md; the zone level sync (build step 6) will read this
 
-		-- Size: Radius is the zone's size. When you change it, also move Gate.Z (= Radius), River.Z (= Gate.Z - 84), the trail's last
-		-- waypoints (they must end about 12 studs before the river) and the camps, which are placed in studs from the spawn.
+		-- Size: Radius is the zone's size. When you change it, also move Gate.Z (about Radius - 20), the trail's last waypoint (about
+		-- 60 studs in front of the gate) and the camps, which are placed in studs from the spawn.
 		Radius = 420, -- studs from the spawn to the foot of the canyon wall
 		Depth = 16, -- studs of terrain below the surface (the top surface is at y = 0)
 		Material = "Grass", -- any Enum.Material name
@@ -19,8 +19,8 @@ return {
 			Material = "Mud", -- dark packed dirt (the trail uses Ground, and a terrain material has one color for the whole map)
 			Color = Color3.fromRGB(98, 72, 50),
 			Thickness = 32, -- studs deep, from the face outward
-			Height = 70, -- studs above the ground at its average
-			HeightVariation = 0.3, -- 0.3 = the top varies up to 30% higher or lower
+			Height = 36, -- studs above the ground at its average (the gate's walls are as tall: 40 x Gate.Scale)
+			HeightVariation = 0.12, -- 0.12 = the top varies up to 12% higher or lower
 			EdgeWobble = 12, -- studs the face moves in and out around the circle
 			Seed = 11,
 		},
@@ -45,7 +45,7 @@ return {
 				Vector3.new(-10, 0, 232),
 				Vector3.new(12, 0, 268),
 				Vector3.new(-4, 0, 300),
-				Vector3.new(0, 0, 324),
+				Vector3.new(0, 0, 340),
 			},
 			Width = 18, -- studs wide (it varies a little along the way, so the edges look worn)
 			Material = "Ground", -- the path
@@ -56,36 +56,25 @@ return {
 			Seed = 3,
 		},
 
-		-- A river across the whole zone in front of the gate, and the raised bank the gate stands on, beyond it. Z is the river's
-		-- near edge and Width its width (keep both multiples of 4: terrain is built from 4-stud cells). The bank is Terrace.Height
-		-- above the ground, so the river's far side is a cliff and only the bridge (Gate.Bridge) leads up to the gate.
-		River = {
-			Z = 336,
-			Width = 28,
-			LedgeWidth = 8, -- a dry ledge this wide along the near bank, so anyone who falls in can climb out (multiple of 4)
-			BedMaterial = "Sand",
-			BedColor = Color3.fromRGB(150, 132, 100),
-		},
-		Terrace = { Height = 8 },
-		Plateau = { Height = 30 }, -- earth behind the gate's wall, up to this far above the bank
-
-		-- The Starter Town gate, at the end of the trail. The town itself is a separate place: pressing F at the gate, or walking
-		-- into its passage, fades the screen and teleports the player to DestinationPlaceId. While that is 0 (no town place yet),
-		-- the player is put back in front of the gate after the fade.
+		-- The Starter Town gate, on the north edge of the zone. Its curved walls take the canyon's place along that stretch (the
+		-- canyon leaves a gap CanyonGap studs either side of the middle) and are as tall as the canyon. The town itself is a
+		-- separate place: walking into the gate or pressing F at it opens the gate, fades the screen and teleports the player to
+		-- DestinationPlaceId. While that is 0 (no town place yet), the player is put back in front of the gate after the fade.
 		Gate = {
 			Name = "Starter Town",
-			Model = "StarterTownGate", -- ServerStorage.Models.StarterTownGate, from assets/models/StarterTownGate.rbxm
-			Scale = 1.3, -- how much bigger than the imported model the gate is built (1 = as imported)
-			Z = 420, -- how far north the gate stands (x = 0): its back wall meets the canyon face, which is at about Radius + 12 here. Keep it equal to Radius; move it with the canyon (Canyon.Seed / EdgeWobble)
+			Model = "StarterTownGateCurve", -- ServerStorage.Models.StarterTownGateCurve, from assets/models/StarterTownGateCurve.rbxm
+			Scale = 0.9, -- how big the gate is built (1 = as the model was saved). Its walls are 40 x Scale tall: keep that level with Canyon.Height
+			Z = 400, -- how far north its middle stands (x = 0); the wall ends must reach into the canyon at x = +-CanyonGap or a little beyond
+			CanyonGap = 84, -- half the width of the stretch of canyon replaced by the gate
 			DestinationPlaceId = 0, -- the Roblox place id of the Starter Town; 0 = not connected yet
-			OpenDistance = 95, -- the gate opens when a player is this close
+			AutoOpen = false, -- true: the gate opens by itself when a player is OpenDistance close (false: only when entering)
+			OpenDistance = 70,
 			OpenSeconds = 2.6, -- how long it takes to open fully
 			DoorOpenDegrees = 95,
 			PromptKey = Enum.KeyCode.F,
-			PromptDistance = 32, -- studs from the gate at which "Enter" shows
+			PromptDistance = 34, -- studs from the gate at which "Enter" shows
 			FadeSeconds = 1.2, -- the screen fades to black this fast, then the teleport happens
-			ReturnDistance = 50, -- studs in front of the gate where the player is put back if the town is not connected
-			Bridge = { Width = 18, Approach = 6, Landing = 8 }, -- over the river to the gate; Approach/Landing = studs it reaches onto the near/far bank
+			ReturnDistance = 60, -- studs in front of the gate where the player is put back if the town is not connected
 		},
 
 		-- Mob camps: where the mobs live. A camp is one kind of mob in one or more groups; each group is a number of mobs

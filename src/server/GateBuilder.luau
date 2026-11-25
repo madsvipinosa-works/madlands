@@ -1,8 +1,7 @@
--- Builds the Starter Town gate at the end of the trail (Config/Zones: Gate): the hand-made gate model, stone walls running
--- from its towers to the canyon on both sides, a row of town buildings standing behind the wall, and the way in. The gate
--- opens when a player comes near. Walking into the passage or pressing F at the gate "enters the town": the screen fades
--- to black and the player is teleported to the town's place (Gate.DestinationPlaceId). Server only; runs after ZoneBuilder
--- (it needs the canyon wall).
+-- Builds the Starter Town gate at the north edge of the zone (Config/Zones: Gate): the hand-made curved gate model, whose walls
+-- replace the canyon along that stretch of the edge (ZoneBuilder leaves a gap in the canyon for it). Walking into the closed
+-- gate or pressing F at it "enters the town": the gate opens, the screen fades to black and the player is teleported to the
+-- town's place (Gate.DestinationPlaceId). Server only; runs after ZoneBuilder.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
@@ -12,24 +11,11 @@ local TweenService = game:GetService("TweenService")
 local Zones = require(ReplicatedStorage.Shared.Config.Zones)
 local zone = Zones.OutsideZone1
 local config = zone.Gate
+local K = config.Scale -- how much bigger than the model was saved (1 = as saved)
 
 local enterRemote = Instance.new("RemoteEvent") -- server -> client: fade the screen for "entering the town"
 enterRemote.Name = "GateEnter"
 enterRemote.Parent = ReplicatedStorage
-
--- Measured from the imported model (assets/models/StarterTownGate.rbxm), in studs from the gate's middle (its pivot).
--- The model is mirrored by the importer: the front, where players arrive, is -Z, so with no rotation it faces the spawn.
-local K = config.Scale -- how much bigger than the imported model the gate is built (Config/Zones)
-local SCALE = 1.714 * K -- the importer already made the model this much bigger than the original design
-local WALL_LENGTH = 46.1 * K -- one stone wall piece, tower to far end
-local WALL_END = 69.8 * K -- where the model's own walls stop, on each side
-local WALL_HEIGHT, WALL_THICKNESS = 27.8 * K, 11 * K
-local PORTCULLIS_DROP = 9 * SCALE
-local DOOR_HINGE_X, DOOR_Z = 8.4 * K, -3.15 * K
-local PASSAGE_HALF_WIDTH = 8.5 * K
-local LANTERNS = {
-	Vector3.new(11.8, 12.9, 10.8) * K, Vector3.new(-11.8, 12.9, 10.8) * K, Vector3.new(11.8, 12.9, -10.8) * K, Vector3.new(-11.8, 12.9, -10.8) * K,
-}
 
 task.wait(1.5) -- freshly built terrain cannot be raycast for a moment
 local template = ServerStorage:WaitForChild("Models"):WaitForChild(config.Model)
@@ -41,7 +27,7 @@ local terrainOnly = RaycastParams.new()
 terrainOnly.FilterType = Enum.RaycastFilterType.Include
 terrainOnly.FilterDescendantsInstances = { workspace.Terrain }
 local function groundAt(x, z)
-	local hit = workspace:Raycast(Vector3.new(x, 150, z), Vector3.new(0, -300, 0), terrainOnly)
+	local hit = workspace:Raycast(Vector3.new(x, 200, z), Vector3.new(0, -400, 0), terrainOnly)
 	return hit and hit.Position.Y or 0
 end
 
@@ -60,19 +46,23 @@ local function invisible(name, cframe, size, canCollide)
 end
 
 -- The gate model ------------------------------------------------------------------------------------------------
+-- In the model the front, where players arrive, is -Z (so with no rotation it faces the spawn); the doors are at the front of
+-- the gatehouse, the portcullis in front of them, and the curved walls bend away behind it.
 
 local groundY = groundAt(0, config.Z)
 local gateModel = template:Clone():FindFirstChild("Gate", true)
 gateModel.Name = "Gate"
-gateModel:ScaleTo(gateModel:GetScale() * K) -- ScaleTo is absolute, and the imported model already carries its own scale
-gateModel:PivotTo(CFrame.new(0, groundY - 0.4, config.Z)) -- the road sits a hair into the ground
+gateModel:ScaleTo(gateModel:GetScale() * K) -- ScaleTo is absolute, and the saved model carries its own scale
+gateModel:PivotTo(CFrame.new(0, groundY - 0.3, config.Z))
 gateModel.Parent = folder
 local origin = gateModel:GetPivot()
+local inverse = origin:Inverse()
 
 local MATERIALS = {
 	Stone = Enum.Material.Slate, Roof = Enum.Material.Slate, Road = Enum.Material.Cobblestone, Door_Iron = Enum.Material.Metal,
-	Door = Enum.Material.Wood, Sign = Enum.Material.Wood, Cloth = Enum.Material.Fabric, Lantern = Enum.Material.Neon,
-	Iron = Enum.Material.Metal, Portcullis = Enum.Material.Metal,
+	Door = Enum.Material.Wood, Sign = Enum.Material.Wood, Signpost = Enum.Material.Wood, Cloth = Enum.Material.Fabric,
+	Lantern = Enum.Material.Neon, Flame = Enum.Material.Neon, Iron = Enum.Material.Metal, Portcullis = Enum.Material.Metal,
+	Props = Enum.Material.Wood, Statue = Enum.Material.Slate, Crest = Enum.Material.Slate,
 }
 local function materialFor(group)
 	if string.find(group, "^Door_[LR]_Iron") then
@@ -86,141 +76,53 @@ local function materialFor(group)
 	return Enum.Material.Slate
 end
 
+-- These stone parts block players (a convex hull of each: close to the wall, tower or gatehouse). The rest is for looking at.
+local SOLID = { "Stone_Gatehouse", "Stone_Tower", "Stone_Wall", "Stone_Plinth", "Statue" }
+
 local groups = {} -- group name -> list of its parts
 for _, part in gateModel:GetDescendants() do
 	if part:IsA("MeshPart") then
-		local group = string.gsub(part.Name, "_H%d+$", "")
+		local group = string.gsub(string.gsub(part.Name, "_H%d+$", ""), "_%d+$", "")
 		part.Anchored = true
-		part.CanCollide = false -- the invisible blocks below do the colliding
 		part.CanQuery = false
 		part.CanTouch = false
 		part.Material = materialFor(group)
 		part.Color = Color3.new(1, 1, 1) -- the meshes carry their own colors
+		local solid = false
+		for _, prefix in SOLID do
+			solid = solid or string.find(group, "^" .. prefix) ~= nil
+		end
+		part.CanCollide = solid
+		if solid then
+			pcall(function()
+				part.CollisionFidelity = Enum.CollisionFidelity.Hull
+			end)
+		end
 		groups[group] = groups[group] or {}
 		table.insert(groups[group], part)
 	end
 end
 
--- Stone walls from the towers out to the canyon, on both sides. The model's wall pieces are copied, end to end, until a
--- ray from the wall's end hits the canyon; the last piece reaches into the rock, so nothing can be seen or walked around.
-local wallPieces = 0
--- Where the canyon face is (the same formula ZoneBuilder builds it with), so the wall can run exactly to it.
-local function canyonFace(x, z)
-	local c = zone.Canyon
-	local angle = math.atan2(z, x)
-	return zone.Radius + math.noise(math.cos(angle) * 3 + c.Seed, math.sin(angle) * 3 + c.Seed, 0.5) * c.EdgeWobble * 2
-end
-for _, side in { { Group = "Stone_Wall_L", Sign = 1 }, { Group = "Stone_Wall_R", Sign = -1 } } do
-	local faceX = WALL_END
-	while faceX < 400 and math.sqrt(faceX ^ 2 + config.Z ^ 2) < canyonFace(side.Sign * faceX, config.Z) do
-		faceX += 2
-	end
-	-- if the wall's own end is already inside the rock there is nothing to add; otherwise run it 8 studs into the canyon
-	local tiles = if faceX <= WALL_END then 0 else math.ceil((faceX + 8 - WALL_END) / WALL_LENGTH)
-	for k = 1, tiles do
-		local shift = Vector3.new(side.Sign * WALL_LENGTH * k, 0, 0)
-		for _, part in groups[side.Group] or {} do
-			local copy = part:Clone()
-			copy.CFrame = part.CFrame + shift
-			copy.Parent = part.Parent
-		end
-		invisible("WallCollision", origin * CFrame.new(side.Sign * (WALL_END - WALL_LENGTH / 2 + WALL_LENGTH * k), (WALL_HEIGHT - 1) / 2, 0), Vector3.new(WALL_LENGTH, WALL_HEIGHT, WALL_THICKNESS), true)
-		wallPieces += 1
-	end
-end
-
--- Invisible collision: the gatehouse masses beside and over the passage, the towers, and the model's own walls.
-local function block(local_, size)
-	invisible("Collision", origin * CFrame.new(local_ * SCALE), size * SCALE, true)
-end
-block(Vector3.new(8.5, 11, 0), Vector3.new(7, 22, 10))
-block(Vector3.new(-8.5, 11, 0), Vector3.new(7, 22, 10))
-block(Vector3.new(0, 17.5, 0), Vector3.new(10, 9, 10))
-for _, side in { 1, -1 } do
-	block(Vector3.new(27 * side, 8.1, 0), Vector3.new(26, 16.2, 4))
-	local tower = invisible("TowerCollision", origin * CFrame.new(12.2 * side * SCALE, 13.5 * SCALE, 0) * CFrame.Angles(0, 0, math.pi / 2), Vector3.new(27, 11, 11) * SCALE, true)
-	tower.Shape = Enum.PartType.Cylinder
-end
-
--- Lantern light on the road.
-for _, offset in LANTERNS do
-	local light = invisible("Lantern", origin * CFrame.new(offset), Vector3.one * 0.5, false)
-	local glow = Instance.new("PointLight")
-	glow.Color = Color3.fromRGB(255, 176, 92)
-	glow.Brightness = 2.2
-	glow.Range = 34
-	glow.Shadows = false
-	glow.Parent = light
-end
-
--- The bridge over the river, from the trail's bank up to the raised bank in front of the gate -------------------------
-
-local river, bridge = zone.River, config.Bridge
-do
-	local zStart, zEnd = river.Z - bridge.Approach, river.Z + river.Width + bridge.Landing
-	local y0, y1 = groundAt(0, zStart), groundAt(0, zEnd)
-	local run, rise = zEnd - zStart, y1 - y0
-	local length = math.sqrt(run ^ 2 + rise ^ 2)
-	local direction = Vector3.new(0, rise, run).Unit
-	local middle = Vector3.new(0, (y0 + y1) / 2, (zStart + zEnd) / 2)
-	local model = Instance.new("Model")
-	model.Name = "Bridge"
-	model.Parent = folder
-	local function bar(name, offset, size, material, color)
-		local cframe = CFrame.lookAt(middle + offset, middle + offset + direction)
-		local p = invisible(name, cframe, size, true)
-		p.Transparency = 0
-		p.Material = material
-		p.Color = color
-		p.CastShadow = true
-		p.Parent = model
-		return p
-	end
-	local wood, rail = Color3.fromRGB(122, 90, 60), Color3.fromRGB(92, 66, 44)
-	bar("Deck", Vector3.new(0, -0.6, 0), Vector3.new(bridge.Width, 1.2, length), Enum.Material.WoodPlanks, wood)
-	for _, side in { -1, 1 } do
-		bar("Rail", Vector3.new(side * (bridge.Width / 2 - 0.4), 3.6, 0), Vector3.new(0.8, 0.8, length), Enum.Material.Wood, rail)
-		bar("LowRail", Vector3.new(side * (bridge.Width / 2 - 0.4), 1.8, 0), Vector3.new(0.6, 0.6, length), Enum.Material.Wood, rail)
-		for i = 0, math.floor(run / 7) do -- a post every 7 studs
-			local z = zStart + i * 7
-			local y = y0 + rise * (z - zStart) / run
-			local post = invisible("Post", CFrame.new(side * (bridge.Width / 2 - 0.4), y + 2.1, z), Vector3.new(0.9, 4.4, 0.9), true)
-			post.Transparency = 0
-			post.Material = Enum.Material.Wood
-			post.Color = rail
-			post.Parent = model
+-- The extent of a group's parts in the gate's own space (x across, y up, z front to back).
+local function bounds(prefix)
+	local lo, hi = Vector3.new(1e9, 1e9, 1e9), Vector3.new(-1e9, -1e9, -1e9)
+	for group, parts in groups do
+		if string.find(group, "^" .. prefix) then
+			for _, part in parts do
+				local cf = inverse * part.CFrame
+				local half = part.Size / 2
+				local r = cf:VectorToWorldSpace(Vector3.new(half.X, 0, 0)):Abs() + cf:VectorToWorldSpace(Vector3.new(0, half.Y, 0)):Abs() + cf:VectorToWorldSpace(Vector3.new(0, 0, half.Z)):Abs()
+				lo = Vector3.new(math.min(lo.X, cf.X - r.X), math.min(lo.Y, cf.Y - r.Y), math.min(lo.Z, cf.Z - r.Z))
+				hi = Vector3.new(math.max(hi.X, cf.X + r.X), math.max(hi.Y, cf.Y + r.Y), math.max(hi.Z, cf.Z + r.Z))
+			end
 		end
 	end
-	for _, z in { zStart + run * 0.3, zStart + run * 0.7 } do -- stone piers down to the river bed
-		local deckY = y0 + rise * (z - zStart) / run
-		for _, side in { -1, 1 } do
-			local height = deckY - (-12)
-			local pier = invisible("Pier", CFrame.new(side * (bridge.Width / 2 - 1.2), -12 + height / 2 - 0.6, z), Vector3.new(2.6, height, 2.6), true)
-			pier.Transparency = 0
-			pier.Material = Enum.Material.Cobblestone
-			pier.Color = Color3.fromRGB(112, 108, 102)
-			pier.Parent = model
-		end
-	end
-	for _, end_ in { { zStart + 2, y0 }, { zEnd - 2, y1 } } do -- a lantern at each end
-		for _, side in { -1, 1 } do
-			local lamp = invisible("BridgeLamp", CFrame.new(side * (bridge.Width / 2 - 0.4), end_[2] + 5.6, end_[1]), Vector3.one * 0.8, false)
-			lamp.Transparency = 0
-			lamp.Material = Enum.Material.Neon
-			lamp.Color = Color3.fromRGB(255, 200, 120)
-			local light = Instance.new("PointLight")
-			light.Color = Color3.fromRGB(255, 176, 92)
-			light.Range = 22
-			light.Brightness = 1.6
-			light.Shadows = false
-			light.Parent = lamp
-		end
-	end
+	return lo, hi
 end
 
 -- Doors and portcullis -------------------------------------------------------------------------------------------
 
-local function pivotParts(prefix)
+local function entries(prefix)
 	local list = {}
 	for group, parts in groups do
 		if string.find(group, "^" .. prefix) then
@@ -231,8 +133,17 @@ local function pivotParts(prefix)
 	end
 	return list
 end
-local leftDoor, rightDoor, portcullis = pivotParts("Door_L"), pivotParts("Door_R"), pivotParts("Portcullis")
-local passageBlock = invisible("PassageBlock", origin * CFrame.new(0, 11.5 * K, DOOR_Z - 1.5 * K), Vector3.new(PASSAGE_HALF_WIDTH * 2, 23 * K, 2.5 * K), true)
+local leftDoor, rightDoor, portcullis = entries("Door_L"), entries("Door_R"), entries("Portcullis")
+local leftLo, leftHi = bounds("Door_L")
+local rightLo, rightHi = bounds("Door_R")
+local portLo, portHi = bounds("Portcullis")
+local doorZ = (leftLo.Z + leftHi.Z) / 2
+local passageLo, passageHi = math.min(leftLo.X, rightLo.X), math.max(leftHi.X, rightHi.X) -- x across the passage
+local doorHeight = math.max(leftHi.Y, rightHi.Y)
+local portcullisDrop = math.max(portLo.Y, 0) -- it is saved raised; lowered, its bottom reaches the ground
+
+-- The shut gate (portcullis down) blocks the passage.
+local gateBlock = invisible("GateBlock", origin * CFrame.new((passageLo + passageHi) / 2, doorHeight / 2, (portLo.Z + portHi.Z) / 2), Vector3.new(passageHi - passageLo, doorHeight, math.max(portHi.Z - portLo.Z, 1) + 2 * K), true)
 
 -- progress 0 = shut (portcullis down, doors closed), 1 = open (portcullis up, doors swung back). Opening raises the
 -- portcullis first, then swings the doors; shutting is the same thing backwards.
@@ -241,18 +152,18 @@ local function apply(progress)
 	local swing = math.clamp((progress - 0.35) / 0.65, 0, 1)
 	local angle = math.rad(config.DoorOpenDegrees) * swing
 	for _, entry in portcullis do
-		entry.Part.CFrame = entry.Home - Vector3.new(0, PORTCULLIS_DROP * (1 - lift), 0)
+		entry.Part.CFrame = entry.Home - Vector3.new(0, portcullisDrop * (1 - lift), 0)
 	end
 	local function swingDoor(list, hingeX, sign)
-		local hinge = origin * CFrame.new(hingeX, 0, DOOR_Z)
+		local hinge = origin * CFrame.new(hingeX, 0, doorZ)
 		local turn = hinge * CFrame.Angles(0, sign * angle, 0) * hinge:Inverse()
 		for _, entry in list do
 			entry.Part.CFrame = turn * entry.Home
 		end
 	end
-	swingDoor(leftDoor, DOOR_HINGE_X, 1)
-	swingDoor(rightDoor, -DOOR_HINGE_X, -1)
-	passageBlock.CanCollide = progress < 0.9
+	swingDoor(leftDoor, passageHi, 1) -- the left leaf hangs from the right edge: the model is mirrored
+	swingDoor(rightDoor, passageLo, -1)
+	gateBlock.CanCollide = progress < 0.9
 end
 
 local progress = Instance.new("NumberValue")
@@ -272,6 +183,17 @@ end
 progress.Changed:Connect(apply)
 apply(0)
 
+-- Light: braziers in front and lanterns up on the gatehouse.
+for _, spot in { Vector3.new(15, 11, -17), Vector3.new(-15, 11, -17), Vector3.new(17, 18, 14), Vector3.new(-17, 18, 14) } do
+	local anchor = invisible("Light", origin * CFrame.new(spot * K), Vector3.one * 0.5, false)
+	local glow = Instance.new("PointLight")
+	glow.Color = Color3.fromRGB(255, 176, 92)
+	glow.Brightness = 2.2
+	glow.Range = 38
+	glow.Shadows = false
+	glow.Parent = anchor
+end
+
 -- Entering the town ----------------------------------------------------------------------------------------------
 
 local entering = {} -- [player] = true while the fade and teleport run
@@ -282,8 +204,9 @@ local function enter(player)
 		return
 	end
 	entering[player] = true
+	setOpen(true) -- the gate opens as the screen goes dark
 	local placeId = config.DestinationPlaceId
-	enterRemote:FireClient(player, zone.Gate.Name, placeId > 0)
+	enterRemote:FireClient(player, config.Name, placeId > 0)
 	task.wait(config.FadeSeconds) -- the screen is black now
 	local teleported = false
 	if placeId > 0 then
@@ -295,16 +218,24 @@ local function enter(player)
 		-- The town place is not connected yet: put the player back in front of the gate, as if they had walked out again.
 		local current = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 		if current then
-			local spot = Vector3.new(0, groundAt(0, config.Z - config.ReturnDistance) + 4, config.Z - config.ReturnDistance)
+			local z = config.Z - config.ReturnDistance
+			local spot = Vector3.new(0, groundAt(0, z) + 4, z)
 			player.Character:PivotTo(CFrame.lookAt(spot, spot + Vector3.new(0, 0, 1)))
 		end
 	end
 	task.wait(3)
 	entering[player] = nil
+	if next(entering) == nil then
+		task.wait(2)
+		if next(entering) == nil then
+			setOpen(false)
+		end
+	end
 end
 
 -- Pressing F in front of the gate.
-local promptPart = invisible("EnterPrompt", origin * CFrame.new(0, 3, -config.PromptDistance * 0.35), Vector3.one, false)
+local frontZ = portLo.Z - 2 * K
+local promptPart = invisible("EnterPrompt", origin * CFrame.new((passageLo + passageHi) / 2, 3, frontZ - 6 * K), Vector3.one, false)
 local prompt = Instance.new("ProximityPrompt")
 prompt.ActionText = "Enter"
 prompt.ObjectText = config.Name
@@ -315,31 +246,33 @@ prompt.RequiresLineOfSight = false
 prompt.Triggered:Connect(enter)
 prompt.Parent = promptPart
 
--- Walking into the passage while the gate is open.
-local doorway = invisible("Doorway", origin * CFrame.new(0, 11 * K, 4 * K), Vector3.new(PASSAGE_HALF_WIDTH * 2, 22 * K, 6 * K), false)
-doorway.CanTouch = true
-doorway.Touched:Connect(function(other)
+-- Walking into the gate: a strip just in front of it.
+local touch = invisible("Doorway", origin * CFrame.new((passageLo + passageHi) / 2, 8, frontZ - 1.5 * K), Vector3.new(passageHi - passageLo, 16, 3 * K), false)
+touch.CanTouch = true
+touch.Touched:Connect(function(other)
 	local player = Players:GetPlayerFromCharacter(other.Parent)
-	if player and progress.Value > 0.85 then
+	if player then
 		enter(player)
 	end
 end)
 
--- The gate opens when someone comes near, and shuts again when everyone has gone.
-task.spawn(function()
-	while true do
-		local near = false
-		for _, player in Players:GetPlayers() do
-			local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-			if root and (Vector3.new(root.Position.X, 0, root.Position.Z) - Vector3.new(0, 0, config.Z)).Magnitude < config.OpenDistance then
-				near = true
+-- Optional: the gate opens by itself when someone comes near (Gate.AutoOpen). Off by default: an open gate shows what is behind it.
+if config.AutoOpen then
+	task.spawn(function()
+		while true do
+			local near = next(entering) ~= nil
+			for _, player in Players:GetPlayers() do
+				local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+				if root and (Vector3.new(root.Position.X, 0, root.Position.Z) - Vector3.new(0, 0, config.Z)).Magnitude < config.OpenDistance then
+					near = true
+				end
 			end
+			setOpen(near)
+			task.wait(0.5)
 		end
-		setOpen(near)
-		task.wait(0.5)
-	end
-end)
+	end)
+end
 
-print(`[Gate] {config.Name} gate built at z={config.Z}, scale {K}: {wallPieces} extra wall pieces`)
+print(`[Gate] {config.Name} gate built at z={config.Z}, scale {K}`)
 
 return true
