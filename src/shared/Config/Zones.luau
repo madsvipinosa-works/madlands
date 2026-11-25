@@ -6,7 +6,9 @@ return {
 		Name = "Outside Zone 1",
 		LevelRange = { 1, 15 }, -- Greenfields in DESIGN.md; the zone level sync (build step 6) will read this
 
-		Radius = 300, -- studs from the spawn to the foot of the canyon wall
+		-- Size: Radius is the zone's size. When you change it, also move Gate.Z (= Radius), River.Z (= Gate.Z - 84), the trail's last
+		-- waypoints (they must end about 12 studs before the river) and the camps, which are placed in studs from the spawn.
+		Radius = 420, -- studs from the spawn to the foot of the canyon wall
 		Depth = 16, -- studs of terrain below the surface (the top surface is at y = 0)
 		Material = "Grass", -- any Enum.Material name
 		GrassColor = Color3.fromRGB(62, 86, 42), -- Roblox's default grass is 111, 126, 62; lower numbers = darker
@@ -24,7 +26,7 @@ return {
 		},
 
 		Hills = {
-			Count = 8, -- gentle hills spread near the canyon
+			Count = 12, -- gentle hills spread near the canyon
 			Height = 12, -- studs above the ground at the top of each hill
 			Radius = 100, -- bigger = wider, gentler slopes
 			Seed = 7, -- change for a different layout
@@ -40,7 +42,10 @@ return {
 				Vector3.new(10, 0, 135),
 				Vector3.new(-6, 0, 168),
 				Vector3.new(4, 0, 188),
-				Vector3.new(0, 0, 204),
+				Vector3.new(-10, 0, 232),
+				Vector3.new(12, 0, 268),
+				Vector3.new(-4, 0, 300),
+				Vector3.new(0, 0, 324),
 			},
 			Width = 18, -- studs wide (it varies a little along the way, so the edges look worn)
 			Material = "Ground", -- the path
@@ -55,7 +60,7 @@ return {
 		-- near edge and Width its width (keep both multiples of 4: terrain is built from 4-stud cells). The bank is Terrace.Height
 		-- above the ground, so the river's far side is a cliff and only the bridge (Gate.Bridge) leads up to the gate.
 		River = {
-			Z = 216,
+			Z = 336,
 			Width = 28,
 			LedgeWidth = 8, -- a dry ledge this wide along the near bank, so anyone who falls in can climb out (multiple of 4)
 			BedMaterial = "Sand",
@@ -71,7 +76,7 @@ return {
 			Name = "Starter Town",
 			Model = "StarterTownGate", -- ServerStorage.Models.StarterTownGate, from assets/models/StarterTownGate.rbxm
 			Scale = 1.3, -- how much bigger than the imported model the gate is built (1 = as imported)
-			Z = 300, -- how far north the gate stands (x = 0): its back wall meets the canyon face, which is at about z = 312 here. Move it with the canyon (Canyon.Seed / EdgeWobble)
+			Z = 420, -- how far north the gate stands (x = 0): its back wall meets the canyon face, which is at about Radius + 12 here. Keep it equal to Radius; move it with the canyon (Canyon.Seed / EdgeWobble)
 			DestinationPlaceId = 0, -- the Roblox place id of the Starter Town; 0 = not connected yet
 			OpenDistance = 95, -- the gate opens when a player is this close
 			OpenSeconds = 2.6, -- how long it takes to open fully
@@ -91,7 +96,7 @@ return {
 		Camps = {
 			{
 				Name = "Goblin Hollow", Mob = "Goblin", Seed = 21,
-				Center = Vector3.new(-85, 0, 75),
+				Center = Vector3.new(-120, 0, 105),
 				Campfire = true, -- a fire at the Center, with the first group gathered around it (MinRadius keeps them off the logs)
 				Groups = {
 					{ Count = 3, MinRadius = 10, Radius = 15 }, -- three goblins around the fire...
@@ -100,7 +105,7 @@ return {
 			},
 			{
 				Name = "Goblin Ridge", Mob = "Goblin", Seed = 22,
-				Center = Vector3.new(100, 0, 150),
+				Center = Vector3.new(140, 0, 210),
 				Campfire = true,
 				Groups = {
 					{ Count = 2, MinRadius = 10, Radius = 15 },
@@ -109,7 +114,7 @@ return {
 			},
 			{
 				Name = "Wolf Den", Mob = "Wolf", Seed = 23,
-				Center = Vector3.new(115, 0, -105),
+				Center = Vector3.new(165, 0, -147),
 				Groups = {
 					{ Count = 3, Radius = 7 }, -- a pack of three...
 					{ Count = 3, Radius = 8, Offset = Vector3.new(-26, 0, 16) }, -- ...and three more prowling beside it
@@ -117,7 +122,7 @@ return {
 			},
 			{
 				Name = "Wolf Hollow", Mob = "Wolf", Seed = 24,
-				Center = Vector3.new(-125, 0, 175),
+				Center = Vector3.new(-175, 0, 245),
 				Groups = {
 					{ Count = 3, Radius = 7 },
 					{ Count = 3, Radius = 8, Offset = Vector3.new(24, 0, -20) },
@@ -163,7 +168,7 @@ return {
 				MaxOffset = 36, -- ...to this far out
 			},
 			Scattered = {
-				Count = 260, -- how many to try to place (some are skipped where it would be crowded)
+				Count = 540, -- how many to try to place (some are skipped where it would be crowded)
 				GroveCutoff = -0.05, -- trees only grow where a noise map is above this: raise it for fewer, tighter groves (about -0.4 to 0.3)
 				ClearAroundSpawn = 40, -- studs kept open around the spawn
 				ClearAroundMobs = 14, -- studs kept open around each mob camp group (on top of its radius)

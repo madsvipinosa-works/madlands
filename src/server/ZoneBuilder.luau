@@ -53,7 +53,8 @@ local function buildHills(zone, trail)
 		local height = hills.Height * rng:NextNumber(0.6, 1)
 		local x, z = math.cos(angle) * distance, math.sin(angle) * distance
 		local reach = math.sqrt(hills.Radius ^ 2 - (hills.Radius - height) ^ 2) -- how far out the dome meets the ground
-		if nearest(Vector3.new(x, 0, z), trail) > reach + zone.Trail.Width then
+		-- not on the trail, and not on the river bank or at the gate, which are built over it
+		if nearest(Vector3.new(x, 0, z), trail) > reach + zone.Trail.Width and z + reach < zone.River.Z - 8 then
 			terrain:FillBall(Vector3.new(x, height - hills.Radius, z), hills.Radius, material)
 		end
 	end
@@ -512,7 +513,7 @@ local keepClear = buildProps(zone, points)
 for _, area in Camps.Areas(zone) do -- the mobs' ground stays open: no trees where they walk and fight
 	table.insert(keepClear, { Position = area.Position, Radius = area.Radius + zone.Trees.Scattered.ClearAroundMobs })
 end
-for x = -200, 200, 20 do -- the gate and its walls: no trees on them
+for x = -300, 300, 20 do -- the gate and its walls: no trees on them
 	table.insert(keepClear, { Position = Vector3.new(x, 0, zone.Gate.Z), Radius = 16 * zone.Gate.Scale })
 end
 table.insert(keepClear, { Position = Vector3.new(0, 0, zone.Gate.Z + 22 * zone.Gate.Scale), Radius = 30 * zone.Gate.Scale }) -- the road behind the passage
