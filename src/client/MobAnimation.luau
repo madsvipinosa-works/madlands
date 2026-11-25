@@ -6,6 +6,7 @@ local RunService = game:GetService("RunService")
 local Mobs = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"):WaitForChild("Mobs"))
 local WolfVFX = require(ReplicatedStorage.Shared:WaitForChild("WolfAttackVFX"))
 local Sounds = require(script.Parent.Sounds)
+local Effects = require(script.Parent.Effects)
 local Players = game:GetService("Players")
 
 local animated = {} -- [model] = { root, def, phase, motors }
@@ -98,6 +99,47 @@ RunService.RenderStepped:Connect(function(dt)
 					table.insert(s.motors, child)
 				end
 			end
+		end
+
+		-- A dead mob (the server stamps DiedAt) topples over, lies a moment, then fades away in a puff of dust.
+		local diedAt = model:GetAttribute("DiedAt")
+		if diedAt then
+			local d = s.def.Look.Death
+			local since = workspace:GetServerTimeNow() - diedAt
+			if d then
+				local f = math.clamp(since / d.FallSeconds, 0, 1)
+				local fall = f * f * (3 - 2 * f) + math.sin(f * math.pi) * 0.06 -- eases in and settles with a tiny bounce
+				for _, motor in s.motors do
+					local role = motor:GetAttribute("Role")
+					if role == "Body" then
+						motor.Transform = CFrame.new(0, -d.Drop * fall, 0) * CFrame.Angles(math.rad(d.Pitch or 0) * fall, 0, math.rad(d.Roll or 0) * fall)
+					elseif role == "Neck" then
+						motor.Transform = CFrame.Angles(math.rad(d.HeadDroop or 0) * fall, 0, 0)
+					else
+						motor.Transform = CFrame.new() -- limbs, tail: limp
+					end
+				end
+				local fadeAt = d.FallSeconds + d.HoldSeconds
+				if since > fadeAt then
+					if not s.fadeParts then
+						s.fadeParts = {}
+						for _, part in model:GetDescendants() do
+							if part:IsA("BasePart") and part ~= s.root then
+								s.fadeParts[part] = part.Transparency
+							end
+						end
+					end
+					local a = math.clamp((since - fadeAt) / d.FadeSeconds, 0, 1)
+					for part, original in s.fadeParts do
+						part.Transparency = original + (1 - original) * a
+					end
+					if a >= 1 and not s.puffed then
+						s.puffed = true
+						Effects.Puff(s.root.Position - Vector3.new(0, s.root.Size.Y / 2, 0), 6)
+					end
+				end
+			end
+			continue
 		end
 
 		local velocity = s.root.AssemblyLinearVelocity

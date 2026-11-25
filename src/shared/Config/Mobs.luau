@@ -18,7 +18,8 @@ return {
 		GoldMin = 5, -- gold dropped is random between min and max
 		GoldMax = 15,
 		Xp = 20,
-		CorpseSeconds = 2, -- body stays this long after death
+		Level = 3, -- shown on its health bar (display only for now; the zone level sync, build step 6, will use it)
+		CorpseSeconds = 3.4, -- body stays this long after death: Look.Death falls, holds and fades within it
 		RespawnSeconds = 10, -- a new wolf appears this long after death
 
 		-- Looks only. The mesh comes from ServerStorage.Models.<Model>, saved from Studio as assets/models/<Model>.rbxm
@@ -26,6 +27,9 @@ return {
 		-- BodySize is the invisible combat hitbox. Keep it the same unless you want to change how the wolf is hit.
 		Look = {
 			Model = "Wolf",
+			-- How it dies: topples (Roll = onto its side, degrees; Pitch = forward/back), lies there, then fades out. The three times add up to
+			-- less than CorpseSeconds. Drop = studs the body sinks as it falls.
+			Death = { Roll = 88, Drop = 0.4, HeadDroop = 25, FallSeconds = 0.5, HoldSeconds = 1.7, FadeSeconds = 1 },
 			TargetLength = 9, -- studs, nose to tail; the mesh is scaled to this
 			YawDegrees = 0, -- turns the mesh to face the way the wolf moves. If it faces away from you, set this to 180
 			BodySize = Vector3.new(3.6, 3.8, 7.2), -- about 0.4 x 0.42 x 0.8 of TargetLength; resize it when you change TargetLength
@@ -107,13 +111,15 @@ return {
 		GoldMin = 3,
 		GoldMax = 10,
 		Xp = 12,
-		CorpseSeconds = 2,
+		Level = 1,
+		CorpseSeconds = 3.4,
 		RespawnSeconds = 10,
 
 		-- Looks only. The mesh comes from ServerStorage.Models.Goblin, saved from Studio as assets/models/Goblin.rbxm
 		-- (import goblin.glb with the 3D Importer first).
 		Look = {
 			Model = "Goblin",
+			Death = { Roll = 90, Drop = 1.2, HeadDroop = 30, FallSeconds = 0.55, HoldSeconds = 1.7, FadeSeconds = 1 },
 			TargetHeight = 4.6, -- studs, feet to top of the head; the mesh is scaled to this (the wolf is sized by length instead)
 			YawDegrees = 0, -- turns the mesh to face the way the goblin moves. If it faces away from you, set this to 180
 			BodySize = Vector3.new(2.2, 4.4, 2), -- the invisible combat hitbox

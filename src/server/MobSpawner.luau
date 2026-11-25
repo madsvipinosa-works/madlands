@@ -148,7 +148,9 @@ local function buildModel(name, def, position)
 	humanoid.MaxHealth = def.Health
 	humanoid.Health = def.Health
 	humanoid.WalkSpeed = def.WalkSpeed
-	humanoid.DisplayName = name
+	humanoid.DisplayName = ""
+	humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None -- no default name tag
+	humanoid.HealthDisplayType = Enum.HumanoidHealthDisplayType.AlwaysOff -- the health bar is client/MobHealth
 	humanoid.Parent = model
 
 	model.PrimaryPart = root
@@ -183,6 +185,9 @@ local function spawnMob(name, def, position)
 
 	humanoid.Died:Once(function()
 		active[model] = nil
+		root.Anchored = true -- it stays where it fell: the clients play the fall and fade (client/MobAnimation, Look.Death)
+		root.CanCollide = false
+		model:SetAttribute("DiedAt", workspace:GetServerTimeNow())
 		reward(def, model)
 		task.delay(def.CorpseSeconds, model.Destroy, model)
 		task.delay(def.RespawnSeconds, spawnMob, name, def, position)
