@@ -28,6 +28,39 @@ return {
 			EdgeWobble = 22, -- most studs the face moves in or out around the circle
 			GateCalm = { 0.12, 0.5 }, -- the wobble fades out within this many radians of the gate, so the cliff meets its walls cleanly
 			Seed = 11,
+			-- Green on the cliff: every ledge and the top are grass, with bushes on the ledges.
+			Greenery = {
+				Material = "Grass",
+				BushChance = 0.04, -- chance that a ledge cell grows a bush
+				BushColors = { Color3.fromRGB(70, 118, 52), Color3.fromRGB(88, 134, 58), Color3.fromRGB(58, 100, 50), Color3.fromRGB(110, 140, 62) },
+			},
+		},
+
+		-- The land beyond the canyon, so the zone is not floating in nothing: rolling hills that rise away from the cliff, cut into
+		-- smooth terraces like rice terraces (one step = Terrace studs; the edge of each terrace is bare dirt), alternating two
+		-- greens, with big trees, and a haze that fades the far edge. It ends at Radius (a long way out, lost in the haze).
+		Surroundings = {
+			Radius = 640, -- studs from the spawn to the outer rim of the hills
+			StartHeight = 40, -- height of the land right behind the canyon (about the canyon's top)
+			Rise = 75, -- how much higher the land is by the end of the ramp
+			RampLength = 170, -- studs from the canyon to where it has risen fully
+			HillSize = 95, -- bigger = broader hills
+			HillHeight = 32, -- how much the hills roll up and down
+			Terrace = 4, -- height of one terrace step (4 is the smoothest the terrain can make; 8 gives bolder steps)
+			Seed = 17, -- change for different hills
+			Grass = "Grass", -- top of every other terrace (its color is the zone's GrassColor)
+			AltGrass = "LeafyGrass", -- top of the terraces between
+			AltColor = Color3.fromRGB(106, 146, 60),
+			EdgeMaterial = "Ground", -- the dirt edge of each terrace and the soil below
+			Trees = { Count = 170, Scale = { 2.6, 4.2 }, Edge = 50 }, -- big trees on the far terraces; Edge = studs left bare at the rim
+			Haze = {
+				Density = 0.3,
+				Offset = 0.15,
+				Color = Color3.fromRGB(196, 214, 232),
+				Decay = Color3.fromRGB(150, 170, 196),
+				Glare = 0,
+				Haze = 1.4,
+			},
 		},
 
 		Hills = {

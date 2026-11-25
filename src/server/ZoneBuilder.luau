@@ -97,6 +97,10 @@ local function buildCanyon(zone)
 		return math.clamp(top + crag, c.MinHeight, c.MaxHeight)
 	end
 
+	local green = c.Greenery
+	local grassMaterial = Enum.Material[green.Material]
+	local bushRng = Random.new(seed + 5)
+	local bushes = {} -- where bushes grow: on the ledges
 	local outer = zone.Radius + c.Thickness + c.EdgeWobble
 	local cells = math.ceil(outer / CELL)
 	local work = 0
@@ -123,11 +127,37 @@ local function buildCanyon(zone)
 				end
 				height = math.max(math.floor(height / CELL) * CELL, CELL)
 				terrain:FillBlock(CFrame.new(x, (height - zone.Depth) / 2, z), Vector3.new(CELL, height + zone.Depth, CELL), material)
+				terrain:FillBlock(CFrame.new(x, height - CELL / 2, z), Vector3.new(CELL, CELL, CELL), grassMaterial) -- grass on every ledge and on top
+				if depth < w1 + w2 and bushRng:NextNumber() < green.BushChance then
+					table.insert(bushes, Vector3.new(x + bushRng:NextNumber(-1.5, 1.5), height + 1, z + bushRng:NextNumber(-1.5, 1.5)))
+				end
 				work += 1
 				if work % 400 == 0 then
 					task.wait() -- spread the work over a few frames; the middle of the zone is already solid
 				end
 			end
+		end
+	end
+
+	-- Bushes on the ledges: a few leafy lumps, so the cliff is green and lived-in, not bare rock.
+	local folder = Instance.new("Folder")
+	folder.Name = "CanyonBushes"
+	folder.Parent = workspace
+	for _, position in bushes do
+		local color = green.BushColors[bushRng:NextInteger(1, #green.BushColors)]
+		for _ = 1, bushRng:NextInteger(2, 4) do
+			local size = bushRng:NextNumber(3, 6)
+			local lump = Instance.new("Part")
+			lump.Shape = Enum.PartType.Ball
+			lump.Anchored = true
+			lump.CanCollide = false
+			lump.CanQuery = false
+			lump.CanTouch = false
+			lump.Material = Enum.Material.LeafyGrass
+			lump.Color = color
+			lump.Size = Vector3.new(size, size * 0.75, size)
+			lump.CFrame = CFrame.new(position + Vector3.new(bushRng:NextNumber(-2, 2), size * 0.25, bushRng:NextNumber(-2, 2)))
+			lump.Parent = folder
 		end
 	end
 end
@@ -187,6 +217,101 @@ local function paintTrail(zone, points)
 	terrain:SetMaterialColor(gate, t.GateColor)
 	local last = points[#points]
 	terrain:FillCylinder(CFrame.new(last.X, -CELL / 2, last.Z), CELL, t.GateRadius, gate)
+end
+
+-- Beyond the canyon -------------------------------------------------------------------------------------------------------
+-- Past the canyon the land goes on: rolling hills cut into smooth terraces, like rice terraces. The ground is one height per
+-- 4-stud cell (the terraces are one cell high, so they stay gentle), the cells at the edge of each terrace are bare dirt like
+-- the little walls round a paddy, and the terraces alternate between two greens. A haze in the air fades the far edge away.
+
+-- The surface height at a spot, before it is cut into terraces.
+local function outsideHeight(zone, x, z)
+	local s = zone.Surroundings
+	local r = math.sqrt(x * x + z * z)
+	local angle = math.atan2(z, x)
+	local start = zone.Radius + faceOffset(zone, angle) + zone.Canyon.Thickness -- the canyon's back edge
+	local t = smooth((r - start) / s.RampLength)
+	local hills = (math.noise(x / s.HillSize + s.Seed, z / s.HillSize + s.Seed, 0.5) * s.HillHeight + math.noise(x / 35 + s.Seed, z / 35 + s.Seed, 1.5) * 8) * t
+	local h = s.StartHeight + s.Rise * t + hills
+	return h * (1 - 0.45 * smooth((r - (s.Radius - 120)) / 120)) -- a little lower toward the rim, so it sinks into the haze
+end
+
+local function terraceHeight(zone, x, z)
+	local step = zone.Surroundings.Terrace
+	return math.max(math.floor(outsideHeight(zone, x, z) / step + 0.5) * step, 24)
+end
+
+local function inSurroundings(zone, x, z)
+	local r = math.sqrt(x * x + z * z)
+	local start = zone.Radius + faceOffset(zone, math.atan2(z, x)) + zone.Canyon.Thickness - 8 -- overlaps the canyon a little, so no gap
+	return r >= start and r <= zone.Surroundings.Radius
+end
+
+local function buildSurroundings(zone)
+	local s = zone.Surroundings
+	terrain:SetMaterialColor(Enum.Material[s.AltGrass], s.AltColor)
+	local body = Enum.Material[s.EdgeMaterial]
+	local grass, alt = Enum.Material[s.Grass], Enum.Material[s.AltGrass]
+	local cells = math.ceil(s.Radius / CELL)
+	local work = 0
+	for j = -cells, cells do
+		local z = (j + 0.5) * CELL
+		local runStart, runHeight, runTop -- the run of cells in this row that share one height and one top material
+		local function flush(xEnd)
+			if runStart then
+				local length = xEnd - runStart
+				local middle = runStart + length / 2
+				terrain:FillBlock(CFrame.new(middle, runHeight - 14, z), Vector3.new(length, 20, CELL), body) -- dirt below the top cell
+				terrain:FillBlock(CFrame.new(middle, runHeight - CELL / 2, z), Vector3.new(length, CELL, CELL), runTop)
+				runStart = nil
+				work += 1
+				if work % 300 == 0 then
+					task.wait()
+				end
+			end
+		end
+		for i = -cells, cells do
+			local x = (i + 0.5) * CELL
+			local height, top
+			if inSurroundings(zone, x, z) then
+				height = terraceHeight(zone, x, z)
+				-- the cells along a terrace's edge are dirt; the rest of the terrace is grass, one of two greens by level
+				if
+					terraceHeight(zone, x + CELL, z) < height
+					or terraceHeight(zone, x - CELL, z) < height
+					or terraceHeight(zone, x, z + CELL) < height
+					or terraceHeight(zone, x, z - CELL) < height
+				then
+					top = body
+				else
+					top = if (height / s.Terrace) % 2 == 0 then grass else alt
+				end
+			end
+			if height and runStart and height == runHeight and top == runTop then
+				-- the run goes on
+			else
+				flush(x - CELL / 2)
+				if height then
+					runStart, runHeight, runTop = x - CELL / 2, height, top
+				end
+			end
+		end
+		flush((cells + 1) * CELL)
+	end
+end
+
+-- A haze in the air, so the far hills fade out instead of ending in nothing.
+local function buildAtmosphere(zone)
+	local h = zone.Surroundings.Haze
+	local lighting = game:GetService("Lighting")
+	local atmosphere = lighting:FindFirstChildOfClass("Atmosphere") or Instance.new("Atmosphere")
+	atmosphere.Density = h.Density
+	atmosphere.Offset = h.Offset
+	atmosphere.Color = h.Color
+	atmosphere.Decay = h.Decay
+	atmosphere.Glare = h.Glare
+	atmosphere.Haze = h.Haze
+	atmosphere.Parent = lighting
 end
 
 -- Trees ---------------------------------------------------------------------------------------------------------
@@ -471,6 +596,33 @@ local function buildTrees(zone, points, keepClear)
 	print(`[Zone] {placed} trees planted`)
 end
 
+-- Trees on the far terraces, big enough to read from inside the zone. Their heights come from a raycast onto the new terrain.
+local function buildFarTrees(zone)
+	local s = zone.Surroundings
+	local rng = Random.new(s.Seed + 3)
+	local folder = Instance.new("Folder")
+	folder.Name = "FarTrees"
+	folder.Parent = workspace
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Include
+	params.FilterDescendantsInstances = { terrain }
+	local settings = table.clone(zone.Trees)
+	settings.Scale = s.Trees.Scale
+	local placed = 0
+	for _ = 1, s.Trees.Count do
+		local angle = rng:NextNumber(0, math.pi * 2)
+		local radius = zone.Radius + zone.Canyon.Thickness + 40 + rng:NextNumber(0, 1) * (s.Radius - s.Trees.Edge - (zone.Radius + zone.Canyon.Thickness + 40))
+		local x, z = math.cos(angle) * radius, math.sin(angle) * radius
+		local hit = workspace:Raycast(Vector3.new(x, 400, z), Vector3.new(0, -600, 0), params)
+		-- only on the grass of a terrace, not on the dirt edge
+		if hit and hit.Position.Y > 30 and (hit.Material == Enum.Material[s.Grass] or hit.Material == Enum.Material[s.AltGrass]) then
+			tree(folder, x, hit.Position.Y, z, rng, settings)
+			placed += 1
+		end
+	end
+	print(`[Zone] {placed} trees on the far terraces`)
+end
+
 -- The spawn: a hidden SpawnLocation at the middle of the zone, and no flat baseplate to hide the grass.
 local function placeSpawn()
 	local baseplate = workspace:FindFirstChild("Baseplate")
@@ -493,6 +645,12 @@ local function placeSpawn()
 end
 
 local zone = Zones.OutsideZone1
+
+-- The client waits for this remote from the moment it joins, and the zone takes a while to build, so it is made first.
+-- (GateBuilder uses it for the "entering the town" fade.)
+local gateRemote = Instance.new("RemoteEvent")
+gateRemote.Name = "GateEnter"
+gateRemote.Parent = ReplicatedStorage
 
 -- Smooth terrain turns the step between two ledges into a steep slope, and a Humanoid walks up any slope below its MaxSlopeAngle
 -- (89 degrees by default), which would let players walk up the canyon. So players are limited to zone.MaxWalkSlope, set as soon
@@ -519,6 +677,8 @@ placeSpawn()
 local points = trailPoints(zone.Trail.Waypoints)
 buildHills(zone, points)
 paintTrail(zone, points)
+buildSurroundings(zone)
+buildAtmosphere(zone)
 task.wait(1) -- new terrain cannot be raycast for a moment; the props and trees look for the ground with a raycast
 treeRay.FilterDescendantsInstances = { propsFolder }
 local keepClear = buildProps(zone, points)
@@ -530,6 +690,7 @@ for x = -300, 300, 20 do -- the gate and its walls: no trees on them
 end
 table.insert(keepClear, { Position = Vector3.new(0, 0, zone.Gate.Z - 40 * zone.Gate.Scale), Radius = 44 * zone.Gate.Scale }) -- the gate's forecourt
 buildTrees(zone, points, keepClear)
+buildFarTrees(zone)
 buildCanyon(zone)
 buildBarrier(zone)
 -- (the canyon is the last and slowest step; it waits between batches, but everything the player stands on is already built)

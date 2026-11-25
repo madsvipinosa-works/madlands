@@ -13,9 +13,7 @@ local zone = Zones.OutsideZone1
 local config = zone.Gate
 local K = config.Scale -- how much bigger than the model was saved (1 = as saved)
 
-local enterRemote = Instance.new("RemoteEvent") -- server -> client: fade the screen for "entering the town"
-enterRemote.Name = "GateEnter"
-enterRemote.Parent = ReplicatedStorage
+local enterRemote = ReplicatedStorage:WaitForChild("GateEnter") -- server -> client: fade the screen for "entering the town" (made by ZoneBuilder)
 
 task.wait(1.5) -- freshly built terrain cannot be raycast for a moment
 local template = ServerStorage:WaitForChild("Models"):WaitForChild(config.Model)
