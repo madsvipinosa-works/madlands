@@ -90,11 +90,18 @@ local function buildCanyon(zone)
 	local seed = c.Seed
 
 	-- The height of the top of the cliff at a spot: broad swells plus small bumps, and now and then a crag one step higher.
+	local wallTop = 40 * zone.Gate.Scale -- how tall the gate's walls are
 	local function topAt(x, z)
 		local n = math.noise(x / 70 + seed, z / 70 + seed, 4.5) + 0.5 * math.noise(x / 20 + seed, z / 20 + seed, 6.5)
 		local top = c.Height + n * c.HeightVariation
 		local crag = 4 * math.max(0, math.floor(math.noise(x / 7 + seed, z / 7 + seed, 7.5) * 2 + 0.5))
-		return math.clamp(top + crag, c.MinHeight, c.MaxHeight)
+		top = math.clamp(top + crag, c.MinHeight, c.MaxHeight)
+		-- Next to the gate the cliff rises to meet its walls, so the walls do not stand up out of a much lower cliff.
+		local beyondGap = math.abs(x) - zone.Gate.CanyonGap
+		if z > 0 and beyondGap < c.GateLift then
+			top += (wallTop - 4 - top) * (1 - smooth(beyondGap / c.GateLift))
+		end
+		return top
 	end
 
 	local green = c.Greenery
@@ -224,6 +231,12 @@ end
 -- 4-stud cell (the terraces are one cell high, so they stay gentle), the cells at the edge of each terrace are bare dirt like
 -- the little walls round a paddy, and the terraces alternate between two greens. A haze in the air fades the far edge away.
 
+-- 1 right behind the gate, fading to 0 off to either side: where the hill of the town stands.
+local function townFactor(zone, angle)
+	local fromNorth = math.abs((angle - math.pi / 2 + math.pi) % (2 * math.pi) - math.pi)
+	return smooth(1 - fromNorth / (zone.Surroundings.Town.Spread + 0.15))
+end
+
 -- The surface height at a spot, before it is cut into terraces.
 local function outsideHeight(zone, x, z)
 	local s = zone.Surroundings
@@ -231,9 +244,10 @@ local function outsideHeight(zone, x, z)
 	local angle = math.atan2(z, x)
 	local start = zone.Radius + faceOffset(zone, angle) + zone.Canyon.Thickness -- the canyon's back edge
 	local t = smooth((r - start) / s.RampLength)
-	local hills = (math.noise(x / s.HillSize + s.Seed, z / s.HillSize + s.Seed, 0.5) * s.HillHeight + math.noise(x / 35 + s.Seed, z / 35 + s.Seed, 1.5) * 8) * t
-	local h = s.StartHeight + s.Rise * t + hills
-	return h * (1 - 0.45 * smooth((r - (s.Radius - 120)) / 120)) -- a little lower toward the rim, so it sinks into the haze
+	local town = townFactor(zone, angle)
+	local hills = (math.noise(x / s.HillSize + s.Seed, z / s.HillSize + s.Seed, 0.5) * s.HillHeight + math.noise(x / 35 + s.Seed, z / 35 + s.Seed, 1.5) * 8) * t * (1 - 0.6 * town)
+	local h = s.StartHeight + s.Rise * t + hills + s.Town.Bump * town * smooth((r - start) / 120) -- the town stands on a hill of its own
+	return h * (1 - 0.45 * (1 - 0.8 * town) * smooth((r - (s.Radius - 120)) / 120)) -- a little lower toward the rim, so it sinks into the haze
 end
 
 local function terraceHeight(zone, x, z)
@@ -596,6 +610,167 @@ local function buildTrees(zone, points, keepClear)
 	print(`[Zone] {placed} trees planted`)
 end
 
+-- The town beyond the gate ------------------------------------------------------------------------------------------------
+-- The Starter Town itself is a separate place, but from the gate it should look like a town lies behind: a hill rises behind the
+-- gate's walls, and on it stand rows of houses, big towers and a keep, lit by warm windows, with smoke from the chimneys.
+-- This is scenery only; nobody can go there (the walls and the canyon close it off).
+
+local function townPart(parent, cframe, size, material, color, shape)
+	local p = Instance.new("Part")
+	if shape then
+		p.Shape = shape
+	end
+	p.Anchored = true
+	p.CanCollide = false
+	p.CanQuery = false
+	p.CanTouch = false
+	p.Material = material
+	p.Color = color
+	p.Size = size
+	p.CFrame = cframe
+	p.Parent = parent
+	return p
+end
+
+local function smoke(part)
+	local emitter = Instance.new("ParticleEmitter")
+	emitter.Texture = "rbxasset://textures/particles/smoke_main.dds"
+	emitter.Color = ColorSequence.new(Color3.fromRGB(150, 148, 146))
+	emitter.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 2), NumberSequenceKeypoint.new(1, 9) })
+	emitter.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.6), NumberSequenceKeypoint.new(1, 1) })
+	emitter.Lifetime = NumberRange.new(4, 7)
+	emitter.Speed = NumberRange.new(3, 5)
+	emitter.SpreadAngle = Vector2.new(12, 12)
+	emitter.Rate = 2
+	emitter.Parent = part
+end
+
+-- A house: plastered walls on a stone foot, a long pitched roof along the row, warm windows, a chimney. `base` stands on the ground
+-- and faces the way the front (-Z) points.
+local function townHouse(parent, base, w, d, h, rng, t)
+	local model = Instance.new("Model")
+	model.Name = "House"
+	model.Parent = parent
+	local wall = t.WallColors[rng:NextInteger(1, #t.WallColors)]
+	local roof = t.RoofColors[rng:NextInteger(1, #t.RoofColors)]
+	townPart(model, base * CFrame.new(0, -3, 0), Vector3.new(w + 1, 8, d + 1), Enum.Material.Cobblestone, Color3.fromRGB(112, 108, 102)) -- foot, deep enough for uneven ground
+	townPart(model, base * CFrame.new(0, h / 2, 0), Vector3.new(w, h, d), Enum.Material.Concrete, wall)
+	townPart(model, base * CFrame.new(0, h - 0.7, 0), Vector3.new(w + 0.6, 1.4, d + 0.6), Enum.Material.Wood, Color3.fromRGB(92, 66, 44))
+	local rise = d * 0.62
+	local half = d / 2 + 1.5
+	local tilt = math.atan2(rise, half)
+	local slab = math.sqrt(half ^ 2 + rise ^ 2) + 0.4
+	for side = -1, 1, 2 do
+		townPart(model, base * CFrame.new(0, h + rise / 2, side * half / 2) * CFrame.Angles(side * tilt, 0, 0), Vector3.new(w + 3, 1.2, slab), Enum.Material.Slate, roof)
+	end
+	local chimney = townPart(model, base * CFrame.new(w * 0.28, h + rise + 3, d * 0.12), Vector3.new(3, 9, 3), Enum.Material.Cobblestone, Color3.fromRGB(104, 100, 96))
+	if rng:NextNumber() < 0.5 then
+		smoke(chimney)
+	end
+	for i = 1, math.max(math.floor(w / 7), 2) do
+		local x = -w / 2 + (i - 0.5) * w / math.max(math.floor(w / 7), 2)
+		townPart(model, base * CFrame.new(x, h * 0.58, -d / 2 - 0.15), Vector3.new(2.6, 3.6, 0.3), Enum.Material.Neon, Color3.fromRGB(255, 196, 110))
+	end
+	townPart(model, base * CFrame.new(0, 4.5, -d / 2 - 0.2), Vector3.new(4.5, 9, 0.4), Enum.Material.Wood, Color3.fromRGB(84, 58, 38)) -- door
+end
+
+-- A round tower with a stepped conical roof (stacked discs, narrowing), banners and a lit window ring.
+local function townTower(parent, base, diameter, height, roofColor, t)
+	local model = Instance.new("Model")
+	model.Name = "Tower"
+	model.Parent = parent
+	local up = CFrame.Angles(0, 0, math.pi / 2) -- a cylinder Part lies along X; this stands it up
+	local cylinder = Enum.PartType.Cylinder
+	townPart(model, base * CFrame.new(0, height / 2 - 2, 0) * up, Vector3.new(height + 4, diameter, diameter), Enum.Material.Cobblestone, t.StoneColor, cylinder)
+	townPart(model, base * CFrame.new(0, height + 1, 0) * up, Vector3.new(3, diameter + 4, diameter + 4), Enum.Material.Cobblestone, t.StoneColor, cylinder) -- the overhang under the roof
+	for i = 0, 4 do -- the roof, from wide to narrow
+		local width = (diameter + 4) * (1 - i * 0.2)
+		townPart(model, base * CFrame.new(0, height + 4 + i * 5, 0) * up, Vector3.new(5, math.max(width, 2), math.max(width, 2)), Enum.Material.Slate, roofColor, cylinder)
+	end
+	townPart(model, base * CFrame.new(0, height + 4 + 5 * 5 + 3, 0), Vector3.new(1, 8, 1), Enum.Material.Metal, Color3.fromRGB(50, 50, 54)) -- spire
+	local ring = townPart(model, base * CFrame.new(0, height * 0.8, 0) * up, Vector3.new(3, diameter + 0.4, diameter + 0.4), Enum.Material.Neon, Color3.fromRGB(255, 190, 100), cylinder) -- a band of lit windows
+	ring.Transparency = 0.35
+	local light = Instance.new("PointLight")
+	light.Color = Color3.fromRGB(255, 190, 110)
+	light.Range = 45
+	light.Brightness = 1.4
+	light.Shadows = false
+	light.Parent = ring
+	return model
+end
+
+local function buildTownBackdrop(zone)
+	local t = zone.Surroundings.Town
+	local rng = Random.new(t.Seed)
+	local folder = Instance.new("Folder")
+	folder.Name = "TownBackdrop"
+	folder.Parent = workspace
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Include
+	params.FilterDescendantsInstances = { terrain }
+	local function ground(x, z)
+		local hit = workspace:Raycast(Vector3.new(x, 500, z), Vector3.new(0, -800, 0), params)
+		return hit and hit.Position.Y
+	end
+	local function placement(radius, angle)
+		local x, z = math.cos(angle) * radius, math.sin(angle) * radius
+		local y = ground(x, z)
+		if not y then
+			return nil
+		end
+		-- the front faces the zone: toward the middle of the circle
+		return CFrame.new(x, y - 1, z) * CFrame.Angles(0, math.pi / 2 - angle, 0), x, z
+	end
+	local count = 0
+
+	-- Rows of houses climbing the hill.
+	for _, radius in t.Rows do
+		local angle = math.pi / 2 - t.Spread
+		while angle < math.pi / 2 + t.Spread do
+			local jitter = rng:NextNumber(-0.012, 0.012)
+			local base = placement(radius + rng:NextNumber(-5, 5), angle + jitter)
+			-- a street up the middle, between the gate and the keep
+			local lane = math.abs(math.cos(angle)) * radius < t.LaneHalfWidth
+			if base and not lane and rng:NextNumber() > t.Gaps then
+				local w, d, h = rng:NextNumber(t.Width[1], t.Width[2]), rng:NextNumber(t.Depth[1], t.Depth[2]), rng:NextNumber(t.Height[1], t.Height[2])
+				townHouse(folder, base, w, d, h, rng, t)
+				count += 1
+			end
+			angle += t.Step + rng:NextNumber(0, t.Step * 0.5)
+		end
+	end
+
+	-- Towers along the arc and the keep on the axis.
+	for _, tower in t.Towers do
+		local base = placement(tower.Radius, math.pi / 2 + tower.Angle)
+		if base then
+			townTower(folder, base, tower.Diameter, tower.Height, t.RoofColors[rng:NextInteger(1, #t.RoofColors)], t)
+			count += 1
+		end
+	end
+	local keep = t.Keep
+	local base, kx, kz = placement(keep.Radius, math.pi / 2)
+	if base then
+		local model = Instance.new("Model")
+		model.Name = "Keep"
+		model.Parent = folder
+		townPart(model, base * CFrame.new(0, -4, 0), Vector3.new(keep.Width + 8, 14, keep.Depth + 8), Enum.Material.Cobblestone, t.StoneColor)
+		townPart(model, base * CFrame.new(0, keep.Height / 2, 0), Vector3.new(keep.Width, keep.Height, keep.Depth), Enum.Material.Cobblestone, t.StoneColor)
+		townPart(model, base * CFrame.new(0, keep.Height + 2, 0), Vector3.new(keep.Width + 6, 4, keep.Depth + 6), Enum.Material.Cobblestone, t.StoneColor) -- the battlement
+		for _, corner in { Vector3.new(1, 0, 1), Vector3.new(-1, 0, 1), Vector3.new(1, 0, -1), Vector3.new(-1, 0, -1) } do
+			townTower(model, base * CFrame.new(corner.X * keep.Width / 2, 0, corner.Z * keep.Depth / 2), 20, keep.Height + 26, Color3.fromRGB(150, 62, 50), t)
+		end
+		townTower(model, base * CFrame.new(0, keep.Height, 0), 26, 70, Color3.fromRGB(150, 62, 50), t) -- the great tower, rising out of the middle
+		for x = -1, 1, 2 do -- long banners down the front
+			townPart(model, base * CFrame.new(x * keep.Width * 0.22, keep.Height * 0.6, -keep.Depth / 2 - 0.4), Vector3.new(5, keep.Height * 0.5, 0.4), Enum.Material.Fabric, Color3.fromRGB(128, 22, 30))
+		end
+		local lit = townPart(model, base * CFrame.new(0, keep.Height * 0.42, -keep.Depth / 2 - 0.3), Vector3.new(keep.Width * 0.7, 6, 0.4), Enum.Material.Neon, Color3.fromRGB(255, 190, 100)) -- a band of windows
+		lit.Transparency = 0.3
+		count += 1
+	end
+	print(`[Zone] town backdrop: {count} buildings behind the gate`)
+end
+
 -- Trees on the far terraces, big enough to read from inside the zone. Their heights come from a raycast onto the new terrain.
 local function buildFarTrees(zone)
 	local s = zone.Surroundings
@@ -613,7 +788,7 @@ local function buildFarTrees(zone)
 		local angle = rng:NextNumber(0, math.pi * 2)
 		local radius = zone.Radius + zone.Canyon.Thickness + 40 + rng:NextNumber(0, 1) * (s.Radius - s.Trees.Edge - (zone.Radius + zone.Canyon.Thickness + 40))
 		local x, z = math.cos(angle) * radius, math.sin(angle) * radius
-		local hit = workspace:Raycast(Vector3.new(x, 400, z), Vector3.new(0, -600, 0), params)
+		local hit = townFactor(zone, angle) < 0.05 and workspace:Raycast(Vector3.new(x, 400, z), Vector3.new(0, -600, 0), params) -- none on the town's hill
 		-- only on the grass of a terrace, not on the dirt edge
 		if hit and hit.Position.Y > 30 and (hit.Material == Enum.Material[s.Grass] or hit.Material == Enum.Material[s.AltGrass]) then
 			tree(folder, x, hit.Position.Y, z, rng, settings)
@@ -691,6 +866,7 @@ end
 table.insert(keepClear, { Position = Vector3.new(0, 0, zone.Gate.Z - 40 * zone.Gate.Scale), Radius = 44 * zone.Gate.Scale }) -- the gate's forecourt
 buildTrees(zone, points, keepClear)
 buildFarTrees(zone)
+buildTownBackdrop(zone)
 buildCanyon(zone)
 buildBarrier(zone)
 -- (the canyon is the last and slowest step; it waits between batches, but everything the player stands on is already built)

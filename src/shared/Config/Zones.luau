@@ -26,6 +26,7 @@ return {
 			MinHeight = 34, -- ...but never below this (keeps every step up taller than a jump)...
 			MaxHeight = 44, -- ...or above this: the gate walls (40 x Gate.Scale) are taller than every peak
 			EdgeWobble = 22, -- most studs the face moves in or out around the circle
+			GateLift = 110, -- the cliff rises to the height of the gate's walls over this many studs beside the gate
 			GateCalm = { 0.12, 0.5 }, -- the wobble fades out within this many radians of the gate, so the cliff meets its walls cleanly
 			Seed = 11,
 			-- Green on the cliff: every ledge and the top are grass, with bushes on the ledges.
@@ -53,6 +54,29 @@ return {
 			AltColor = Color3.fromRGB(106, 146, 60),
 			EdgeMaterial = "Ground", -- the dirt edge of each terrace and the soil below
 			Trees = { Count = 170, Scale = { 2.6, 4.2 }, Edge = 50 }, -- big trees on the far terraces; Edge = studs left bare at the rim
+			-- The town you see beyond the gate: a hill behind its walls, with houses in rows, big towers and a keep (scenery only).
+			Town = {
+				Seed = 23,
+				Spread = 0.5, -- radians either side of straight behind the gate that the town fills (0.5 = about 29 degrees)
+				Bump = 55, -- how much higher than the other hills its hill rises
+				Rows = { 500, 526, 552, 578, 604 }, -- distance from the spawn of each row of houses; each row is further up the hill
+				Step = 0.062, -- radians between houses along a row (about 36 studs)
+				Gaps = 0.2, -- chance that a house is left out
+				LaneHalfWidth = 26, -- a street up the middle, from the gate to the keep
+				Width = { 20, 30 },
+				Depth = { 16, 22 },
+				Height = { 18, 30 }, -- wall height, before the roof
+				WallColors = { Color3.fromRGB(216, 200, 170), Color3.fromRGB(206, 178, 142), Color3.fromRGB(198, 192, 178) },
+				RoofColors = { Color3.fromRGB(152, 68, 52), Color3.fromRGB(104, 78, 58), Color3.fromRGB(88, 94, 106) },
+				StoneColor = Color3.fromRGB(150, 146, 138),
+				Towers = { -- Angle is radians from straight behind the gate
+					{ Radius = 520, Angle = -0.4, Diameter = 24, Height = 80 },
+					{ Radius = 520, Angle = 0.4, Diameter = 24, Height = 80 },
+					{ Radius = 566, Angle = -0.22, Diameter = 22, Height = 100 },
+					{ Radius = 566, Angle = 0.22, Diameter = 22, Height = 100 },
+				},
+				Keep = { Radius = 600, Width = 80, Depth = 56, Height = 80 }, -- the big building on top, straight behind the gate
+			},
 			Haze = {
 				Density = 0.3,
 				Offset = 0.15,
@@ -83,7 +107,7 @@ return {
 				Vector3.new(-10, 0, 232),
 				Vector3.new(12, 0, 268),
 				Vector3.new(-4, 0, 300),
-				Vector3.new(0, 0, 322),
+				Vector3.new(0, 0, 296),
 			},
 			Width = 18, -- studs wide (it varies a little along the way, so the edges look worn)
 			Material = "Ground", -- the path
@@ -101,18 +125,18 @@ return {
 		Gate = {
 			Name = "Starter Town",
 			Model = "StarterTownGateCurve", -- ServerStorage.Models.StarterTownGateCurve, from assets/models/StarterTownGateCurve.rbxm
-			Scale = 1.2, -- how big the gate is built (1 = as the model was saved). Its walls are 40 x Scale tall (48): above the canyon's highest peak (Canyon.MaxHeight)
-			Z = 400, -- how far north its middle stands (x = 0); the wall ends must reach into the canyon at x = +-CanyonGap or a little beyond
-			CanyonGap = 104, -- half the width of the stretch of canyon replaced by the gate
+			Scale = 1.5, -- how big the gate is built (1 = as the model was saved). Its walls are 40 x Scale tall (60), and the canyon rises to meet them (Canyon.GateLift)
+			Z = 396, -- how far north its middle stands (x = 0); the wall ends (100 x Scale to each side, bending back 32 x Scale) must reach the canyon
+			CanyonGap = 130, -- half the width of the stretch of canyon replaced by the gate
 			DestinationPlaceId = 0, -- the Roblox place id of the Starter Town; 0 = not connected yet
 			AutoOpen = false, -- true: the gate opens by itself when a player is OpenDistance close (false: only when entering)
 			OpenDistance = 70,
 			OpenSeconds = 2.6, -- how long it takes to open fully
 			DoorOpenDegrees = 95,
 			PromptKey = Enum.KeyCode.F,
-			PromptDistance = 34, -- studs from the gate at which "Enter" shows
+			PromptDistance = 46, -- studs from the gate at which "Enter" shows
 			FadeSeconds = 1.2, -- the screen fades to black this fast, then the teleport happens
-			ReturnDistance = 60, -- studs in front of the gate where the player is put back if the town is not connected
+			ReturnDistance = 70, -- studs in front of the gate where the player is put back if the town is not connected
 		},
 
 		-- Mob camps: where the mobs live. A camp is one kind of mob in one or more groups; each group is a number of mobs
