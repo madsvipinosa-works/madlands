@@ -83,6 +83,16 @@ return {
 			{ T = 0.62, Ease = "InOut", Pose = { RightShoulder = V(-360, 0, 0) } }, -- -360 is rest again, so the arm finishes the circle
 		},
 	},
+	-- The E dash (Config/Dash): a low forward lean with the arms swept back and one leg driving, held through the burst.
+	Dash = {
+		AssetId = "",
+		Duration = 0.5,
+		Keyframes = {
+			{ T = 0.04, Pose = { Root = V(-42, 0, 0), Shift = V(0, -0.9, -0.8), RightShoulder = V(-75, 0, 12), LeftShoulder = V(-75, 0, -12), RightElbow = V(10, 0, 0), LeftElbow = V(10, 0, 0), RightHip = V(-50, 0, 0), RightKnee = V(-55, 0, 0), LeftHip = V(55, 0, 0), LeftKnee = V(-25, 0, 0) } }, -- snap into the lean
+			{ T = 0.26, Pose = { Root = V(-36, 0, 0), Shift = V(0, -0.8, -0.8), RightShoulder = V(-70, 0, 12), LeftShoulder = V(-70, 0, -12), RightElbow = V(10, 0, 0), LeftElbow = V(10, 0, 0), RightHip = V(-35, 0, 0), RightKnee = V(-45, 0, 0), LeftHip = V(45, 0, 0), LeftKnee = V(-20, 0, 0) } }, -- held while the burst slows
+			{ T = 0.5, Ease = "InOut", Pose = {} },
+		},
+	},
 	-- The four sword skills. They have no published AssetId yet, so these poses are what plays.
 	DashSlash = { -- coil low with the blade level, burst through the target in one flat sideways cut, then slide to a low stop
 		AssetId = "",

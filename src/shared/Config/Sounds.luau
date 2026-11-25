@@ -42,7 +42,7 @@ return {
 		Swing3 = { { Id = SWORD_SWING, Volume = 1, Speed = { 0.85, 0.92 }, Start = 0.05 } }, -- the finisher: lower and heavier
 
 		-- The wolf's bite. The jaws snap shut 0.3 s after it starts, so the clip's silent lead-in is skipped.
-		WolfBite = { { Id = WOLF_BITE, Volume = 1, Speed = { 0.95, 1.05 }, Start = 0.4, Seconds = 1.1 } },
+		WolfBite = { { Id = WOLF_BITE, Volume = 0.55, Speed = { 0.95, 1.05 }, Start = 0.4, Seconds = 1.1 } },
 
 		-- A hit landing on something.
 		Hit = {
@@ -52,12 +52,15 @@ return {
 			{ Id = HIT_FLESH, Volume = 1, Speed = { 0.8, 0.9 } }, -- the same blow, lower and louder
 		},
 		PlayerHurt = { -- you taking a hit: a dull thud, not the sharp one
-			{ Id = THUD, Volume = 0.5, Speed = { 0.9, 1.0 } },
+			{ Id = THUD, Volume = 0.2, Speed = { 0.95, 1.05 } },
 		},
 
 		-- Skills.
 		DashWhoosh = {
 			{ Id = DASH, Volume = 0.8, Start = 0.2, Seconds = 0.9 },
+		},
+		DashStep = { -- the E dash: a short low swish
+			{ Id = WOOSH_SHORT, Volume = 0.5, Speed = { 0.8, 0.9 }, Eq = { High = -4 } },
 		},
 		LeapWhoosh = {
 			{ Id = WOOSH_HEAVY, Volume = 0.45, Speed = { 1.35, 1.5 } },

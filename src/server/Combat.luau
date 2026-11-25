@@ -10,6 +10,7 @@ local Weapons = require(ReplicatedStorage.Shared.Config.Weapons)
 local Skills = require(ReplicatedStorage.Shared.Config.Skills)
 local EffectStyle = require(ReplicatedStorage.Shared.Config.Effects)
 local SwingAnimations = require(ReplicatedStorage.Shared.Config.SwingAnimations)
+local DashConfig = require(ReplicatedStorage.Shared.Config.Dash)
 local PlayerData = require(script.Parent.PlayerData)
 local WeaponVisuals = require(script.Parent.WeaponVisuals)
 
@@ -22,6 +23,7 @@ end
 local swingRemote = makeRemote("Swing")
 local skillRemote = makeRemote("UseSkill") -- client -> server: skill slot number
 local skillUsedRemote = makeRemote("SkillUsed") -- server -> client: slot and cooldown, so the bar shows the real cooldown
+local dashRemote = makeRemote("DashStep") -- client -> server: "I pressed E"
 local waveRemote = makeRemote("WaveFired") -- server -> every client: draw a wave (shooter, start, direction, speed, range)
 
 -- Clients draw the Wave slash themselves, so they need its mesh; ServerStorage is not visible to them.
@@ -39,6 +41,7 @@ PhysicsService:RegisterCollisionGroup("Dashing")
 PhysicsService:RegisterCollisionGroup("Mobs")
 PhysicsService:CollisionGroupSetCollidable("Dashing", "Mobs", false)
 
+local dashReady = {} -- [player] = os.clock() when the E dash can be used again
 local lastSwing = {} -- [player] = os.clock() of last accepted swing
 local combo = {} -- [player] = { index, expires }: which basic swing comes next
 local skillReady = {} -- [player][skillId] = os.clock() when that skill can be used again
@@ -307,7 +310,42 @@ skillRemote.OnServerEvent:Connect(function(player, slot)
 	handler(player, character, root, skill)
 end)
 
+-- The E dash, for every player: a short burst the way you are moving (or facing, if standing still).
+dashRemote.OnServerEvent:Connect(function(player) -- extra arguments are ignored on purpose
+	local character = player.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	if not (root and humanoid and humanoid.Health > 0) then
+		return
+	end
+	local now = os.clock()
+	if now < (dashReady[player] or 0) then
+		return
+	end
+	dashReady[player] = now + DashConfig.Cooldown
+
+	local move = humanoid.MoveDirection * Vector3.new(1, 0, 1)
+	local direction = if move.Magnitude > 0.1 then move.Unit else flatLook(root)
+	-- Speed falls off as (1 - progress)^2, which covers Distance in Time exactly when it starts at 3 x Distance / Time.
+	local startSpeed = 3 * DashConfig.Distance / DashConfig.Time
+	local mover = pushWith(root, DashConfig.Time, function(m)
+		m.VectorVelocity = direction * startSpeed
+	end)
+	local startedAt = os.clock()
+	local connection
+	connection = RunService.Heartbeat:Connect(function()
+		local progress = (os.clock() - startedAt) / DashConfig.Time
+		if progress >= 1 or not mover.Parent then
+			connection:Disconnect()
+			return
+		end
+		mover.VectorVelocity = direction * startSpeed * (1 - progress) ^ 2
+	end)
+	dashRemote:FireClient(player) -- the client draws the dash only when the server accepted it
+end)
+
 Players.PlayerRemoving:Connect(function(player)
+	dashReady[player] = nil
 	lastSwing[player] = nil
 	skillReady[player] = nil
 	combo[player] = nil
