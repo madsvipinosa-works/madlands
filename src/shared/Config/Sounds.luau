@@ -11,8 +11,8 @@
 -- To change a sound, change its Id (a number from the Creator Store: create.roblox.com/store/audio). In Studio, press
 -- [ and ] to step through every cue and hear each one (dev only, see client/Sounds.luau).
 -- The basic swing: assets/audio/sword-swing.mp3, uploaded to Roblox (Creator Hub > Create > Audio). Paste its number here.
--- It is 0.84 s long but the first 0.2 s is silent, so the swings start it at Start = 0.17 to land on time.
-local SWORD_SWING = "rbxassetid://129494434245898" -- "rbxassetid://<the number Roblox gives the upload>"
+-- "sword swing - basic attack": 1.1 s, the whoosh is over by 0.4 s and peaks at 0.11 s.
+local SWORD_SWING = "rbxassetid://132438275638608" -- "sword swing - basic attack"
 local DASH = "rbxassetid://109570025444455" -- skill 1 sword dash.mp3: 2.19 s, starts at 0.1 s
 local WAVE = "rbxassetid://137534802780457" -- wave slash skill 3.mp3: 1.75 s, loud from the start
 local WHIRLWIND = "rbxassetid://90083794106814" -- whirlwind skill 4.mp3: 13.4 s, so it is cut short
@@ -37,9 +37,10 @@ return {
 
 	Cues = {
 		-- The three basic swings. The whoosh peaks as the blade crosses in front of you.
-		Swing1 = { { Id = SWORD_SWING, Volume = 0.9, Speed = { 0.97, 1.05 }, Start = 0.09 } },
-		Swing2 = { { Id = SWORD_SWING, Volume = 0.9, Speed = { 1.03, 1.12 }, Start = 0.09 } }, -- the backhand: a touch higher
-		Swing3 = { { Id = SWORD_SWING, Volume = 1, Speed = { 0.85, 0.92 }, Start = 0.05 } }, -- the finisher: lower and heavier
+		-- The clip (1.1 s) swells at 0.085 s and peaks at 0.11 s, so Delay holds it back until the blade is crossing.
+		Swing1 = { { Id = SWORD_SWING, Volume = 0.9, Speed = { 0.97, 1.05 }, Delay = 0.06 } },
+		Swing2 = { { Id = SWORD_SWING, Volume = 0.9, Speed = { 1.03, 1.12 }, Delay = 0.06 } }, -- the backhand: a touch higher
+		Swing3 = { { Id = SWORD_SWING, Volume = 1, Speed = { 0.85, 0.92 }, Delay = 0.12 } }, -- the finisher: lower and heavier, the chop lands later
 
 		-- The wolf's bite. The jaws snap shut 0.3 s after it starts, so the clip's silent lead-in is skipped.
 		WolfBite = { { Id = WOLF_BITE, Volume = 0.55, Speed = { 0.95, 1.05 }, Start = 0.4, Seconds = 1.1 } },

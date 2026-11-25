@@ -1,5 +1,6 @@
--- E key: ask the server for a dash, and show it (pose, ghost copies, dust, camera zoom). The server decides if and
+-- E key: ask the server for a dash, and show it (pose, white streak, dust, camera zoom). The server decides if and
 -- how far you move; it tells this client to draw the dash only when it accepted it.
+local Debris = game:GetService("Debris")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
@@ -13,29 +14,24 @@ local dashRemote = ReplicatedStorage:WaitForChild("DashStep")
 
 local lastPress = 0
 
--- A see-through glowing copy of the body, left where you were; it fades away.
-local function ghost(character)
-	for _, part in character:GetDescendants() do
-		if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" and part.Transparency < 1 then
-			local copy = part:Clone()
-			copy:ClearAllChildren()
-			if copy:IsA("MeshPart") then
-				copy.TextureID = ""
-			end
-			copy.Anchored = true
-			copy.CanCollide = false
-			copy.CanQuery = false
-			copy.CanTouch = false
-			copy.CastShadow = false
-			copy.Material = Enum.Material.Neon
-			copy.Color = Dash.GhostColor
-			copy.Transparency = 0.5
-			copy.CFrame = part.CFrame
-			copy.Parent = workspace
-			TweenService:Create(copy, TweenInfo.new(Dash.GhostSeconds), { Transparency = 1 }):Play()
-			game:GetService("Debris"):AddItem(copy, Dash.GhostSeconds + 0.1)
-		end
-	end
+-- A faint white ribbon behind your body for as long as the dash lasts; it fades out on its own.
+local function streak(root)
+	local top, bottom = Instance.new("Attachment"), Instance.new("Attachment")
+	top.Position, bottom.Position = Vector3.new(0, 1.2, 0), Vector3.new(0, -1.5, 0)
+	top.Parent, bottom.Parent = root, root
+	local trail = Instance.new("Trail")
+	trail.Attachment0, trail.Attachment1 = top, bottom
+	trail.Color = ColorSequence.new(Dash.StreakColor)
+	trail.Transparency = NumberSequence.new(Dash.StreakStart, 1) -- see-through at the body, gone at the tail
+	trail.LightEmission = 0.4
+	trail.Lifetime = Dash.StreakSeconds
+	trail.Parent = root
+	task.delay(Dash.Time, function()
+		trail.Enabled = false -- stop growing; the ribbon fades over its lifetime, then everything is removed
+	end)
+	Debris:AddItem(trail, Dash.Time + Dash.StreakSeconds + 0.1)
+	Debris:AddItem(top, Dash.Time + Dash.StreakSeconds + 0.1)
+	Debris:AddItem(bottom, Dash.Time + Dash.StreakSeconds + 0.1)
 end
 
 local function show()
@@ -46,19 +42,11 @@ local function show()
 	end
 	Animations.Play(Dash.Animation)
 	Effects.Puff(root.Position - Vector3.new(0, 2.5, 0), 5)
+	streak(root)
 	local camera = workspace.CurrentCamera
 	local fov = camera.FieldOfView
 	camera.FieldOfView = fov + Dash.FovKick
 	TweenService:Create(camera, TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { FieldOfView = fov }):Play()
-	task.spawn(function()
-		for _ = 1, math.ceil(Dash.Time / Dash.GhostEvery) do
-			if not character.Parent then
-				return
-			end
-			ghost(character)
-			task.wait(Dash.GhostEvery)
-		end
-	end)
 end
 
 dashRemote.OnClientEvent:Connect(show)

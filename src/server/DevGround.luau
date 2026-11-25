@@ -27,6 +27,48 @@ for i = 1, hills.Count do
 	terrain:FillBall(center, hills.Radius, material)
 end
 
+-- The trail to the town: a smooth curve through the waypoints (a Catmull-Rom spline). Terrain is made of 4-stud cells and
+-- only a fully covered cell changes its material, so the path is painted cell by cell: every cell whose middle is within
+-- half the (slightly varying) width of the curve becomes dirt. A stone plaza closes the town end.
+local trail = ground.Trail
+if trail then
+	local points = trail.Waypoints
+	local trailMaterial = Enum.Material[trail.Material]
+	terrain:SetMaterialColor(trailMaterial, trail.Color)
+	local wobble = Random.new(trail.Seed)
+	local function point(i)
+		return points[math.clamp(i, 1, #points)]
+	end
+	local CELL = 4 -- studs; the terrain's cell size
+	local painted = {} -- ["x,z"] = true, so a cell is only filled once
+	local last
+	for i = 1, #points - 1 do
+		local p0, p1, p2, p3 = point(i - 1), point(i), point(i + 1), point(i + 2)
+		local steps = math.ceil((p2 - p1).Magnitude / (CELL / 2))
+		for s = 0, steps do
+			local t = s / steps
+			local position = 0.5 * (2 * p1 + (p2 - p0) * t + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t ^ 2 + (3 * p1 - p0 - 3 * p2 + p3) * t ^ 3)
+			local reach = trail.Width / 2 * wobble:NextNumber(0.8, 1.2)
+			local cells = math.ceil(reach / CELL) + 1
+			local cx, cz = math.floor(position.X / CELL), math.floor(position.Z / CELL)
+			for dx = -cells, cells do
+				for dz = -cells, cells do
+					local x, z = (cx + dx) * CELL + CELL / 2, (cz + dz) * CELL + CELL / 2
+					local key = x .. "," .. z
+					if not painted[key] and (Vector3.new(x, 0, z) - position).Magnitude <= reach then
+						painted[key] = true
+						terrain:FillBlock(CFrame.new(x, -CELL / 2, z), Vector3.one * CELL, trailMaterial)
+					end
+				end
+			end
+			last = position
+		end
+	end
+	local plazaMaterial = Enum.Material[trail.PlazaMaterial]
+	terrain:SetMaterialColor(plazaMaterial, trail.PlazaColor)
+	terrain:FillCylinder(CFrame.new(last.X, -CELL / 2, last.Z), CELL, trail.PlazaRadius, plazaMaterial)
+end
+
 -- The flat baseplate would hide the grass.
 local baseplate = workspace:FindFirstChild("Baseplate")
 if baseplate then

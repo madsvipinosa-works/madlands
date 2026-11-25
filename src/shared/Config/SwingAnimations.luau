@@ -83,14 +83,17 @@ return {
 			{ T = 0.62, Ease = "InOut", Pose = { RightShoulder = V(-360, 0, 0) } }, -- -360 is rest again, so the arm finishes the circle
 		},
 	},
-	-- The E dash (Config/Dash): a low forward lean with the arms swept back and one leg driving, held through the burst.
+	-- The E dash (Config/Dash): a dodge roll. Duck low, tuck into a fast forward somersault through the burst, land in a crouch
+	-- and stand up. Root counts down -360 for the full turn (-360 is rest again), like the Whirlwind's spin.
 	Dash = {
 		AssetId = "",
-		Duration = 0.5,
+		Duration = 0.55,
 		Keyframes = {
-			{ T = 0.04, Pose = { Root = V(-42, 0, 0), Shift = V(0, -0.9, -0.8), RightShoulder = V(-75, 0, 12), LeftShoulder = V(-75, 0, -12), RightElbow = V(10, 0, 0), LeftElbow = V(10, 0, 0), RightHip = V(-50, 0, 0), RightKnee = V(-55, 0, 0), LeftHip = V(55, 0, 0), LeftKnee = V(-25, 0, 0) } }, -- snap into the lean
-			{ T = 0.26, Pose = { Root = V(-36, 0, 0), Shift = V(0, -0.8, -0.8), RightShoulder = V(-70, 0, 12), LeftShoulder = V(-70, 0, -12), RightElbow = V(10, 0, 0), LeftElbow = V(10, 0, 0), RightHip = V(-35, 0, 0), RightKnee = V(-45, 0, 0), LeftHip = V(45, 0, 0), LeftKnee = V(-20, 0, 0) } }, -- held while the burst slows
-			{ T = 0.5, Ease = "InOut", Pose = {} },
+			{ T = 0.05, Ease = "Out", Pose = { Root = V(-50, 0, 0), Shift = V(0, -1.4, -0.6), RightShoulder = V(60, 0, 15), LeftShoulder = V(60, 0, -15), RightElbow = V(70, 0, 0), LeftElbow = V(70, 0, 0), RightHip = V(80, 0, 0), LeftHip = V(80, 0, 0), RightKnee = V(-95, 0, 0), LeftKnee = V(-95, 0, 0) } }, -- duck and tuck
+			{ T = 0.15, Ease = "Linear", Pose = { Root = V(-190, 0, 0), Shift = V(0, -1.5, -1), RightShoulder = V(60, 0, 15), LeftShoulder = V(60, 0, -15), RightElbow = V(70, 0, 0), LeftElbow = V(70, 0, 0), RightHip = V(95, 0, 0), LeftHip = V(95, 0, 0), RightKnee = V(-110, 0, 0), LeftKnee = V(-110, 0, 0) } }, -- over the top, tight ball
+			{ T = 0.26, Ease = "Linear", Pose = { Root = V(-330, 0, 0), Shift = V(0, -1.4, -0.6), RightShoulder = V(40, 0, 15), LeftShoulder = V(40, 0, -15), RightElbow = V(50, 0, 0), LeftElbow = V(50, 0, 0), RightHip = V(70, 0, 0), LeftHip = V(70, 0, 0), RightKnee = V(-85, 0, 0), LeftKnee = V(-85, 0, 0) } }, -- coming round
+			{ T = 0.31, Pose = { Root = V(-360, 0, 0), Shift = V(0, -1.2, -0.4), RightShoulder = V(30, 0, 20), LeftShoulder = V(30, 0, -20), RightElbow = V(30, 0, 0), LeftElbow = V(30, 0, 0), RightHip = V(60, 0, 0), LeftHip = V(45, 0, 0), RightKnee = V(-80, 0, 0), LeftKnee = V(-60, 0, 0) } }, -- land in a crouch
+			{ T = 0.55, Ease = "InOut", Pose = { Root = V(-360, 0, 0) } }, -- stand up (-360 is upright: staying at it, not going back to 0, keeps the body from rolling backwards)
 		},
 	},
 	-- The four sword skills. They have no published AssetId yet, so these poses are what plays.

@@ -326,8 +326,10 @@ dashRemote.OnServerEvent:Connect(function(player) -- extra arguments are ignored
 
 	local move = humanoid.MoveDirection * Vector3.new(1, 0, 1)
 	local direction = if move.Magnitude > 0.1 then move.Unit else flatLook(root)
-	-- Speed falls off as (1 - progress)^2, which covers Distance in Time exactly when it starts at 3 x Distance / Time.
-	local startSpeed = 3 * DashConfig.Distance / DashConfig.Time
+	-- Speed falls off as 1 - progress^2: quick off the mark but steady through most of the roll, then a short brake. It covers
+	-- Distance in Time exactly when it starts at 1.5 x Distance / Time. (A sharper (1 - progress)^2 fall-off put most of the
+	-- distance into the first 0.08 s, which looked like a teleport.)
+	local startSpeed = 1.5 * DashConfig.Distance / DashConfig.Time
 	local mover = pushWith(root, DashConfig.Time, function(m)
 		m.VectorVelocity = direction * startSpeed
 	end)
@@ -339,7 +341,7 @@ dashRemote.OnServerEvent:Connect(function(player) -- extra arguments are ignored
 			connection:Disconnect()
 			return
 		end
-		mover.VectorVelocity = direction * startSpeed * (1 - progress) ^ 2
+		mover.VectorVelocity = direction * startSpeed * (1 - progress ^ 2)
 	end)
 	dashRemote:FireClient(player) -- the client draws the dash only when the server accepted it
 end)
