@@ -1,4 +1,5 @@
 -- Mob definitions, keyed by mob id. Read-only data; the server runs all mob behaviour.
+-- Where they live is set by the camps in Config/Zones.
 return {
 	Wolf = {
 		Health = 60,
@@ -13,7 +14,6 @@ return {
 		Xp = 20,
 		CorpseSeconds = 2, -- body stays this long after death
 		RespawnSeconds = 10, -- a new wolf appears this long after death
-		Spawns = { Vector3.new(30, 3, -30) }, -- one wolf per position
 
 		-- Looks only. The mesh comes from ServerStorage.Models.<Model>, saved from Studio as assets/models/<Model>.rbxm
 		-- (import assets/models/wolf.glb with the 3D Importer first).
@@ -89,7 +89,6 @@ return {
 		Xp = 12,
 		CorpseSeconds = 2,
 		RespawnSeconds = 10,
-		Spawns = { Vector3.new(-30, 3, -30) },
 
 		-- Looks only. The mesh comes from ServerStorage.Models.Goblin, saved from Studio as assets/models/Goblin.rbxm
 		-- (import goblin.glb with the 3D Importer first).

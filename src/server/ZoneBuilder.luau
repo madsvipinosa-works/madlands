@@ -4,7 +4,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 
 local Zones = require(ReplicatedStorage.Shared.Config.Zones)
-local Mobs = require(ReplicatedStorage.Shared.Config.Mobs)
+local Camps = require(ReplicatedStorage.Shared.Camps)
 
 local terrain = workspace.Terrain
 local CELL = 4 -- terrain cell size in studs: only a fully covered cell changes material, so everything is laid cell by cell
@@ -121,10 +121,182 @@ end
 
 local treeRay = RaycastParams.new()
 treeRay.FilterType = Enum.RaycastFilterType.Exclude
+local propsFolder = Instance.new("Folder") -- campfires and rocks; they must not count as ground either
+propsFolder.Name = "Props"
+propsFolder.Parent = workspace
 
 local function groundHeight(x, z)
 	local hit = workspace:Raycast(Vector3.new(x, 120, z), Vector3.new(0, -200, 0), treeRay)
 	return hit and hit.Position.Y
+end
+
+-- True if the point is outside every { Position, Radius } circle in the list.
+local function clearOf(position, circles)
+	for _, circle in circles do
+		if (Vector3.new(position.X, 0, position.Z) - Vector3.new(circle.Position.X, 0, circle.Position.Z)).Magnitude < circle.Radius then
+			return false
+		end
+	end
+	return true
+end
+
+-- Campfires and rocks ---------------------------------------------------------------------------------------------
+
+local function prop(parent, shape, cframe, size, material, color, solid)
+	local p = Instance.new("Part")
+	p.Shape = shape
+	p.Anchored = true
+	p.CanCollide = solid
+	p.CanTouch = false
+	p.Material = material
+	p.Color = color
+	p.Size = size
+	p.CFrame = cframe
+	p.Parent = parent
+	return p
+end
+
+-- A rock: a chunky tilted block with one or two smaller ones leaning against it, sunk a little into the ground.
+local function rock(parent, x, y, z, size, rng, rocks)
+	local model = Instance.new("Model")
+	model.Name = "Rock"
+	local color = rocks.Colors[rng:NextInteger(1, #rocks.Colors)]
+	for i = 1, rng:NextInteger(2, 3) do
+		local scale = if i == 1 then 1 else rng:NextNumber(0.4, 0.65)
+		local w, h, d = size * scale * rng:NextNumber(0.8, 1.2), size * scale * rng:NextNumber(0.55, 0.85), size * scale * rng:NextNumber(0.8, 1.2)
+		local offset = if i == 1 then Vector3.zero else Vector3.new(rng:NextNumber(-0.4, 0.4) * size, 0, rng:NextNumber(-0.4, 0.4) * size)
+		local turn = CFrame.Angles(math.rad(rng:NextNumber(-22, 22)), rng:NextNumber(0, math.pi * 2), math.rad(rng:NextNumber(-22, 22)))
+		prop(model, Enum.PartType.Block, CFrame.new(x + offset.X, y + h * 0.3, z + offset.Z) * turn, Vector3.new(w, h, d), Enum.Material.Slate, color:Lerp(Color3.new(0.3, 0.3, 0.3), rng:NextNumber(0, 0.2)), true)
+	end
+	model.Parent = parent
+end
+
+-- A campfire: a ring of stones, three logs, ash, a fire with smoke and sparks that lights up the ground, and three log seats.
+local function campfire(parent, x, y, z, rng, c)
+	local model = Instance.new("Model")
+	model.Name = "Campfire"
+	local base = CFrame.new(x, y, z)
+	local block, cylinder = Enum.PartType.Block, Enum.PartType.Cylinder
+	local flat = CFrame.Angles(0, 0, math.pi / 2) -- a cylinder Part lies along X; this stands it up
+
+	for i = 0, 8 do -- the stone ring
+		local angle = i / 9 * math.pi * 2
+		local size = Vector3.new(rng:NextNumber(1.4, 2), rng:NextNumber(0.9, 1.3), rng:NextNumber(1.2, 1.7))
+		prop(model, block, base * CFrame.Angles(0, angle, 0) * CFrame.new(3, size.Y / 2 - 0.2, 0) * CFrame.Angles(0, rng:NextNumber(-0.4, 0.4), 0), size, Enum.Material.Rock, c.StoneColor:Lerp(Color3.new(0.4, 0.4, 0.4), rng:NextNumber(0, 0.25)), true)
+	end
+	prop(model, cylinder, base * CFrame.new(0, 0.05, 0) * flat, Vector3.new(0.2, 5.2, 5.2), Enum.Material.Slate, Color3.fromRGB(40, 36, 34), false) -- the ash and embers bed
+	for i = 0, 2 do -- three logs, crossing like spokes
+		prop(model, cylinder, base * CFrame.Angles(0, i / 3 * math.pi + 0.3, 0) * CFrame.new(0, 0.55, 0) * CFrame.Angles(0, 0, math.rad(8)), Vector3.new(4.2, 0.9, 0.9), Enum.Material.Wood, c.LogColor, false)
+	end
+	for i = 0, 2 do -- log seats around it, a bit apart
+		local angle = i / 3 * math.pi * 2 + 0.9
+		local seat = base * CFrame.Angles(0, angle, 0) * CFrame.new(7.2, 0.6, 0) * CFrame.Angles(0, math.pi / 2, 0)
+		prop(model, cylinder, seat, Vector3.new(5, 1.3, 1.3), Enum.Material.Wood, c.LogColor:Lerp(Color3.new(0.5, 0.4, 0.3), 0.15), true)
+	end
+
+	local flame = prop(model, block, base * CFrame.new(0, 1.4, 0), Vector3.one, Enum.Material.SmoothPlastic, Color3.new(1, 1, 1), false)
+	flame.Transparency = 1
+	flame.CanQuery = false
+	local fire = Instance.new("ParticleEmitter")
+	fire.Texture = "rbxasset://textures/particles/fire_main.dds"
+	fire.Color = ColorSequence.new(Color3.fromRGB(255, 190, 80), Color3.fromRGB(230, 70, 20))
+	fire.LightEmission = 1
+	fire.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 3.6), NumberSequenceKeypoint.new(1, 0.6) })
+	fire.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.1), NumberSequenceKeypoint.new(1, 1) })
+	fire.Lifetime = NumberRange.new(0.6, 1.1)
+	fire.Speed = NumberRange.new(3, 5)
+	fire.SpreadAngle = Vector2.new(12, 12)
+	fire.Rate = 30
+	fire.Rotation = NumberRange.new(-20, 20)
+	fire.Parent = flame
+	local smoke = Instance.new("ParticleEmitter")
+	smoke.Texture = "rbxasset://textures/particles/smoke_main.dds"
+	smoke.Color = ColorSequence.new(Color3.fromRGB(90, 88, 86))
+	smoke.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1.5), NumberSequenceKeypoint.new(1, 5) })
+	smoke.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.7), NumberSequenceKeypoint.new(1, 1) })
+	smoke.Lifetime = NumberRange.new(2.5, 4)
+	smoke.Speed = NumberRange.new(3, 5)
+	smoke.SpreadAngle = Vector2.new(15, 15)
+	smoke.Rate = 4
+	smoke.Parent = flame
+	local sparks = Instance.new("ParticleEmitter")
+	sparks.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+	sparks.Color = ColorSequence.new(Color3.fromRGB(255, 200, 110))
+	sparks.LightEmission = 1
+	sparks.Size = NumberSequence.new(0.25)
+	sparks.Lifetime = NumberRange.new(1, 2)
+	sparks.Speed = NumberRange.new(5, 9)
+	sparks.SpreadAngle = Vector2.new(35, 35)
+	sparks.Rate = 5
+	sparks.Parent = flame
+	local light = Instance.new("PointLight")
+	light.Color = c.Light.Color
+	light.Range = c.Light.Range
+	light.Brightness = c.Light.Brightness
+	light.Shadows = false
+	light.Parent = flame
+	model.Parent = parent
+end
+
+-- Puts campfires and rocks along the trail. Returns the circles trees must stay out of (the fires).
+local function buildProps(zone, points)
+	local clear = {}
+	local halfWidth = zone.Trail.Width / 2 * 1.2 -- the trail's widest edge
+	local function sideOf(i)
+		local forward = (points[math.min(i + 1, #points)] - points[math.max(i - 1, 1)]).Unit
+		return Vector3.new(-forward.Z, 0, forward.X)
+	end
+
+	-- How far along the trail each point is, in studs.
+	local along, total = { 0 }, 0
+	for i = 2, #points do
+		total += (points[i] - points[i - 1]).Magnitude
+		along[i] = total
+	end
+
+	local fires = zone.Campfires
+	local fireRng = Random.new(zone.Trees.Seed + 1)
+	for n, fraction in fires.Along do
+		local i = 1
+		while along[i] < total * fraction and i < #points do
+			i += 1
+		end
+		local side = if n % 2 == 1 then 1 else -1
+		local spot = points[i] + sideOf(i) * side * (halfWidth + fires.Offset)
+		local y = groundHeight(spot.X, spot.Z)
+		if y then
+			terrain:FillCylinder(CFrame.new(spot.X, -CELL / 2, spot.Z), CELL, fires.BareRadius, Enum.Material[fires.BareMaterial]) -- bare ground: no tall grass
+			campfire(propsFolder, spot.X, y, spot.Z, fireRng, fires)
+			table.insert(clear, { Position = spot, Radius = zone.Trees.Scattered.ClearAroundCampfires })
+		end
+	end
+
+	local r = zone.Rocks
+	local rng = Random.new(r.Seed)
+	local distance, count = rng:NextNumber(r.Every[1], r.Every[2]), 0
+	for i = 1, #points do
+		if along[i] >= distance and along[i] < total - zone.Trail.GateRadius - 4 then
+			distance = along[i] + rng:NextNumber(r.Every[1], r.Every[2])
+			local side = if rng:NextNumber() < 0.5 then 1 else -1
+			local boulder = rng:NextNumber() < r.BoulderChance
+			local reach = halfWidth + rng:NextNumber(r.MinOffset, r.MaxOffset) + (if boulder then r.BoulderSize[2] / 2 else 0)
+			local center = points[i] + sideOf(i) * side * reach
+			if clearOf(center, clear) then
+				local rocksInGroup = if boulder then 1 else rng:NextInteger(r.Group[1], r.Group[2])
+				for _ = 1, rocksInGroup do
+					local spot = center + Vector3.new(rng:NextNumber(-3.5, 3.5), 0, rng:NextNumber(-3.5, 3.5))
+					local y = groundHeight(spot.X, spot.Z)
+					if y then
+						local size = if boulder then rng:NextNumber(r.BoulderSize[1], r.BoulderSize[2]) else rng:NextNumber(r.Size[1], r.Size[2])
+						rock(propsFolder, spot.X, y, spot.Z, size, rng, r)
+						count += 1
+					end
+				end
+			end
+		end
+	end
+	print(`[Zone] {#fires.Along} campfires and {count} rocks placed`)
+	return clear
 end
 
 -- The tree is a model made by hand (assets/models/Tree.rbxm, served as ServerStorage.Models.Tree). Every tree is a clone,
@@ -153,13 +325,13 @@ local function tree(parent, x, y, z, rng, trees)
 	model.Parent = parent
 end
 
-local function buildTrees(zone, points)
+local function buildTrees(zone, points, keepClear)
 	local trees = zone.Trees
 	local rng = Random.new(trees.Seed)
 	local folder = Instance.new("Folder")
 	folder.Name = "Trees"
 	folder.Parent = workspace
-	treeRay.FilterDescendantsInstances = { folder } -- a new tree must not count as ground
+	treeRay.FilterDescendantsInstances = { folder, propsFolder } -- a new tree or prop must not count as ground
 	local placed = 0
 	local function plant(x, z)
 		local y = groundHeight(x, z)
@@ -182,7 +354,7 @@ local function buildTrees(zone, points)
 				if rng:NextNumber() < a.Chance then
 					local offset = zone.Trail.Width / 2 + rng:NextNumber(a.MinOffset, a.MaxOffset)
 					local spot = points[i] + side * sign * offset + Vector3.new(rng:NextNumber(-1.5, 1.5), 0, rng:NextNumber(-1.5, 1.5))
-					if i < #points - 4 then -- none on the stone apron at the end
+					if i < #points - 4 and clearOf(spot, keepClear) then -- none on the stone apron at the end, or near a camp or fire
 						plant(spot.X, spot.Z)
 					end
 				end
@@ -192,12 +364,6 @@ local function buildTrees(zone, points)
 
 	-- Scattered: random spots in groves, away from the spawn, the mobs, the trail and the canyon.
 	local s = trees.Scattered
-	local mobSpots = {}
-	for _, def in Mobs do
-		for _, position in def.Spawns do
-			table.insert(mobSpots, position)
-		end
-	end
 	for _ = 1, s.Count do
 		local angle = rng:NextNumber(0, math.pi * 2)
 		local distance = math.sqrt(rng:NextNumber()) * (zone.Radius - s.EdgeMargin)
@@ -208,7 +374,7 @@ local function buildTrees(zone, points)
 			grove > s.GroveCutoff
 			and distance > s.ClearAroundSpawn
 			and nearest(position, points) > zone.Trail.Width / 2 + s.ClearAroundTrail
-			and nearest(position, mobSpots) > s.ClearAroundMobs
+			and clearOf(position, keepClear)
 		then
 			plant(x, z)
 		end
@@ -244,8 +410,13 @@ placeSpawn()
 local points = trailPoints(zone.Trail.Waypoints)
 buildHills(zone, points)
 paintTrail(zone, points)
-task.wait(1) -- new terrain cannot be raycast for a moment; the trees look for the ground with a raycast
-buildTrees(zone, points)
+task.wait(1) -- new terrain cannot be raycast for a moment; the props and trees look for the ground with a raycast
+treeRay.FilterDescendantsInstances = { propsFolder }
+local keepClear = buildProps(zone, points)
+for _, area in Camps.Areas(zone) do -- the mobs' ground stays open: no trees where they walk and fight
+	table.insert(keepClear, { Position = area.Position, Radius = area.Radius + zone.Trees.Scattered.ClearAroundMobs })
+end
+buildTrees(zone, points, keepClear)
 buildCanyon(zone) -- last and slowest; it waits between batches, but everything the player stands on is already built
 
 print(`[Zone] {zone.Name} (levels {zone.LevelRange[1]}-{zone.LevelRange[2]}): radius {zone.Radius}, canyon wall built`)

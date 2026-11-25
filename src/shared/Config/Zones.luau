@@ -52,6 +52,70 @@ return {
 			Seed = 3,
 		},
 
+		-- Mob camps: where the mobs live. A camp is one kind of mob in one or more groups; each group is a number of mobs
+		-- placed at random inside a circle (Radius) around the camp Center plus the group's Offset (x, z). A second group with
+		-- an Offset is the part of the pack standing "beside" the main one. Placement is fixed by the camp's Seed.
+		-- The spawn is at 0, 0 and the trail runs north (+z), so camps keep well away from the trail (mobs notice you at about 30 studs).
+		Camps = {
+			{
+				Name = "Goblin Hollow", Mob = "Goblin", Seed = 21,
+				Center = Vector3.new(-85, 0, 75),
+				Groups = {
+					{ Count = 3, Radius = 7 }, -- three goblins in the middle...
+					{ Count = 2, Radius = 6, Offset = Vector3.new(-20, 0, 14) }, -- ...and two more standing nearby
+				},
+			},
+			{
+				Name = "Goblin Ridge", Mob = "Goblin", Seed = 22,
+				Center = Vector3.new(100, 0, 150),
+				Groups = {
+					{ Count = 2, Radius = 6 },
+					{ Count = 2, Radius = 6, Offset = Vector3.new(18, 0, -18) },
+				},
+			},
+			{
+				Name = "Wolf Den", Mob = "Wolf", Seed = 23,
+				Center = Vector3.new(115, 0, -105),
+				Groups = {
+					{ Count = 3, Radius = 7 }, -- a pack of three...
+					{ Count = 3, Radius = 8, Offset = Vector3.new(-26, 0, 16) }, -- ...and three more prowling beside it
+				},
+			},
+			{
+				Name = "Wolf Hollow", Mob = "Wolf", Seed = 24,
+				Center = Vector3.new(-125, 0, 175),
+				Groups = {
+					{ Count = 3, Radius = 7 },
+					{ Count = 3, Radius = 8, Offset = Vector3.new(24, 0, -20) },
+				},
+			},
+		},
+
+		-- Campfires beside the trail: a ring of stones, logs, a fire and log seats. Along = how far along the trail each one
+		-- stands (0 = spawn, 1 = the gate); they alternate sides, starting on the left.
+		Campfires = {
+			Along = { 0.2, 0.47, 0.74 },
+			Offset = 11, -- studs from the trail's edge to the fire
+			BareRadius = 10, -- studs of bare dirt around the fire (the tall grass would hide it)
+			BareMaterial = "Ground",
+			StoneColor = Color3.fromRGB(112, 110, 106),
+			LogColor = Color3.fromRGB(88, 62, 42),
+			Light = { Color = Color3.fromRGB(255, 170, 90), Range = 34, Brightness = 2 }, -- the glow the fire throws
+		},
+
+		-- Rocks beside the trail, alone or in small groups; now and then a big boulder.
+		Rocks = {
+			Seed = 9,
+			Every = { 8, 20 }, -- studs of trail between one group and the next (random in this range)
+			MinOffset = 3, -- studs from the trail's edge...
+			MaxOffset = 10, -- ...to this far out
+			Group = { 1, 3 }, -- rocks per group
+			Size = { 2.5, 6 }, -- studs across
+			BoulderChance = 0.12, -- chance that a group is one big boulder instead
+			BoulderSize = { 9, 14 },
+			Colors = { Color3.fromRGB(86, 84, 82), Color3.fromRGB(72, 72, 76), Color3.fromRGB(96, 90, 84), Color3.fromRGB(66, 68, 70) },
+		},
+
 		-- Trees: a row on each side of the trail, then scattered clumps over the rest of the zone.
 		Trees = {
 			Seed = 5,
@@ -65,7 +129,8 @@ return {
 				Count = 260, -- how many to try to place (some are skipped where it would be crowded)
 				GroveCutoff = -0.05, -- trees only grow where a noise map is above this: raise it for fewer, tighter groves (about -0.4 to 0.3)
 				ClearAroundSpawn = 40, -- studs kept open around the spawn
-				ClearAroundMobs = 14, -- studs kept open around each mob spawn
+				ClearAroundMobs = 14, -- studs kept open around each mob camp group (on top of its radius)
+				ClearAroundCampfires = 18, -- studs kept open around each campfire
 				ClearAroundTrail = 20, -- studs kept open beyond the trail's edge
 				EdgeMargin = 12, -- studs kept clear in front of the canyon wall
 			},

@@ -1,4 +1,4 @@
--- Spawns mobs from Config/Mobs and runs their AI. Server only.
+-- Spawns mobs from Config/Mobs, at the camps set in Config/Zones, and runs their AI. Server only.
 -- shortcut: mobs walk straight at the target with MoveTo (no pathfinding), so walls block them; upgrade with PathfindingService when zones have terrain.
 local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
@@ -6,6 +6,8 @@ local ServerStorage = game:GetService("ServerStorage")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Mobs = require(ReplicatedStorage.Shared.Config.Mobs)
+local ZoneConfig = require(ReplicatedStorage.Shared.Config.Zones)
+local Camps = require(ReplicatedStorage.Shared.Camps)
 local PlayerData = require(script.Parent.PlayerData)
 
 local rng = Random.new()
@@ -249,9 +251,10 @@ local function step(s)
 	end
 end
 
-for name, def in Mobs do
-	for _, position in def.Spawns do
-		spawnMob(name, def, position)
+for _, zone in ZoneConfig do
+	for _, spawn in Camps.Positions(zone) do
+		spawnMob(spawn.Mob, Mobs[spawn.Mob], spawn.Position + Vector3.new(0, 6, 0)) -- dropped from a little above the ground
+		task.wait() -- one mob per frame, so building them all does not freeze the server
 	end
 end
 
