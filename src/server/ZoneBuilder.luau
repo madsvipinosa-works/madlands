@@ -710,7 +710,7 @@ local function buildTownBackdrop(zone)
 		local travelled = length -- so the first piece goes right at the start
 		for i = 1, #wallPoints - 1 do
 			travelled += (wallPoints[i + 1] - wallPoints[i]).Magnitude
-			if travelled >= length * 0.94 then -- a little overlap, so there is no crack between pieces
+			if travelled >= length * 0.78 then -- plenty of overlap, so the outside of a curve has no cracks between pieces
 				travelled = 0
 				local a, b = wallPoints[i], wallPoints[math.min(i + 4, #wallPoints)]
 				local tangent = (b - a).Unit

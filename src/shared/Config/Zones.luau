@@ -42,7 +42,7 @@ return {
 		-- smooth terraces like rice terraces (one step = Terrace studs; the edge of each terrace is bare dirt), alternating two
 		-- greens, with big trees, and a haze that fades the far edge. It ends at Radius (a long way out, lost in the haze).
 		Surroundings = {
-			Radius = 640, -- studs from the spawn to the outer rim of the hills
+			Radius = 700, -- studs from the spawn to the outer rim of the hills
 			StartHeight = 40, -- height of the land right behind the canyon (about the canyon's top)
 			Rise = 60, -- how much higher the land is by the end of the ramp
 			RampLength = 170, -- studs from the canyon to where it has risen fully
@@ -67,18 +67,18 @@ return {
 					Model = "WallPiece", -- assets/models/WallPiece.rbxm
 					Scale = 2.4, -- size of each piece (1 = as saved): it stands about 40 studs tall, like the gate's walls
 					Sink = 3, -- studs it is set into the ground
-					-- x, z of the wall's path: from the end of the gate's right wall, round the back of the town, to the end of the left wall
+					-- x, z of the wall's path: starts inside the end of the gate's right wall (so there is no gap), goes round the back of the town, and ends inside the left wall
 					Path = {
-						Vector3.new(150, 0, 446), Vector3.new(184, 0, 484), Vector3.new(194, 0, 536), Vector3.new(162, 0, 586),
-						Vector3.new(92, 0, 616), Vector3.new(0, 0, 626), Vector3.new(-92, 0, 616), Vector3.new(-162, 0, 586),
-						Vector3.new(-194, 0, 536), Vector3.new(-184, 0, 484), Vector3.new(-150, 0, 446),
+						Vector3.new(112, 0, 434), Vector3.new(152, 0, 448), Vector3.new(190, 0, 484), Vector3.new(226, 0, 530), Vector3.new(232, 0, 584),
+						Vector3.new(196, 0, 624), Vector3.new(112, 0, 650), Vector3.new(0, 0, 660), Vector3.new(-112, 0, 650), Vector3.new(-196, 0, 624),
+						Vector3.new(-232, 0, 584), Vector3.new(-226, 0, 530), Vector3.new(-190, 0, 484), Vector3.new(-152, 0, 448), Vector3.new(-112, 0, 434),
 					},
 				},
-				RowsZ = { 516, 548, 580 }, -- z of each row of houses inside the wall
-				HalfWidth = 190, -- houses are tried from -HalfWidth to +HalfWidth across
+				RowsZ = { 516, 550, 584, 618 }, -- z of each row of houses inside the wall
+				HalfWidth = 235, -- houses are tried from -HalfWidth to +HalfWidth across
 				WallMargin = 14, -- studs kept between a house and the wall
 				Gap = { 6, 16 }, -- studs between houses along a row
-				Gaps = 0.25, -- chance that a house is left out
+				Gaps = 0.4, -- chance that a house is left out
 				LaneHalfWidth = 22, -- a street up the middle, from the gate to the hall
 				Width = { 18, 26 },
 				Depth = { 14, 20 },
