@@ -97,7 +97,7 @@ return {
 		-- Campfires beside the trail: a ring of stones, logs, a fire and log seats. Along = how far along the trail each one
 		-- stands (0 = spawn, 1 = the gate); they alternate sides, starting on the left.
 		Campfires = {
-			Along = { 0.2, 0.47, 0.74 },
+			Along = { 0.47 },
 			Stones = 7, -- stones in the ring around the fire
 			StoneRing = 3.8, -- studs from the fire to the ring (the bigger, the more space between the stones)
 			Offset = 16, -- studs from the trail's edge to the fire

@@ -103,8 +103,17 @@ RunService.RenderStepped:Connect(function(dt)
 		local velocity = s.root.AssemblyLinearVelocity
 		local speed = Vector3.new(velocity.X, 0, velocity.Z).Magnitude
 		local swing = s.def.Look.Swing
-		s.phase += speed * dt * swing.RadiansPerStud
+		-- A mob with a Run gait (Config/Mobs) blends from its walk to it as it speeds up from WalkSpeed to RunSpeed.
+		local run = swing.Run
+		local gait = if run and s.def.RunSpeed then math.clamp((speed - s.def.WalkSpeed) / (s.def.RunSpeed - s.def.WalkSpeed), 0, 1) else 0
+		local function blend(field)
+			local walk = swing[field]
+			return walk + ((if run and run[field] then run[field] else walk) - walk) * gait
+		end
+		local hipDegrees, legLift, bobStuds, pitchDegrees = blend("HipDegrees"), blend("LegLiftStuds"), blend("BodyBobStuds"), blend("BodyPitchDegrees")
+		s.phase += speed * dt * blend("RadiansPerStud")
 		local power = math.min(speed / s.def.WalkSpeed, 1)
+		local lean = if run then -math.rad(run.LeanDegrees or 0) * gait else 0 -- nose down
 
 		-- The bite runs on top of the walk: wind up, snap forward, recover.
 		local bite = s.def.Look.Bite or { Duration = 0 }
@@ -157,14 +166,14 @@ RunService.RenderStepped:Connect(function(dt)
 					motor.Transform = CFrame.Angles((math.sin(p) * math.rad(swing.ArmDegrees) * power + fidget) * forward, 0, 0)
 				end
 			elseif role == "Body" then -- bobs twice and rocks once per stride; breathes when still; hops and lunges in the attack
-				local bob = math.sin(s.phase * 2) * swing.BodyBobStuds * power + math.sin(os.clock() * 2.4) * (swing.IdleBreathStuds or 0) * (1 - power)
-				local pitch = math.sin(s.phase) * math.rad(swing.BodyPitchDegrees) * power
+				local bob = math.sin(s.phase * 2) * bobStuds * power + math.sin(os.clock() * 2.4) * (swing.IdleBreathStuds or 0) * (1 - power)
+				local pitch = math.sin(s.phase) * math.rad(pitchDegrees) * power + lean
 				motor.Transform = CFrame.new(0, bob + hop, -forward * biteLunge) * CFrame.Angles(pitch + bitePitch * (if club then forward else 1), twist, roll)
 			else -- Hip
 				local p = s.phase + (if motor:GetAttribute("Phase") == 1 then 0 else math.pi) -- diagonal legs move together
 				-- The hinge is turned by YawDegrees, so `forward` (above) says which swing direction is "forward".
-				local lift = math.max(0, math.cos(p) * forward) * swing.LegLiftStuds * power
-				motor.Transform = CFrame.new(0, lift, 0) * CFrame.Angles(0, -twist * 0.8, 0) * CFrame.Angles(math.sin(p) * math.rad(swing.HipDegrees) * power + legStep * forward * motor:GetAttribute("Phase") + (if motor.Name:find("^Front") then frontLegs else hindLegs) * forward, 0, 0)
+				local lift = math.max(0, math.cos(p) * forward) * legLift * power
+				motor.Transform = CFrame.new(0, lift, 0) * CFrame.Angles(0, -twist * 0.8, 0) * CFrame.Angles(math.sin(p) * math.rad(hipDegrees) * power + legStep * forward * motor:GetAttribute("Phase") + (if motor.Name:find("^Front") then frontLegs else hindLegs) * forward, 0, 0)
 			end
 		end
 	end

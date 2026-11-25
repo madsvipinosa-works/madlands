@@ -8,7 +8,8 @@ return {
 		AttackCooldown = 1.2, -- seconds between bites
 		AggroRange = 30, -- starts chasing a player closer than this
 		LeashRange = 60, -- gives up and walks home when this far from its spawn
-		WalkSpeed = 14,
+		WalkSpeed = 14, -- walking speed: strolling and heading home
+		RunSpeed = 24, -- chasing a player: faster than a walking player (16), and the legs gallop (Look.Swing.Run)
 		-- When nobody is near, the wolf strolls around its spawn instead of standing still.
 		WanderRadius = 14, -- studs from its spawn it may stroll to
 		WanderSpeed = 0.35, -- share of WalkSpeed used for strolling (the legs swing less, so it looks like a stroll)
@@ -74,6 +75,16 @@ return {
 				RadiansPerStud = 0.9, -- how fast the legs cycle per stud walked; lower = longer strides
 				BodyBobStuds = 0.17, -- body moves up and down twice per stride
 				BodyPitchDegrees = 3, -- body rocks forward and back once per stride
+				-- The gait blends from the walk above to this as the wolf speeds up from WalkSpeed to RunSpeed: long, wide
+				-- strides, high lifted feet, a springing body and a forward lean.
+				Run = {
+					HipDegrees = 58,
+					LegLiftStuds = 1,
+					RadiansPerStud = 0.55,
+					BodyBobStuds = 0.5,
+					BodyPitchDegrees = 9,
+					LeanDegrees = 7, -- the body leans forward, nose down
+				},
 				TailDegrees = 20, -- tail wag size
 				TailSpeed = 3, -- tail wag speed
 			},

@@ -235,7 +235,7 @@ local function step(s)
 		humanoid:MoveTo(s.wanderTo or pos)
 		return
 	end
-	humanoid.WalkSpeed = def.WalkSpeed -- hunting: full speed
+	humanoid.WalkSpeed = def.RunSpeed or def.WalkSpeed -- hunting: full speed
 	if targetDistance <= def.AttackRange then
 		humanoid:MoveTo(pos) -- stand still and bite
 		local now = os.clock()
