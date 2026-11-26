@@ -9,6 +9,7 @@ local Mobs = require(ReplicatedStorage.Shared.Config.Mobs)
 local ZoneConfig = require(ReplicatedStorage.Shared.Config.Zones)
 local Camps = require(ReplicatedStorage.Shared.Camps)
 local PlayerData = require(script.Parent.PlayerData)
+local Quests = require(script.Parent.Quests)
 
 local rng = Random.new()
 local active = {} -- [model] = state
@@ -171,6 +172,7 @@ local function reward(def, model)
 	local gold = rng:NextInteger(def.GoldMin, def.GoldMax)
 	PlayerData.AddGold(player, gold)
 	local levels = PlayerData.AddXp(player, def.Xp)
+	Quests.MobKilled(player, model.Name)
 	print(`[Mob] {player.Name} killed {model.Name}: +{gold} gold, +{def.Xp} XP (Gold {data.Gold}, Level {data.Level}, XP {data.Xp}){levels > 0 and " LEVEL UP" or ""}`)
 end
 

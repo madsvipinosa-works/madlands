@@ -11,6 +11,7 @@ require(script.Hud)
 require(script.Sounds)
 require(script.Menu)
 require(script.GateFade)
+require(script.Quests)
 
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
 	if not gameProcessed and input.UserInputType == Enum.UserInputType.MouseButton1 then

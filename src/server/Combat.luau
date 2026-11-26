@@ -1,6 +1,7 @@
 -- Server-side combat. The client only says "I swung" or "I pressed skill N"; the server decides everything else.
 local Debris = game:GetService("Debris")
 local PhysicsService = game:GetService("PhysicsService")
+local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -58,14 +59,14 @@ local function getFighter(player)
 	end
 end
 
--- Hits a mob once. Players are skipped until the PvP rules exist (build step 8).
+-- Hits a mob once. Only mobs can be hurt: not villagers, and not players until the PvP rules exist (build step 8).
 local function hitModel(player, character, model, damage, seen)
 	local humanoid = model and model:FindFirstChildOfClass("Humanoid")
 	if
 		not humanoid
 		or seen[model]
 		or model == character
-		or Players:GetPlayerFromCharacter(model)
+		or not CollectionService:HasTag(model, "WalkingMob") -- MobSpawner tags every mob
 		or humanoid.Health <= 0
 		or not model:FindFirstChild("HumanoidRootPart")
 	then

@@ -114,11 +114,14 @@ return {
 			Radius = 95, -- studs round the Center kept free of the zone's trees, rocks and hills (the fence stands inside it)
 			Spawn = Vector3.new(-1, 3, -322), -- where players start and respawn, facing north (up the lane, to the gate)
 			Campfire = Vector3.new(-28, 0, -286),
+			-- where the Village Chief stands (Config/Quests), and the spot they look at
+			Chief = { Position = Vector3.new(6, 0, -311), Faces = Vector3.new(-1, 0, -322) },
 			Dirt = { -- round patches of trodden earth that together make the square, off to one side of the lane
 				{ At = Vector3.new(-24, 0, -287), Radius = 15 },
 				{ At = Vector3.new(-34, 0, -276), Radius = 9 },
 				{ At = Vector3.new(-9, 0, -296), Radius = 11 },
 				{ At = Vector3.new(-12, 0, -277), Radius = 8 },
+				{ At = Vector3.new(5, 0, -311), Radius = 6 }, -- where the Village Chief stands
 			},
 			Lane = { -- the lane from the end of the trail to the chief house
 				Vector3.new(0, 0, -292), Vector3.new(-6, 0, -308), Vector3.new(-2, 0, -325), Vector3.new(7, 0, -336), Vector3.new(9, 0, -350),

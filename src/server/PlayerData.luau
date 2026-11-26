@@ -12,6 +12,7 @@ local TEMPLATE = {
 	Gold = 0, -- carried gold, can drop on death
 	BankGold = 0, -- safe gold
 	Inventory = {}, -- [itemId] = count
+	Quests = {}, -- [questId] = { Progress = n } while taken, { Done = true } once rewarded (Config/Quests)
 }
 
 -- Change the name only to wipe all data (new store). Add new fields to TEMPLATE; Reconcile fills them in.
@@ -42,6 +43,7 @@ function PlayerData.Sync(player)
 	player:SetAttribute("BankGold", d.BankGold)
 	player:SetAttribute("Weapon", d.Weapon)
 	player:SetAttribute("Inventory", HttpService:JSONEncode(d.Inventory)) -- the bag as text; the menu decodes it
+	player:SetAttribute("Quests", HttpService:JSONEncode(d.Quests))
 end
 
 -- Adds XP and levels the player up as many times as it pays for. Returns how many levels were gained.
