@@ -1,7 +1,7 @@
 local Config = game:GetService("ReplicatedStorage").Shared.Config
 
 -- Load every config table at startup so a broken config shows up in Output right away.
-for _, name in { "Weapons", "Skills", "Pets", "Leveling", "Items", "Sounds", "Zones", "Quests", "WeaponMaster", "Guide" } do
+for _, name in { "Weapons", "Skills", "Pets", "Leveling", "Items", "Sounds", "Zones", "Quests", "WeaponMaster", "Guide", "Projectiles" } do
 	local data = require(Config[name])
 	assert(type(data) == "table", name .. " config must return a table")
 end

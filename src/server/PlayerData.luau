@@ -4,6 +4,7 @@ local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ProfileStore = require(script.Parent.ProfileStore)
 local Leveling = require(ReplicatedStorage.Shared.Config.Leveling)
+local Weapons = require(ReplicatedStorage.Shared.Config.Weapons)
 
 local TEMPLATE = {
 	Level = 1,
@@ -12,6 +13,7 @@ local TEMPLATE = {
 	Gold = 0, -- carried gold, can drop on death
 	BankGold = 0, -- safe gold
 	Inventory = {}, -- [itemId] = count
+	Skills = {}, -- [skillId] = true for each skill obtained; the weapon's StarterSkill is open without being listed
 	Quests = {}, -- [questId] = { Progress = n } while taken, { Done = true } once rewarded (Config/Quests)
 }
 
@@ -29,6 +31,12 @@ function PlayerData.XpNeeded(level)
 	return math.floor(Leveling.BaseXp * level ^ Leveling.Power)
 end
 
+-- True if the player may use that skill of their weapon: its starting skill, or one they have obtained.
+function PlayerData.HasSkill(d, skillId)
+	local weapon = Weapons[d.Weapon]
+	return weapon ~= nil and table.find(weapon.Skills, skillId) ~= nil and (weapon.StarterSkill == skillId or d.Skills[skillId] == true)
+end
+
 -- Copies the numbers the HUD shows onto the player as attributes, which Roblox replicates to that client.
 -- The client only reads them; every change happens on the server.
 function PlayerData.Sync(player)
@@ -41,6 +49,11 @@ function PlayerData.Sync(player)
 	player:SetAttribute("XpNeeded", PlayerData.XpNeeded(d.Level))
 	player:SetAttribute("Gold", d.Gold)
 	player:SetAttribute("BankGold", d.BankGold)
+	local open = {} -- the skills of the equipped weapon that are not locked
+	for _, id in Weapons[d.Weapon] and Weapons[d.Weapon].Skills or {} do
+		open[id] = PlayerData.HasSkill(d, id) or nil
+	end
+	player:SetAttribute("Skills", HttpService:JSONEncode(open))
 	player:SetAttribute("Weapon", d.Weapon)
 	player:SetAttribute("Inventory", HttpService:JSONEncode(d.Inventory)) -- the bag as text; the menu decodes it
 	player:SetAttribute("Quests", HttpService:JSONEncode(d.Quests))

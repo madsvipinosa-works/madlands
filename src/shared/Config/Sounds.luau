@@ -56,6 +56,17 @@ return {
 			{ Id = THUD, Volume = 0.2, Speed = { 0.95, 1.05 } },
 		},
 
+		-- The bow and the wand: the basic shots (named like their moves) and their skills.
+		BowShot = { { Id = WOOSH_SHORT, Volume = 0.45, Speed = { 1.35, 1.55 }, Delay = 0.24 } },
+		BowPower = { { Id = WOOSH_HEAVY, Volume = 0.5, Speed = { 1.5, 1.65 } } },
+		WandCast = { { Id = WHIRL, Volume = 0.35, Speed = { 1.5, 1.7 }, Delay = 0.18 } },
+		FireCast = { { Id = WOOSH_HEAVY, Volume = 0.55, Speed = { 0.85, 0.95 } } },
+		Explosion = { { Id = WHOMP, Volume = 0.65, Speed = { 1.1, 1.25 } }, { Id = RUBBLE, Volume = 0.2, Speed = { 1.1, 1.2 } } },
+		MeteorLand = { { Id = EARTH, Volume = 0.85, Speed = { 0.9, 1.0 } }, { Id = WHOMP, Volume = 0.7, Speed = { 0.8, 0.9 } } },
+		FrostNova = { { Id = WOOSH_HEAVY, Volume = 0.55, Speed = { 1.15, 1.25 } }, { Id = STAFF, Volume = 0.4, Speed = { 1.4, 1.55 } } },
+		Blink = { { Id = WOOSH_SHORT, Volume = 0.55, Speed = { 0.65, 0.75 } } },
+		RainFall = { { Id = WOOSH_SHORT, Volume = 0.3, Speed = { 1.0, 1.2 } } },
+
 		-- Skills.
 		DashWhoosh = {
 			{ Id = DASH, Volume = 0.8, Start = 0.2, Seconds = 0.9 },

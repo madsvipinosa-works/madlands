@@ -96,6 +96,90 @@ return {
 			{ T = 0.55, Ease = "InOut", Pose = { Root = V(-360, 0, 0) } }, -- stand up (-360 is upright: staying at it, not going back to 0, keeps the body from rolling backwards)
 		},
 	},
+	-- The bow (held in the LEFT hand). The body turns side-on; the bow arm stays pointed at the target, upright: with the waist
+	-- turned -45, LeftShoulder (90, 0, -45) aims straight ahead. HitDelay = when the arrow leaves.
+	BowShot = {
+		AssetId = "", TrailStart = 0, TrailSeconds = 0, HitDelay = 0.24, Duration = 0.55,
+		Keyframes = {
+			{ T = 0.1, Ease = "Out", Pose = { LeftShoulder = V(90, 0, -45), Waist = V(0, -45, 0), RightShoulder = V(90, 0, 25), RightElbow = V(25, 0, 0), RightHip = V(0, 0, 10), LeftHip = V(0, 0, -10) } }, -- raise the bow, reach for the string
+			{ T = 0.23, Ease = "InOut", Pose = { LeftShoulder = V(90, 0, -45), Waist = V(0, -45, 0), RightShoulder = V(80, 0, 30), RightElbow = V(125, 0, 0), RightHip = V(0, 0, 10), LeftHip = V(0, 0, -10) } }, -- full draw, hand at the chin
+			{ T = 0.32, Pose = { LeftShoulder = V(86, 0, -45), Waist = V(0, -45, 0), RightShoulder = V(70, 0, 75), RightElbow = V(55, 0, 0), RightHip = V(0, 0, 10), LeftHip = V(0, 0, -10) } }, -- loose: the hand flies back
+			{ T = 0.55, Ease = "InOut", Pose = {} },
+		},
+	},
+	BowPower = {
+		AssetId = "", TrailStart = 0, TrailSeconds = 0, Duration = 0.8,
+		Keyframes = {
+			{ T = 0.15, Ease = "Out", Pose = { LeftShoulder = V(90, 0, -45), Waist = V(0, -45, 0), RightShoulder = V(90, 0, 25), RightElbow = V(25, 0, 0), Shift = V(0, -0.5, 0), RightHip = V(-20, 0, 12), LeftHip = V(25, 0, -12), LeftKnee = V(-30, 0, 0) } },
+			{ T = 0.39, Ease = "InOut", Pose = { LeftShoulder = V(90, 0, -45), Waist = V(0, -48, 0), Root = V(6, 0, 0), RightShoulder = V(82, 0, 35), RightElbow = V(135, 0, 0), Shift = V(0, -0.8, 0.3), RightHip = V(-28, 0, 14), LeftHip = V(35, 0, -14), LeftKnee = V(-45, 0, 0) } }, -- a long, deep draw
+			{ T = 0.48, Pose = { LeftShoulder = V(82, 0, -45), Waist = V(0, -40, 0), Root = V(14, 0, 0), RightShoulder = V(65, 0, 90), RightElbow = V(40, 0, 0), Shift = V(0, -0.6, 0.8), RightHip = V(-25, 0, 14), LeftHip = V(30, 0, -14), LeftKnee = V(-35, 0, 0) } }, -- the kick
+			{ T = 0.8, Ease = "InOut", Pose = {} },
+		},
+	},
+	BowLeap = {
+		AssetId = "", TrailStart = 0, TrailSeconds = 0, Duration = 0.6,
+		Keyframes = {
+			{ T = 0.1, Ease = "Out", Pose = { LeftShoulder = V(90, 0, -35), Waist = V(0, -35, 0), RightShoulder = V(80, 0, 30), RightElbow = V(120, 0, 0), Root = V(18, 0, 0), Shift = V(0, 0.6, 0), RightHip = V(55, 0, 0), LeftHip = V(35, 0, 0), RightKnee = V(-80, 0, 0), LeftKnee = V(-60, 0, 0) } }, -- spring back, knees up
+			{ T = 0.2, Pose = { LeftShoulder = V(85, 0, -35), Waist = V(0, -35, 0), RightShoulder = V(65, 0, 80), RightElbow = V(50, 0, 0), Root = V(22, 0, 0), Shift = V(0, 0.8, 0), RightHip = V(60, 0, 0), LeftHip = V(40, 0, 0), RightKnee = V(-85, 0, 0), LeftKnee = V(-65, 0, 0) } },
+			{ T = 0.4, Ease = "InOut", Pose = { Root = V(-10, 0, 0), Shift = V(0, -0.7, 0), RightHip = V(30, 0, 0), LeftHip = V(30, 0, 0), RightKnee = V(-55, 0, 0), LeftKnee = V(-55, 0, 0) } }, -- land low
+			{ T = 0.6, Ease = "InOut", Pose = {} },
+		},
+	},
+	BowRain = {
+		AssetId = "", TrailStart = 0, TrailSeconds = 0, Duration = 0.85,
+		Keyframes = {
+			{ T = 0.18, Ease = "Out", Pose = { LeftShoulder = V(145, 0, -35), Waist = V(0, -35, 0), Root = V(18, 0, 0), RightShoulder = V(130, 0, 25), RightElbow = V(40, 0, 0), RightHip = V(-15, 0, 10), LeftHip = V(20, 0, -10) } }, -- aim at the sky
+			{ T = 0.4, Ease = "InOut", Pose = { LeftShoulder = V(150, 0, -35), Waist = V(0, -35, 0), Root = V(24, 0, 0), RightShoulder = V(115, 0, 35), RightElbow = V(130, 0, 0), RightHip = V(-20, 0, 10), LeftHip = V(25, 0, -10) } },
+			{ T = 0.5, Pose = { LeftShoulder = V(145, 0, -35), Waist = V(0, -30, 0), Root = V(20, 0, 0), RightShoulder = V(100, 0, 85), RightElbow = V(50, 0, 0) } }, -- loose
+			{ T = 0.85, Ease = "InOut", Pose = {} },
+		},
+	},
+	-- The wand (right hand).
+	WandCast = { -- a quick wind-up and a flick toward the target
+		AssetId = "", TrailStart = 0, TrailSeconds = 0, HitDelay = 0.22, Duration = 0.5,
+		Keyframes = {
+			{ T = 0.12, Ease = "InOut", Pose = { RightShoulder = V(140, 0, 20), RightElbow = V(75, 0, 0), LeftShoulder = V(20, 0, -30), Waist = V(0, -30, 0) } },
+			{ T = 0.22, Ease = "In", Pose = { RightShoulder = V(80, 0, 0), RightElbow = V(5, 0, 0), LeftShoulder = V(-15, 0, -35), Waist = V(0, 22, 0), Root = V(-10, 0, 0), RightHip = V(25, 0, 0), RightKnee = V(-25, 0, 0) } },
+			{ T = 0.32, Pose = { RightShoulder = V(70, 0, 0), LeftShoulder = V(-15, 0, -35), Waist = V(0, 26, 0), Root = V(-12, 0, 0), RightHip = V(25, 0, 0), RightKnee = V(-25, 0, 0) } },
+			{ T = 0.5, Ease = "InOut", Pose = {} },
+		},
+	},
+	WandFireball = { -- the wand drawn up and held while the fire gathers at its tip, then flung at the target
+		AssetId = "", TrailStart = 0, TrailSeconds = 0, Duration = 0.85,
+		Keyframes = {
+			{ T = 0.18, Ease = "InOut", Pose = { RightShoulder = V(125, 0, 25), RightElbow = V(60, 0, 0), LeftShoulder = V(35, 0, -35), Waist = V(0, -28, 0), RightHip = V(-12, 0, 8), LeftHip = V(15, 0, -8) } },
+			{ T = 0.37, Ease = "InOut", Pose = { RightShoulder = V(145, 0, 30), RightElbow = V(80, 0, 0), LeftShoulder = V(45, 0, -35), Waist = V(0, -42, 0), Root = V(8, 0, 0), RightHip = V(-18, 0, 8), LeftHip = V(22, 0, -8) } },
+			{ T = 0.45, Ease = "In", Pose = { RightShoulder = V(82, 0, 0), RightElbow = V(5, 0, 0), LeftShoulder = V(-20, 0, -40), Waist = V(0, 26, 0), Root = V(-14, 0, 0), Shift = V(0, -0.5, -0.8), RightHip = V(35, 0, 0), RightKnee = V(-35, 0, 0), LeftHip = V(-20, 0, 0) } },
+			{ T = 0.6, Pose = { RightShoulder = V(72, 0, 0), LeftShoulder = V(-20, 0, -40), Waist = V(0, 30, 0), Root = V(-16, 0, 0), Shift = V(0, -0.5, -0.8), RightHip = V(35, 0, 0), RightKnee = V(-35, 0, 0), LeftHip = V(-20, 0, 0) } },
+			{ T = 0.85, Ease = "InOut", Pose = {} },
+		},
+	},
+	WandNova = { -- both arms flung up, then driven down to the ground
+		AssetId = "", TrailStart = 0, TrailSeconds = 0, Duration = 0.75,
+		Keyframes = {
+			{ T = 0.2, Ease = "InOut", Pose = { RightShoulder = V(165, 0, 25), LeftShoulder = V(165, 0, -25), Root = V(14, 0, 0), Shift = V(0, 0.4, 0) } },
+			{ T = 0.32, Ease = "In", Pose = { RightShoulder = V(35, 0, 45), LeftShoulder = V(35, 0, -45), Root = V(-30, 0, 0), Shift = V(0, -1.3, 0), RightHip = V(70, 0, 8), LeftHip = V(70, 0, -8), RightKnee = V(-110, 0, 0), LeftKnee = V(-110, 0, 0) } },
+			{ T = 0.52, Pose = { RightShoulder = V(32, 0, 50), LeftShoulder = V(32, 0, -50), Root = V(-26, 0, 0), Shift = V(0, -1.2, 0), RightHip = V(65, 0, 8), LeftHip = V(65, 0, -8), RightKnee = V(-100, 0, 0), LeftKnee = V(-100, 0, 0) } },
+			{ T = 0.75, Ease = "InOut", Pose = {} },
+		},
+	},
+	WandBlink = { -- leaning hard into the flash, arms trailing
+		AssetId = "", TrailStart = 0, TrailSeconds = 0, Duration = 0.45,
+		Keyframes = {
+			{ T = 0.05, Pose = { Root = V(-40, 0, 0), Shift = V(0, -0.8, -0.5), RightShoulder = V(-60, 0, 20), LeftShoulder = V(-60, 0, -20), RightHip = V(40, 0, 0), RightKnee = V(-45, 0, 0), LeftHip = V(-35, 0, 0) } },
+			{ T = 0.2, Pose = { Root = V(-32, 0, 0), Shift = V(0, -0.8, -0.5), RightShoulder = V(-50, 0, 20), LeftShoulder = V(-50, 0, -20), RightHip = V(40, 0, 0), RightKnee = V(-55, 0, 0), LeftHip = V(-30, 0, 0) } },
+			{ T = 0.45, Ease = "InOut", Pose = {} },
+		},
+	},
+	WandMeteor = { -- the wand raised high and held while the rock comes, then swept down as it lands
+		AssetId = "", TrailStart = 0, TrailSeconds = 0, Duration = 1.4,
+		Keyframes = {
+			{ T = 0.28, Ease = "InOut", Pose = { RightShoulder = V(172, 0, 8), LeftShoulder = V(55, 0, -45), Root = V(16, 0, 0), RightHip = V(-12, 0, 8), LeftHip = V(18, 0, -8) } },
+			{ T = 0.85, Ease = "InOut", Pose = { RightShoulder = V(178, 0, 14), LeftShoulder = V(65, 0, -55), Root = V(22, 0, 0), RightHip = V(-16, 0, 8), LeftHip = V(22, 0, -8) } },
+			{ T = 1.08, Ease = "In", Pose = { RightShoulder = V(65, 0, 0), LeftShoulder = V(-10, 0, -35), Root = V(-20, 0, 0), Shift = V(0, -0.8, -0.6), RightHip = V(45, 0, 0), RightKnee = V(-55, 0, 0) } },
+			{ T = 1.4, Ease = "InOut", Pose = {} },
+		},
+	},
 	-- The four sword skills. They have no published AssetId yet, so these poses are what plays.
 	DashSlash = { -- coil low with the blade level, burst through the target in one flat sideways cut, then slide to a low stop
 		AssetId = "",

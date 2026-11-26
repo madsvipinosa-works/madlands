@@ -1,8 +1,10 @@
--- Input only. Click to ask the server for a swing; the server decides if it hits.
+-- Input only. Click to ask the server for an attack; the server decides if it hits.
 local UserInputService = game:GetService("UserInputService")
 local swingRemote = game:GetService("ReplicatedStorage"):WaitForChild("Swing")
 local Feedback = require(script.Feedback)
 local Effects = require(script.Effects)
+local Aim = require(script.Aim)
+require(script.Projectiles)
 require(script.MobAnimation)
 require(script.MobHealth)
 require(script.SkillBar)
@@ -15,7 +17,7 @@ require(script.Quests) -- also loads the dialogue box and the guide arrows
 
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
 	if not gameProcessed and input.UserInputType == Enum.UserInputType.MouseButton1 then
-		swingRemote:FireServer()
+		swingRemote:FireServer(Aim.Take())
 		Feedback.ClickSound()
 	end
 end)

@@ -10,6 +10,7 @@ local UserInputService = game:GetService("UserInputService")
 
 local Config = ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")
 local Weapons = require(Config:WaitForChild("Weapons"))
+local Aim = require(script.Parent.Aim)
 local Skills = require(Config:WaitForChild("Skills"))
 local Items = require(Config:WaitForChild("Items"))
 local player = Players.LocalPlayer
@@ -437,17 +438,18 @@ end
 
 local function skillTooltip(index, id, skill)
 	local rows = {}
-	local damage = if skill.Hits then string.format("%d x %d", skill.Damage, skill.Hits) else tostring(skill.Damage)
+	local times = skill.Count or skill.Hits
+	local damage = if times and times > 1 then string.format("%d x %d", skill.Damage, times) else tostring(skill.Damage)
 	table.insert(rows, { "Damage", damage })
-	if skill.Range then
-		table.insert(rows, { "Range", skill.Range .. " studs" })
+	if skill.Range or skill.CastRange then
+		table.insert(rows, { "Range", (skill.Range or skill.CastRange) .. " studs" })
 	end
 	table.insert(rows, { "Cooldown", skill.Cooldown .. " sec" })
 	table.insert(rows, { "Hotkey", tostring(index) })
 	return {
 		Title = skill.Name,
 		Color = SKILL_COLOR:Lerp(Color3.new(1, 1, 1), 0.35),
-		Subtitle = "Skill  -  Melee",
+		Subtitle = "Skill  -  " .. (Weapons[skill.Weapon].Kind or ""),
 		Description = skill.Description,
 		Rows = rows,
 	}
@@ -489,7 +491,7 @@ local function refresh()
 			Tooltip = {
 				Title = weapon.Name or weaponId,
 				Color = color:Lerp(Color3.new(1, 1, 1), 0.4),
-				Subtitle = "Weapon  -  Melee",
+				Subtitle = "Weapon  -  " .. (weapon.Kind or ""),
 				Description = weapon.Description,
 				Rows = {
 					{ "Damage", tostring(weapon.Damage) },
@@ -548,11 +550,17 @@ local function refresh()
 	for index, id in (weapon and weapon.Skills or {}) do
 		local skill = Skills[id]
 		if skill then
+			local locked = not Aim.HasSkill(id)
+			local tip = skillTooltip(index, id, skill)
+			if locked then
+				tip.Subtitle = "Locked  -  not obtained yet"
+				tip.Color = Color3.fromRGB(170, 170, 180)
+			end
 			local button = card(skillsGrid, {
-				Name = skill.Name,
-				Color = SKILL_COLOR,
+				Name = if locked then "🔒 " .. skill.Name else skill.Name,
+				Color = if locked then Color3.fromRGB(110, 110, 122) else SKILL_COLOR,
 				Badge = tostring(index),
-				Tooltip = skillTooltip(index, id, skill),
+				Tooltip = tip,
 			})
 			button.LayoutOrder = index
 		end

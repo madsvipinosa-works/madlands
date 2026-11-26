@@ -4,7 +4,7 @@ return {
 	Name = "Weapon Master",
 	PromptKey = Enum.KeyCode.F,
 	TalkDistance = 10, -- studs at which "Talk" shows
-	Offers = { "Sword" }, -- weapon ids from Config/Weapons a new player can choose from; add more here as they are made
+	Offers = { "Sword", "Bow", "Wand" }, -- weapon ids from Config/Weapons a new player can choose from
 	-- a plain Roblox character in a leather apron, until there is a model
 	Look = {
 		Skin = Color3.fromRGB(190, 136, 100),
@@ -18,7 +18,7 @@ return {
 		"Choose your first weapon, and take good care of it.",
 	},
 	Chosen = {
-		"A fine choice. Click to swing it, and press 1 to 4 for its skills.",
+		"A fine choice. Click to attack, and press 1 for your first skill. You will learn the other three on your journey.",
 		"Now go and speak with the Village Chief. Follow the arrows.",
 	},
 	After = { "Keep that blade sharp. The Village Chief always has work for someone who can use it." },

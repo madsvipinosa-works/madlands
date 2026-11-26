@@ -110,5 +110,18 @@ return {
 			WhirlHeights = { -0.2, 0.7, 1.6 }, -- height of each crescent, from your middle
 		},
 		Wave = {},
+		Nova = { -- a ring of ice bursting out around you when the hit lands
+			Color = Color3.fromRGB(170, 230, 255),
+			Spikes = 16, -- glowing cracks of ice running out along the ground
+			NovaShake = 0.4, -- camera shake as it bursts
+		},
+		Blink = {
+			StreakSeconds = 0.4,
+			StreakColor = Color3.fromRGB(190, 140, 255),
+			StreakHeight = 4,
+			StreakSpread = 1.2,
+			FlashEnds = Color3.fromRGB(190, 140, 255), -- a pop of light where you leave and where you arrive
+			FovKick = 10,
+		},
 	},
 }

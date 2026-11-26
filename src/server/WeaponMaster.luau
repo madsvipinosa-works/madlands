@@ -25,7 +25,7 @@ local function talk(player)
 	for _, id in Config.Offers do
 		local weapon = Weapons[id]
 		lines[#lines] ..= `\n{weapon.Name}: {weapon.Description}`
-		table.insert(choices, { Label = `Take the {weapon.Name}`, Action = "Take", Arg = id })
+		table.insert(choices, { Label = weapon.Name, Action = "Take", Arg = id })
 	end
 	table.insert(choices, { Label = "Not yet" })
 	return { Lines = lines, Choices = choices }
@@ -56,20 +56,19 @@ local function part(parent, cframe, size, color, material)
 	return p
 end
 
--- A sword stuck point-down in a stump, so you can see what is on offer from a distance.
-local function stand(at)
+-- A weapon stuck in a stump, so you can see what is on offer from a distance.
+local function stand(at, weapon)
 	local model = Instance.new("Model")
 	model.Name = "WeaponStand"
-	local stump = part(model, CFrame.new(at + Vector3.new(0, 0.6, 0)) * CFrame.Angles(0, 0, math.pi / 2), Vector3.new(1.6, 2.2, 2.2), Color3.fromRGB(104, 72, 44), Enum.Material.Wood)
+	local stump = part(model, CFrame.new(at + Vector3.new(0, 0.6, 0)) * CFrame.Angles(0, 0, math.pi / 2), Vector3.new(1.6, 2, 2), Color3.fromRGB(104, 72, 44), Enum.Material.Wood)
 	stump.Shape = Enum.PartType.Cylinder
-	local visual = Weapons.Sword.Visual
+	local visual = weapon.Visual
 	local template = ServerStorage.Models:FindFirstChild(visual.Model)
 	if template then
-		local sword = template:Clone()
-		local size = sword:GetExtentsSize()
-		sword:ScaleTo(sword:GetScale() * visual.Length / math.max(size.X, size.Y, size.Z))
-		local blade = sword:FindFirstChild(visual.TrailPart, true)
-		for _, p in sword:GetDescendants() do
+		local copy = template:Clone()
+		local size = copy:GetExtentsSize()
+		copy:ScaleTo(copy:GetScale() * visual.Length / math.max(size.X, size.Y, size.Z))
+		for _, p in copy:GetDescendants() do
 			if p:IsA("BasePart") then
 				local style = visual.Colors[p.Name] or visual.Colors.Default
 				p.Color = style.Color
@@ -79,13 +78,11 @@ local function stand(at)
 				p.CanTouch = false
 			end
 		end
-		if blade then
-			local length = blade.Size:Dot(visual.TrailAxis:Abs())
-			-- turn the whole sword so the blade points down, its lower end buried in the stump
-			local target = CFrame.new(at + Vector3.new(0, 1.4 + length / 2 - 0.7, 0)) * CFrame.Angles(math.pi, 0, 0)
-			sword:PivotTo(target * blade.CFrame:ToObjectSpace(sword:GetPivot()))
-			sword.Parent = model
-		end
+		copy:PivotTo(CFrame.new(copy:GetPivot().Position) * CFrame.Angles(if visual.StandFlip then math.pi else 0, 0, 0))
+		local box, extent = copy:GetBoundingBox()
+		-- its lower end sunk StandSink studs into the top of the stump
+		copy:PivotTo(copy:GetPivot() + Vector3.new(at.X - box.X, at.Y + 1.4 - visual.StandSink - (box.Y - extent.Y / 2), at.Z - box.Z))
+		copy.Parent = model
 	end
 	model.Parent = workspace
 end
@@ -130,8 +127,10 @@ local function build()
 	track.Looped = true
 	track:Play()
 
-	local beside = facing * Vector3.new(3.2, 0, 0)
-	stand(Vector3.new(beside.X, ground, beside.Z))
+	for i, id in Config.Offers do -- a row of stumps beside them, on the side away from the chief
+		local beside = facing * Vector3.new(-3.2 - (i - 1) * 2.6, 0, 0)
+		stand(Vector3.new(beside.X, ground, beside.Z), Weapons[id])
+	end
 
 	Dialogue.Add({
 		Id = "WeaponMaster",

@@ -3,7 +3,6 @@ local Debris = game:GetService("Debris")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 
-local Weapons = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"):WaitForChild("Weapons"))
 
 local Style = require(ReplicatedStorage.Shared.Config:WaitForChild("DamageNumbers"))
 
@@ -12,6 +11,7 @@ local SwingAnimations = require(ReplicatedStorage.Shared.Config:WaitForChild("Sw
 local Players = game:GetService("Players")
 local Effects = require(script.Parent.Effects)
 local Sounds = require(script.Parent.Sounds)
+local Aim = require(script.Parent.Aim)
 
 local Feedback = {}
 
@@ -19,10 +19,10 @@ local Feedback = {}
 -- (shortcut: if the server refuses a swing, the sound still played; it only plays once per Cooldown).
 local lastClick, guess, guessExpires = 0, 0, 0
 function Feedback.ClickSound()
-	if not Weapons[Players.LocalPlayer:GetAttribute("Weapon") or ""] then
+	local weapon = Aim.Weapon()
+	if not weapon then
 		return -- nothing in your hand to swing
 	end
-	local weapon = Weapons.Sword -- shortcut: always the Sword, see PlaySwing
 	local now = os.clock()
 	if now - lastClick < weapon.Cooldown + 0.02 then
 		return
@@ -34,8 +34,11 @@ function Feedback.ClickSound()
 end
 
 function Feedback.PlaySwing(comboIndex)
-	-- shortcut: always the Sword's swings, the client doesn't know the equipped weapon yet; fix in build step 5
-	local name = Weapons.Sword.SwingCombo[comboIndex] or Weapons.Sword.SwingCombo[1]
+	local weapon = Aim.Weapon()
+	if not weapon then
+		return
+	end
+	local name = weapon.SwingCombo[comboIndex] or weapon.SwingCombo[1]
 	Animations.Play(name)
 
 	-- The crescent of the cut, in front of you, tilted the way the blade travels.

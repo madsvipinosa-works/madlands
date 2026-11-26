@@ -38,6 +38,9 @@ function WeaponVisuals.ShowTrail(character, delay, seconds, style)
 end
 
 local function addTrail(character, model, visual)
+	if not visual.TrailPart then
+		return -- bows and wands leave no blade trail
+	end
 	local blade = model:FindFirstChild(visual.TrailPart)
 	if not blade then
 		return
@@ -84,7 +87,7 @@ local function collectParts(visual)
 		return parts, copy
 	end
 	warn(`[WeaponVisuals] ServerStorage.Models.{visual.Model} not found, using plain parts: import the mesh and save it as assets/models/{visual.Model}.rbxm`)
-	for _, spec in visual.Parts do
+	for _, spec in visual.Parts or {} do
 		local part = Instance.new("Part")
 		part.Name = spec.Name
 		part.Size = spec.Size
@@ -126,7 +129,7 @@ local function attach(player, character)
 		task.wait(0.2)
 	end
 	local visual = data and Weapons[data.Weapon] and Weapons[data.Weapon].Visual
-	local hand = character:WaitForChild("RightHand", 10) -- R15 only
+	local hand = character:WaitForChild(visual and visual.Hand or "RightHand", 10) -- R15 only
 	if not (visual and hand) or character:FindFirstChild("WeaponVisual") then
 		return
 	end

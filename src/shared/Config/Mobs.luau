@@ -7,7 +7,11 @@ return {
 		AttackRange = 6, -- studs, root part to root part (a big wolf bites from further away)
 		AttackCooldown = 1.2, -- seconds between bites
 		AggroRange = 30, -- starts chasing a player closer than this
-		LeashRange = 60, -- gives up and walks home when this far from its spawn
+		LeashRange = 60, -- gives up and walks home when this far from its spawn...
+		ChaseRange = 120, -- ...or this far while someone is hitting it (must be more than the longest shot, 90)
+		ProvokedSeconds = 12, -- how long after a hit it keeps after the attacker
+		ChargeSpeed = 28, -- the opening rush when a chase begins (players walk at 16)...
+		ChargeSeconds = 3, -- ...for this long, then its usual chasing speed
 		WalkSpeed = 14, -- walking speed: strolling and heading home
 		RunSpeed = 24, -- chasing a player: faster than a walking player (16), and the legs gallop (Look.Swing.Run)
 		-- When nobody is near, the wolf strolls around its spawn instead of standing still.
@@ -103,6 +107,10 @@ return {
 		AttackDamages = { 4, 4, 8 }, -- damage of each blow: two swings, then the ground slam
 		AggroRange = 28,
 		LeashRange = 55,
+		ChaseRange = 120,
+		ProvokedSeconds = 12,
+		ChargeSpeed = 18,
+		ChargeSeconds = 3,
 		WalkSpeed = 12,
 		WanderRadius = 9,
 		WanderSpeed = 0.4,

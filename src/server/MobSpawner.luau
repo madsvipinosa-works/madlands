@@ -183,6 +183,14 @@ local function spawnMob(name, def, position)
 	end
 	local state = { def = def, humanoid = humanoid, root = root, home = position, lastAttack = 0, returning = false, nextWander = 0 }
 	active[model] = state
+	local health = humanoid.Health
+	humanoid.HealthChanged:Connect(function(now) -- hit from afar: it comes after whoever shot it
+		if now < health then
+			state.provokedBy = model:GetAttribute("LastHitBy")
+			state.provokedUntil = os.clock() + def.ProvokedSeconds
+		end
+		health = now
+	end)
 	print(`[Mob] {name} spawned at {position}, size {model:GetExtentsSize()}, yaw {def.Look.YawDegrees}`)
 
 	humanoid.Died:Once(function()
@@ -201,13 +209,19 @@ local function step(s)
 	local pos = s.root.Position
 	local homeDistance = (pos - s.home).Magnitude
 
-	-- Too far from home: walk back and ignore players until it arrives.
-	if homeDistance > def.LeashRange then
+	local provoked = s.provokedUntil ~= nil and os.clock() < s.provokedUntil -- someone hit it lately
+
+	-- Too far from home: walk back and ignore players. A mob that is being hit goes farther (ChaseRange) before it gives up,
+	-- and one that is hit on its way home turns back once it is inside its ordinary LeashRange again.
+	if homeDistance > (if provoked then def.ChaseRange else def.LeashRange) then
 		s.returning = true
-	elseif s.returning and homeDistance < 5 then
+		s.provokedUntil = nil
+	elseif s.returning and (homeDistance < 5 or (provoked and homeDistance < def.LeashRange)) then
 		s.returning = false
 	end
 	if s.returning then
+		s.chaseStarted = nil
+		humanoid.Health = humanoid.MaxHealth -- it recovers, so wearing down a mob that cannot reach you gets you nowhere
 		humanoid.WalkSpeed = def.WalkSpeed
 		humanoid:MoveTo(s.home)
 		return
@@ -226,7 +240,18 @@ local function step(s)
 		end
 	end
 
+	if not target and provoked then
+		local shooter = Players:GetPlayerByUserId(s.provokedBy)
+		local character = shooter and shooter.Character
+		local shooterRoot = character and character:FindFirstChild("HumanoidRootPart")
+		local h = character and character:FindFirstChildOfClass("Humanoid")
+		if shooterRoot and h and h.Health > 0 and (shooterRoot.Position - pos).Magnitude <= def.ChaseRange then
+			target, targetHumanoid, targetDistance = shooterRoot, h, (shooterRoot.Position - pos).Magnitude
+		end
+	end
+
 	if not target then
+		s.chaseStarted = nil
 		-- Nobody near: stroll around home, standing still now and then, so the camp looks alive.
 		local now = os.clock()
 		if now >= s.nextWander then
@@ -242,7 +267,10 @@ local function step(s)
 		humanoid:MoveTo(s.wanderTo or pos)
 		return
 	end
-	humanoid.WalkSpeed = def.RunSpeed or def.WalkSpeed -- hunting: full speed
+	-- Hunting: a rush as the chase begins, then its usual chasing speed.
+	s.chaseStarted = s.chaseStarted or os.clock()
+	local charging = os.clock() - s.chaseStarted < def.ChargeSeconds
+	humanoid.WalkSpeed = if charging then def.ChargeSpeed else def.RunSpeed or def.WalkSpeed
 	if targetDistance <= def.AttackRange then
 		humanoid:MoveTo(pos) -- stand still and bite
 		local now = os.clock()

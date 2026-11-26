@@ -1,7 +1,8 @@
 -- Skill definitions, keyed by skill id. Read-only data.
 -- A weapon lists its skills in Config/Weapons.luau (Skills = { ... }); the order is the hotkey order (1, 2, 3, 4).
 -- The server checks the equipped weapon, the cooldown and all damage and movement using these values.
--- Type picks how the skill works (see handlers in server/Combat): Dash, Jump, Wave or Arc.
+-- Type picks how the skill works (see handlers in server/Combat): Dash, Jump, Wave, Arc, Shot (one or more projectiles),
+-- Rain (strikes where you point), Nova (an Arc with its own look) or Blink (a Dash with its own look).
 -- Animation is a name in Config/SwingAnimations (client feedback only); AnimationSpeed 2 plays it twice as fast.
 -- Sounds = { { Cue, At } }: sound cues from Config/Sounds, each At this many seconds after the key press.
 return {
@@ -78,5 +79,142 @@ return {
 		Cooldown = 12,
 		Trail = { Color = Color3.fromRGB(225, 240, 255), LightEmission = 0.9, Lifetime = 0.28, MaxLength = 30 }, -- long enough to draw the whole circle
 		Sounds = { { Cue = "WhirlSpin", At = 0 } },
+	},
+
+	-- Bow base skills
+	PowerShot = {
+		Weapon = "Bow",
+		Name = "Power Shot",
+		Description = "Draw the bow to its limit and loose a heavy arrow that goes through every enemy in its line.",
+		Type = "Shot",
+		Animation = "BowPower",
+		AnimationSpeed = 1,
+		Delay = 0.4, -- seconds until the arrow leaves
+		Damage = 45,
+		Speed = 170,
+		Range = 75,
+		Width = 3.5,
+		Pierce = true, -- flies on through what it hits
+		Look = "PowerArrow", -- Config/Projectiles
+		Cooldown = 5,
+		Sounds = { { Cue = "BowPower", At = 0.38 } },
+	},
+	Volley = {
+		Weapon = "Bow",
+		Name = "Volley",
+		Description = "Loose five arrows at once in a wide fan.",
+		Type = "Shot",
+		Animation = "BowShot",
+		AnimationSpeed = 1,
+		Delay = 0.24,
+		Count = 5, -- arrows
+		Spread = 40, -- degrees from the first to the last
+		Damage = 16, -- per arrow
+		Speed = 130,
+		Range = 45,
+		Width = 2.5,
+		Look = "Arrow",
+		Cooldown = 7,
+		Sounds = { { Cue = "BowShot", At = 0 }, { Cue = "BowPower", At = 0.24 } },
+	},
+	RetreatShot = {
+		Weapon = "Bow",
+		Name = "Retreat Shot",
+		Description = "Spring backwards away from danger, firing a piercing arrow as you go.",
+		Type = "Shot",
+		Animation = "BowLeap",
+		AnimationSpeed = 1,
+		Delay = 0.12,
+		Damage = 25,
+		Speed = 140,
+		Range = 55,
+		Width = 3,
+		Pierce = true,
+		Look = "Arrow",
+		Recoil = { Distance = 18, Time = 0.28 }, -- you are pushed back this far, over this long
+		Cooldown = 8,
+		Sounds = { { Cue = "Blink", At = 0.1 }, { Cue = "BowShot", At = 0 } },
+	},
+	ArrowRain = {
+		Weapon = "Bow",
+		Name = "Arrow Rain",
+		Description = "Fire into the sky; arrows pour down where you point, again and again.",
+		Type = "Rain",
+		Animation = "BowRain",
+		AnimationSpeed = 1,
+		CastRange = 45, -- farthest from you it can land
+		Radius = 11,
+		Delay = 0.8, -- seconds until the first arrows land
+		Hits = 6,
+		HitInterval = 0.25,
+		Damage = 10, -- per hit
+		Look = "Rain",
+		Cooldown = 14,
+		Sounds = { { Cue = "BowPower", At = 0.3 } },
+	},
+
+	-- Wand base skills
+	Fireball = {
+		Weapon = "Wand",
+		Name = "Fireball",
+		Description = "Hurl a ball of fire that bursts on whatever it meets, burning everything nearby.",
+		Type = "Shot",
+		Animation = "WandFireball",
+		AnimationSpeed = 1.8, -- the throw in the animation is at 0.45 s at speed 1: keep Delay = 0.45 / this
+		Delay = 0.25, -- the charge-up at the wand tip, then it is thrown
+		Damage = 40,
+		Speed = 140,
+		Range = 90, -- keep below every mob's ChaseRange (Config/Mobs), so what you hit can come after you
+		Width = 3,
+		Radius = 9, -- the burst, only when it touches a mob or something solid
+		Look = "Fireball",
+		Cooldown = 5,
+		Sounds = { { Cue = "FireCast", At = 0.2 } },
+	},
+	FrostNova = {
+		Weapon = "Wand",
+		Name = "Frost Nova",
+		Description = "Strike the ground with cold: a ring of ice bursts out and hits everything around you.",
+		Type = "Nova",
+		Animation = "WandNova",
+		AnimationSpeed = 1,
+		HitDelay = 0.32,
+		Damage = 30,
+		Range = 15,
+		ArcDegrees = 360,
+		Cooldown = 8,
+		Sounds = { { Cue = "FrostNova", At = 0.28 } },
+	},
+	ArcaneStep = {
+		Weapon = "Wand",
+		Name = "Arcane Step",
+		Description = "Flash forward toward where you point, scorching whatever you pass through.",
+		Type = "Blink",
+		Animation = "WandBlink",
+		AnimationSpeed = 1,
+		Damage = 20,
+		DashDistance = 22,
+		DashTime = 0.15,
+		Brake = true, -- no sliding past the end
+		HitDelay = 0.07,
+		Width = 6,
+		Cooldown = 7,
+		Sounds = { { Cue = "Blink", At = 0 } },
+	},
+	Meteor = {
+		Weapon = "Wand",
+		Name = "Meteor",
+		Description = "Call a burning rock down from the sky. Slow to land, and it hits very hard.",
+		Type = "Rain",
+		Animation = "WandMeteor",
+		AnimationSpeed = 1,
+		CastRange = 45,
+		Radius = 13,
+		Delay = 1.1,
+		Hits = 1,
+		Damage = 75,
+		Look = "Meteor",
+		Cooldown = 15,
+		Sounds = { { Cue = "FireCast", At = 0.25 } },
 	},
 }

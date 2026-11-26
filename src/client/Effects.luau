@@ -546,6 +546,22 @@ function Effects.SkillStarted(skill)
 			Effects.CutMark(CFrame.lookAt(at, at + look) * CFrame.Angles(0, math.rad(180), math.rad(90)), e.ChopMarkScale, 0.35)
 		end)
 	end
+	if e.Spikes then -- a nova: ice bursts out along the ground when the hit lands
+		later(skill.HitDelay, function(now)
+			local ground = groundBelow(now)
+			Effects.Flash(now.Position, skill.Range, e.Color)
+			Effects.Cracks(ground, e.Spikes, skill.Range, e.Color)
+			Effects.Ring(ground, skill.Range * 2, 0.5)
+			Effects.Shake(e.NovaShake, 0.25)
+			Effects.Sparks(ground, Vector3.yAxis, { Count = 40, Color = e.Color, Speed = 40, Size = 0.7, Lifetime = 0.55, Spread = 85, Gravity = 60 })
+		end)
+	end
+	if e.FlashEnds then
+		Effects.Flash(root.Position, 7, e.FlashEnds)
+		later(skill.DashTime, function(now)
+			Effects.Flash(now.Position, 7, e.FlashEnds)
+		end)
+	end
 	if e.UseSkySlam then
 		-- Take-off puff at the end of the crouch, then the dive trail from the same moment. The module watches the
 		-- ground itself and fires the slam the instant you touch down, so it cannot drift from the real landing.
