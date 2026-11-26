@@ -9,10 +9,10 @@ end
 require(script.PlayerData)
 require(script.Combat)
 require(script.WeaponVisuals)
-require(script.DevEffectTuner)
-require(script.ZoneBuilder) -- the ground, canyon wall, trail and trees; must load before the dummy and mobs, which stand on it
+require(script.ZoneBuilder) -- the ground, canyon wall, trail and trees; must load before the mobs, which stand on it
 require(script.GateBuilder) -- the Starter Town gate at the end of the trail; needs the canyon wall from ZoneBuilder
-require(script.DevDummy)
 require(script.MobSpawner)
+workspace:SetAttribute("ZoneReady", true) -- the ground is built, so returning players can be placed on it
+require(script.LogoutSpot) -- puts you back where you logged out
 
 print("Madlands is alive. Configs loaded: Weapons, Skills, Pets")

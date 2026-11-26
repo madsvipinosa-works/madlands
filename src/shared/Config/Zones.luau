@@ -148,6 +148,9 @@ return {
 			PromptDistance = 46, -- studs from the gate at which "Enter" shows
 			FadeSeconds = 1.2, -- the screen fades to black this fast, then the teleport happens
 			ReturnDistance = 70, -- studs in front of the gate where the player is put back if the town is not connected
+			-- Stone paving in front of the doors, so no grass grows there: HalfWidth studs either side of the middle, reached over
+			-- the first Flare studs from the end of the trail.
+			Forecourt = { HalfWidth = 52, Flare = 36 },
 		},
 
 		-- Mob camps: where the mobs live. A camp is one kind of mob in one or more groups; each group is a number of mobs
@@ -201,7 +204,8 @@ return {
 			Offset = 16, -- studs from the trail's edge to the fire
 			BareRadius = 10, -- studs of bare dirt around the fire (the tall grass would hide it)
 			BareMaterial = "Ground",
-			StoneColor = Color3.fromRGB(112, 110, 106),
+			StoneKinds = { "RockBoulderRound", "RockBoulderAngular" }, -- the ring around each fire (assets/models/rocks)
+			StoneSize = { 1.6, 2.3 }, -- studs across
 			LogColor = Color3.fromRGB(88, 62, 42),
 			Light = { Color = Color3.fromRGB(255, 170, 90), Range = 34, Brightness = 2 }, -- the glow the fire throws
 		},
@@ -217,7 +221,33 @@ return {
 			Size = { 2.5, 6 }, -- studs across
 			BoulderChance = 0.12, -- chance that a group is one big boulder instead
 			BoulderSize = { 9, 14 },
-			Colors = { Color3.fromRGB(86, 84, 82), Color3.fromRGB(72, 72, 76), Color3.fromRGB(96, 90, 84), Color3.fromRGB(66, 68, 70) },
+			-- The rocks are the hand-made models in assets/models/rocks.
+			Material = "Slate",
+			Tint = Color3.new(1, 1, 1), -- multiplies the models' own colors; white leaves them as made
+			Tilt = 6, -- most degrees a rock leans
+			Sink = 0.08, -- share of its height set into the ground
+			-- Which models stand where, by how far along the trail (0 = spawn, 1 = the gate): Main = the first rock of a group, Small = the
+			-- ones beside it, Boulder = a lone big one. List a name twice to make it more common.
+			Areas = {
+				{ -- the meadow by the spawn: soft, mossy shapes
+					Until = 0.35,
+					Main = { "RockMossyBoulder", "RockBoulderRound", "RockCluster" },
+					Small = { "RockPebbles", "RockBoulderRound" },
+					Boulder = { "RockMossyBoulder" },
+				},
+				{ -- around the campfire: flat slabs to sit on, loose clusters
+					Until = 0.7,
+					Main = { "RockFlatSlab", "RockCluster", "RockBoulderRound", "RockMossyBoulder" },
+					Small = { "RockPebbles", "RockFlatSlab" },
+					Boulder = { "RockSplitBoulder", "RockMossyBoulder" },
+				},
+				{ -- toward the gate: rugged, with standing stones
+					Until = 1,
+					Main = { "RockBoulderAngular", "RockSplitBoulder", "RockStandingStone" },
+					Small = { "RockPebbles", "RockBoulderAngular" },
+					Boulder = { "RockStandingStone", "RockSplitBoulder" },
+				},
+			},
 		},
 
 		-- Trees: a row on each side of the trail, then scattered clumps over the rest of the zone.

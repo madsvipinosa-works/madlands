@@ -39,9 +39,10 @@ return {
 		DiveAccel = 700, -- extra downward acceleration in the dive, on top of gravity (196): gravity alone is slow and floaty
 		Forward = 20, -- studs per second forward
 		ForwardTime = 0.45, -- seconds the forward push lasts, so you travel Forward x ForwardTime studs through the air
-		HitDelay = 0.54, -- seconds until the slam lands: must match when you touch down (measure it if you change the numbers above)
-		Range = 10,
-		ArcDegrees = 180,
+		HitDelay = 0.54, -- seconds until the slam lands on flat ground (times the effects): measure it if you change the numbers above
+		LandWait = 0.7, -- the server may wait this much longer for you to touch down (slopes, lag) before it counts the hit anyway
+		Range = 16, -- studs all around where you land; the slam's shock ring spreads to about 17
+		ArcDegrees = 360,
 		Cooldown = 6,
 		Trail = { Color = Color3.fromRGB(255, 190, 110), LightEmission = 0.85, Lifetime = 0.3, MaxLength = 14 },
 		Sounds = { { Cue = "LeapWhoosh", At = 0.06 }, { Cue = "DiveWhoosh", At = 0.38 } },

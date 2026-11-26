@@ -203,8 +203,18 @@ function handlers.Jump(player, character, root, skill)
 			Debris:AddItem(attachment, seconds)
 		end)
 	end)
-	task.delay(skill.HitDelay, function()
-		if root.Parent then
+	-- The slam counts when you are back on the ground (when the effect plays), not on a fixed timer alone: a slope or the
+	-- network delay moves the landing. Watching starts a little before the flat-ground landing time.
+	task.delay(skill.HitDelay - 0.08, function()
+		local humanoid = character:FindFirstChildOfClass("Humanoid")
+		local params = RaycastParams.new()
+		params.FilterType = Enum.RaycastFilterType.Exclude
+		params.FilterDescendantsInstances = { character }
+		local deadline = os.clock() + 0.08 + skill.LandWait
+		while root.Parent and humanoid and os.clock() < deadline and not workspace:Raycast(root.Position, Vector3.new(0, -(humanoid.HipHeight + root.Size.Y / 2 + 1.5), 0), params) do
+			RunService.Heartbeat:Wait()
+		end
+		if root.Parent and humanoid and humanoid.Health > 0 then
 			hitArc(player, character, root, skill.Damage, skill.Range, skill.ArcDegrees)
 		end
 	end)

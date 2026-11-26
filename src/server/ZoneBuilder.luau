@@ -1,5 +1,5 @@
 -- Builds the outside zones from Config/Zones: round grass ground, a dirt canyon wall around it, hills, a trail to the
--- gate site, and trees. Server only. Must load before the dummy and the mobs, which stand on the ground.
+-- gate site, and trees. Server only. Must load before the mobs, which stand on the ground.
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 
@@ -208,6 +208,15 @@ local function paintTrail(zone, points)
 	terrain:SetMaterialColor(gate, t.GateColor)
 	local last = points[#points]
 	terrain:FillCylinder(CFrame.new(last.X, -CELL / 2, last.Z), CELL, t.GateRadius, gate)
+
+	-- The forecourt: paved from the end of the trail to the gate's doors, so no grass grows there. It widens from the stone
+	-- apron to the full width (Gate.Forecourt) over the first Flare studs.
+	local f = zone.Gate.Forecourt
+	for z = math.floor(last.Z / CELL) * CELL + CELL / 2, zone.Gate.Z, CELL do
+		local half = t.GateRadius + (f.HalfWidth - t.GateRadius) * math.clamp((z - last.Z) / f.Flare, 0, 1)
+		local width = math.floor(half / CELL) * CELL * 2 -- whole cells: a partly covered cell would keep its grass
+		terrain:FillBlock(CFrame.new(0, -CELL / 2, z), Vector3.new(width, CELL, CELL), gate)
+	end
 end
 
 -- Beyond the canyon -------------------------------------------------------------------------------------------------------
@@ -352,23 +361,34 @@ local function prop(parent, shape, cframe, size, material, color, solid)
 	return p
 end
 
--- A rock: a chunky tilted block with one or two smaller ones leaning against it, sunk a little into the ground.
-local function rock(parent, x, y, z, size, rng, rocks)
-	local model = Instance.new("Model")
+-- A rock: one of the hand-made models (assets/models/rocks), scaled so its longest side is `size` studs, turned any way,
+-- tilted a touch and sunk into the ground. `look` is Config/Zones Rocks (Sink, Material, Tint).
+local rockModels = ServerStorage:WaitForChild("Models"):WaitForChild("rocks")
+
+local function rock(parent, x, y, z, kind, size, rng, look, solid)
+	local model = rockModels:WaitForChild(kind):Clone()
 	model.Name = "Rock"
-	local color = rocks.Colors[rng:NextInteger(1, #rocks.Colors)]
-	for i = 1, rng:NextInteger(2, 3) do
-		local scale = if i == 1 then 1 else rng:NextNumber(0.4, 0.65)
-		local w, h, d = size * scale * rng:NextNumber(0.8, 1.2), size * scale * rng:NextNumber(0.55, 0.85), size * scale * rng:NextNumber(0.8, 1.2)
-		local offset = if i == 1 then Vector3.zero else Vector3.new(rng:NextNumber(-0.4, 0.4) * size, 0, rng:NextNumber(-0.4, 0.4) * size)
-		local turn = CFrame.Angles(math.rad(rng:NextNumber(-22, 22)), rng:NextNumber(0, math.pi * 2), math.rad(rng:NextNumber(-22, 22)))
-		prop(model, Enum.PartType.Block, CFrame.new(x + offset.X, y + h * 0.3, z + offset.Z) * turn, Vector3.new(w, h, d), Enum.Material.Slate, color:Lerp(Color3.new(0.3, 0.3, 0.3), rng:NextNumber(0, 0.2)), true)
+	local _, native = model:GetBoundingBox()
+	model:ScaleTo(model:GetScale() * size / math.max(native.X, native.Y, native.Z))
+	local tilt = math.rad(look.Tilt)
+	model:PivotTo(CFrame.new(model:GetPivot().Position) * CFrame.Angles(rng:NextNumber(-tilt, tilt), rng:NextNumber(0, math.pi * 2), rng:NextNumber(-tilt, tilt)))
+	local box, extent = model:GetBoundingBox()
+	model:PivotTo(model:GetPivot() + Vector3.new(x - box.X, y - extent.Y * look.Sink - (box.Y - extent.Y / 2), z - box.Z))
+	local shade = look.Tint:Lerp(Color3.new(0, 0, 0), rng:NextNumber(0, 0.12))
+	for _, part in model:GetDescendants() do
+		if part:IsA("BasePart") then
+			part.Anchored = true
+			part.CanCollide = solid
+			part.CanTouch = false
+			part.Material = Enum.Material[look.Material]
+			part.Color = shade
+		end
 	end
 	model.Parent = parent
 end
 
 -- A campfire: a ring of stones, three logs, ash, a fire with smoke and sparks that lights up the ground, and three log seats.
-local function campfire(parent, x, y, z, rng, c)
+local function campfire(parent, x, y, z, rng, c, rocks)
 	local model = Instance.new("Model")
 	model.Name = "Campfire"
 	local base = CFrame.new(x, y, z)
@@ -377,8 +397,8 @@ local function campfire(parent, x, y, z, rng, c)
 
 	for i = 0, c.Stones - 1 do -- the stone ring, spaced out
 		local angle = i / c.Stones * math.pi * 2 + rng:NextNumber(-0.12, 0.12)
-		local size = Vector3.new(rng:NextNumber(1.4, 2), rng:NextNumber(0.9, 1.3), rng:NextNumber(1.2, 1.7))
-		prop(model, block, base * CFrame.Angles(0, angle, 0) * CFrame.new(c.StoneRing, size.Y / 2 - 0.2, 0) * CFrame.Angles(0, rng:NextNumber(-0.4, 0.4), 0), size, Enum.Material.Rock, c.StoneColor:Lerp(Color3.new(0.4, 0.4, 0.4), rng:NextNumber(0, 0.25)), true)
+		local spot = (base * CFrame.Angles(0, angle, 0) * CFrame.new(c.StoneRing, 0, 0)).Position
+		rock(model, spot.X, y, spot.Z, c.StoneKinds[rng:NextInteger(1, #c.StoneKinds)], rng:NextNumber(c.StoneSize[1], c.StoneSize[2]), rng, rocks, true)
 	end
 	prop(model, cylinder, base * CFrame.new(0, 0.05, 0) * flat, Vector3.new(0.2, 5.2, 5.2), Enum.Material.Slate, Color3.fromRGB(40, 36, 34), false) -- the ash and embers bed
 	for i = 0, 2 do -- three logs, crossing like spokes
@@ -434,6 +454,21 @@ local function campfire(parent, x, y, z, rng, c)
 	model.Parent = parent
 end
 
+-- Bare ground round a fire, so the tall grass does not hide it. Painted in whole cells, like the trail: a partly covered cell
+-- keeps its grass.
+local function bareGround(center, radius, material)
+	local cells = math.ceil(radius / CELL)
+	local cx, cz = math.floor(center.X / CELL), math.floor(center.Z / CELL)
+	for dx = -cells, cells do
+		for dz = -cells, cells do
+			local x, z = (cx + dx) * CELL + CELL / 2, (cz + dz) * CELL + CELL / 2
+			if (x - center.X) ^ 2 + (z - center.Z) ^ 2 <= radius ^ 2 then
+				terrain:FillBlock(CFrame.new(x, -CELL / 2, z), Vector3.one * CELL, material)
+			end
+		end
+	end
+end
+
 -- Puts campfires (along the trail, and at the camps that have one) and rocks along the trail. Returns the circles trees
 -- must stay out of.
 local function buildProps(zone, points)
@@ -462,8 +497,8 @@ local function buildProps(zone, points)
 		local spot = points[i] + sideOf(i) * side * (halfWidth + fires.Offset)
 		local y = groundHeight(spot.X, spot.Z)
 		if y then
-			terrain:FillCylinder(CFrame.new(spot.X, -CELL / 2, spot.Z), CELL, fires.BareRadius, Enum.Material[fires.BareMaterial]) -- bare ground: no tall grass
-			campfire(propsFolder, spot.X, y, spot.Z, fireRng, fires)
+			bareGround(spot, fires.BareRadius, Enum.Material[fires.BareMaterial])
+			campfire(propsFolder, spot.X, y, spot.Z, fireRng, fires, zone.Rocks)
 			table.insert(clear, { Position = spot, Radius = zone.Trees.Scattered.ClearAroundCampfires })
 		end
 	end
@@ -473,8 +508,8 @@ local function buildProps(zone, points)
 		if camp.Campfire then
 			local y = groundHeight(camp.Center.X, camp.Center.Z)
 			if y then
-				terrain:FillCylinder(CFrame.new(camp.Center.X, -CELL / 2, camp.Center.Z), CELL, fires.BareRadius, Enum.Material[fires.BareMaterial])
-				campfire(propsFolder, camp.Center.X, y, camp.Center.Z, fireRng, fires)
+				bareGround(camp.Center, fires.BareRadius, Enum.Material[fires.BareMaterial])
+				campfire(propsFolder, camp.Center.X, y, camp.Center.Z, fireRng, fires, zone.Rocks)
 				table.insert(clear, { Position = camp.Center, Radius = zone.Trees.Scattered.ClearAroundCampfires })
 			end
 		end
@@ -495,13 +530,23 @@ local function buildProps(zone, points)
 			local reach = halfWidth + rng:NextNumber(r.MinOffset, r.MaxOffset) + (if boulder then r.BoulderSize[2] / 2 else 0)
 			local center = points[i] + sideOf(i) * side * reach
 			if clearOf(center, noRocks) then
+				-- which rocks stand here depends on how far along the trail this is (Rocks.Areas)
+				local area = r.Areas[#r.Areas]
+				for _, candidate in r.Areas do
+					if along[i] / total <= candidate.Until then
+						area = candidate
+						break
+					end
+				end
 				local rocksInGroup = if boulder then 1 else rng:NextInteger(r.Group[1], r.Group[2])
-				for _ = 1, rocksInGroup do
+				for n = 1, rocksInGroup do
 					local spot = center + Vector3.new(rng:NextNumber(-3.5, 3.5), 0, rng:NextNumber(-3.5, 3.5))
 					local y = groundHeight(spot.X, spot.Z)
 					if y then
+						local kinds = if boulder then area.Boulder elseif n == 1 then area.Main else area.Small
+						local kind = kinds[rng:NextInteger(1, #kinds)]
 						local size = if boulder then rng:NextNumber(r.BoulderSize[1], r.BoulderSize[2]) else rng:NextNumber(r.Size[1], r.Size[2])
-						rock(propsFolder, spot.X, y, spot.Z, size, rng, r)
+						rock(propsFolder, spot.X, y, spot.Z, kind, size, rng, r, kind ~= "RockPebbles") -- pebbles are walked over
 						count += 1
 					end
 				end
