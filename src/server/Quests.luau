@@ -3,12 +3,11 @@
 local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ServerStorage = game:GetService("ServerStorage")
 
 local Config = require(ReplicatedStorage.Shared.Config.Quests)
 local village = require(ReplicatedStorage.Shared.Config.Zones).OutsideZone1.Village
 local PlayerData = require(script.Parent.PlayerData)
-
-local IDLE_ANIMATION = "rbxassetid://507766388" -- Roblox's standard R15 idle
 
 local chief = Config.Chief
 local lastTalk = {} -- [player] = when they last talked
@@ -84,31 +83,20 @@ local function asked(player, at)
 	end
 end
 
-local function part(parent, cframe, size, color, material)
-	local p = Instance.new("Part")
-	p.CanCollide = false
-	p.CanTouch = false
-	p.Massless = true
-	p.Material = material
-	p.Color = color
-	p.Size = size
-	p.CFrame = cframe
-	p.Parent = parent
-	return p
-end
-
+-- The chief is the hand-made model, anchored. Its idle movement is only a look, so client/Quests does it.
 local function buildChief()
-	local look = chief.Look
-	local description = Instance.new("HumanoidDescription")
-	description.HeadColor, description.LeftArmColor, description.RightArmColor = look.Skin, look.Skin, look.Skin
-	description.TorsoColor = look.Robe
-	description.LeftLegColor, description.RightLegColor = look.Trousers, look.Trousers
-	local model = Players:CreateHumanoidModelFromDescriptionAsync(description, Enum.HumanoidRigType.R15)
+	local model = ServerStorage:WaitForChild("Models"):WaitForChild(chief.Model):Clone()
 	model.Name = chief.Name
-	local humanoid = model:FindFirstChildOfClass("Humanoid")
-	humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None -- client/Quests draws the name and marker
-	local root = model.HumanoidRootPart
-	root.Anchored = true
+	model.ModelStreamingMode = Enum.ModelStreamingMode.Atomic -- reaches a client all at once
+	model:ScaleTo(model:GetScale() * chief.Scale)
+	for _, part in model:GetDescendants() do
+		if part:IsA("BasePart") then
+			part.Anchored = true
+			part.CanCollide = false
+			part.CanTouch = false
+			part.Color = Color3.new(1, 1, 1) -- white shows the model's own colors
+		end
+	end
 
 	local spot, faces = village.Chief.Position, village.Chief.Faces
 	local params = RaycastParams.new()
@@ -116,25 +104,25 @@ local function buildChief()
 	params.FilterDescendantsInstances = { workspace.Terrain }
 	local hit = workspace:Raycast(Vector3.new(spot.X, 120, spot.Z), Vector3.new(0, -200, 0), params)
 	local ground = if hit then hit.Position.Y else 0
-	local standing = Vector3.new(spot.X, ground + humanoid.HipHeight + root.Size.Y / 2, spot.Z)
-	model:PivotTo(CFrame.lookAt(standing, Vector3.new(faces.X, standing.Y, faces.Z)))
+	-- the model's face is toward -Z, which lookAlong turns toward the spot
+	model:PivotTo(CFrame.lookAlong(model:GetPivot().Position, Vector3.new(faces.X - spot.X, 0, faces.Z - spot.Z)))
+	local box, size = model:GetBoundingBox()
+	model:PivotTo(model:GetPivot() + Vector3.new(spot.X - box.X, ground - (box.Y - size.Y / 2), spot.Z - box.Z))
 
-	local head = model.Head
-	local beard = part(model, head.CFrame * CFrame.new(0, -0.5, -0.55), Vector3.new(0.75, 0.7, 0.25), look.Beard, Enum.Material.Fabric)
-	local weld = Instance.new("WeldConstraint")
-	weld.Part0, weld.Part1 = head, beard
-	weld.Parent = beard
-	local staff = part(model, root.CFrame * CFrame.new(1.9, ground + 3 - standing.Y, -0.4), Vector3.new(0.3, 6, 0.3), look.Staff, Enum.Material.Wood)
-	staff.Anchored = true
+	-- an invisible post: players cannot walk through it, and the prompt and the name hang on it
+	local root = Instance.new("Part")
+	root.Name = "Root"
+	root.Anchored = true
+	root.CanQuery = false
+	root.CanTouch = false
+	root.Transparency = 1
+	root.Size = Vector3.new(2, size.Y, 2)
+	root.CFrame = CFrame.lookAlong(Vector3.new(spot.X, ground + size.Y / 2, spot.Z), Vector3.new(faces.X - spot.X, 0, faces.Z - spot.Z)) -- the client reads which way is forward
+	root.Parent = model
+	model.PrimaryPart = root
 
 	CollectionService:AddTag(model, "QuestGiver")
 	model.Parent = workspace
-
-	local idle = Instance.new("Animation")
-	idle.AnimationId = IDLE_ANIMATION
-	local track = humanoid:FindFirstChildOfClass("Animator"):LoadAnimation(idle)
-	track.Looped = true
-	track:Play()
 
 	local prompt = Instance.new("ProximityPrompt")
 	prompt.ActionText = "Talk"

@@ -7,14 +7,9 @@ return {
 		TalkDistance = 10, -- studs at which "Talk" shows
 		Cooldown = 1, -- seconds between two talks
 		NoMoreQuests = "You have done all I asked, friend. The Starter Town gate lies at the north end of the trail.",
-		-- a plain Roblox character with a beard and a staff, until there is a model
-		Look = {
-			Skin = Color3.fromRGB(214, 168, 130),
-			Robe = Color3.fromRGB(92, 36, 40),
-			Trousers = Color3.fromRGB(62, 46, 34),
-			Beard = Color3.fromRGB(222, 220, 214),
-			Staff = Color3.fromRGB(96, 66, 40),
-		},
+		Model = "VillageChief", -- assets/models/VillageChief.rbxm; parts named "Head...", "LeftArm" (free hand), "...Leg" and "Staff" move
+		Scale = 1, -- size of the model (1 = as saved)
+		LookDistance = 18, -- studs within which the chief watches you
 	},
 
 	-- Given one at a time, in this order. Mob = a key in Config/Mobs. Reminder takes the kills so far and the number needed.
