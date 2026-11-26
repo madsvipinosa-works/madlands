@@ -108,8 +108,16 @@ skillUsedRemote.OnClientEvent:Connect(function(slot, cooldown)
 	end
 end)
 
+-- No weapon yet, no skills: the bar shows once the server says you have one.
+local player = Players.LocalPlayer
+local function showBar()
+	holder.Visible = Weapons[player:GetAttribute("Weapon") or ""] ~= nil
+end
+player:GetAttributeChangedSignal("Weapon"):Connect(showBar)
+showBar()
+
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
-	if gameProcessed then
+	if gameProcessed or not holder.Visible then
 		return
 	end
 	for i, key in KEYS do

@@ -1,12 +1,20 @@
--- Quests on screen: the tracker under the profile panel, the chief's name with "!" or "?" over their head, and what they
--- say, and how the chief moves. Display only: the server owns the quest state (the "Quests" attribute, set by PlayerData.Sync).
+-- What to do next: the tracker under the profile panel, the villagers' names with "!" or "?" over their heads, the arrows
+-- on the ground (client/Guide), and how the chief moves. Display only: the server owns the weapon and quest state (the
+-- "Weapon" and "Quests" attributes, set by PlayerData.Sync).
 local CollectionService = game:GetService("CollectionService")
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
-local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"):WaitForChild("Quests"))
+local Shared = ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")
+local Config = require(Shared:WaitForChild("Quests"))
+local WeaponMaster = require(Shared:WaitForChild("WeaponMaster"))
+local Weapons = require(Shared:WaitForChild("Weapons"))
+local GuideStyle = require(Shared:WaitForChild("Guide"))
+local zone = require(Shared:WaitForChild("Zones")).OutsideZone1
+local Dialogue = require(script.Parent.Dialogue)
+local Guide = require(script.Parent.Guide)
 local player = Players.LocalPlayer
 
 local GOLD = Color3.fromRGB(255, 215, 90)
@@ -15,7 +23,7 @@ local GREY = Color3.fromRGB(190, 190, 200)
 local gui = Instance.new("ScreenGui")
 gui.Name = "Quests"
 gui.ResetOnSpawn = false
-gui.DisplayOrder = 102
+gui.DisplayOrder = 98
 gui.Parent = player:WaitForChild("PlayerGui")
 
 local function text(parent, size, position, boxSize, color, alignment)
@@ -35,39 +43,30 @@ local function text(parent, size, position, boxSize, color, alignment)
 	return l
 end
 
-local function panel(class, anchor, position, size)
-	local frame = Instance.new(class)
-	frame.AnchorPoint = anchor
-	frame.Position = position
-	frame.Size = size
-	frame.BackgroundColor3 = Color3.fromRGB(18, 18, 24)
-	frame.BackgroundTransparency = 0.2
-	frame.BorderSizePixel = 0
-	frame.Visible = false
-	frame.Parent = gui
-	Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 14)
-	return frame
-end
-
-local tracker = panel("Frame", Vector2.new(1, 0), UDim2.new(1, -16, 0, 150), UDim2.fromOffset(280, 58))
+local tracker = Instance.new("Frame")
+tracker.AnchorPoint = Vector2.new(1, 0)
+tracker.Position = UDim2.new(1, -16, 0, 150)
+tracker.Size = UDim2.fromOffset(330, 58)
+tracker.BackgroundColor3 = Color3.fromRGB(18, 18, 24)
+tracker.BackgroundTransparency = 0.2
+tracker.BorderSizePixel = 0
+tracker.Visible = false
+tracker.Parent = gui
+Instance.new("UICorner", tracker).CornerRadius = UDim.new(0, 14)
 local trackerTitle = text(tracker, 16, UDim2.fromOffset(14, 8), UDim2.new(1, -28, 0, 20), GOLD)
 local trackerLine = text(tracker, 14, UDim2.fromOffset(14, 31), UDim2.new(1, -28, 0, 18), Color3.new(1, 1, 1))
 
-local speech = panel("TextButton", Vector2.new(0.5, 1), UDim2.fromScale(0.5, 0.69), UDim2.fromOffset(520, 130))
-speech.Text = "" -- a button so a click closes it
-local speaker = text(speech, 17, UDim2.fromOffset(18, 10), UDim2.new(1, -36, 0, 22), GOLD)
-local words = text(speech, 15, UDim2.fromOffset(18, 38), UDim2.new(1, -36, 1, -48), Color3.new(1, 1, 1))
-words.TextWrapped = true
-words.TextYAlignment = Enum.TextYAlignment.Top
+local markers = {} -- [villager id] = the "!" / "?" label over them
 
-local marker -- the "!" / "?" label over the chief
-local talkingUntil = 0 -- while this is ahead, the chief gestures and nods
-
--- Where the player stands with the next quest: "Offer", "Active", "Ready" or "None" (all done). nil until data arrives.
+-- Where the player stands: "Weapon" (has none yet), then for the next quest "Offer", "Active" or "Ready", and "None" when
+-- all are done. nil until the data arrives.
 local function current()
-	local saved = player:GetAttribute("Quests")
-	if not saved then
+	local saved, weapon = player:GetAttribute("Quests"), player:GetAttribute("Weapon")
+	if not saved or not weapon then
 		return nil
+	end
+	if not Weapons[weapon] then
+		return "Weapon"
 	end
 	saved = HttpService:JSONDecode(saved)
 	for _, quest in Config.List do
@@ -80,10 +79,38 @@ local function current()
 	return "None"
 end
 
+-- Where the arrows lead for each step.
+local function goalFor(stage, quest)
+	if stage == "Weapon" then
+		return function()
+			return zone.Village.WeaponMaster.Position, GuideStyle.HideAtVillager
+		end
+	elseif stage == "Offer" or stage == "Ready" then
+		return function()
+			return zone.Village.Chief.Position, GuideStyle.HideAtVillager
+		end
+	elseif stage == "Active" then
+		return function(from) -- the nearest camp of the quest's mob
+			local best, bestDistance = nil, math.huge
+			for _, camp in zone.Camps do
+				local d = (camp.Center - from).Magnitude
+				if camp.Mob == quest.Mob and d < bestDistance then
+					best, bestDistance = camp.Center, d
+				end
+			end
+			return best, GuideStyle.HideAtCamp
+		end
+	end
+	return nil
+end
+
 local function refresh()
 	local stage, quest, state = current()
-	tracker.Visible = quest ~= nil
-	if quest then
+	tracker.Visible = stage ~= nil and stage ~= "None"
+	if stage == "Weapon" then
+		trackerTitle.Text = "First Steps"
+		trackerLine.Text = "Pick a weapon from the " .. WeaponMaster.Name
+	elseif quest then
 		trackerTitle.Text = quest.Title
 		if stage == "Offer" then
 			trackerLine.Text = "Talk to the " .. Config.Chief.Name
@@ -93,10 +120,14 @@ local function refresh()
 			trackerLine.Text = "Return to the " .. Config.Chief.Name
 		end
 	end
-	if marker then
-		marker.Text = if stage == "Offer" then "!" elseif stage == "Active" or stage == "Ready" then "?" else ""
-		marker.TextColor3 = if stage == "Active" then GREY else GOLD
+	if markers.WeaponMaster then
+		markers.WeaponMaster.Text = if stage == "Weapon" then "!" else ""
 	end
+	if markers.VillageChief then
+		markers.VillageChief.Text = if stage == "Offer" then "!" elseif stage == "Active" or stage == "Ready" then "?" else ""
+		markers.VillageChief.TextColor3 = if stage == "Active" then GREY else GOLD
+	end
+	Guide.SetGoal(goalFor(stage, quest))
 end
 
 -- Brings a value part of the way to its target, the same speed at any frame rate.
@@ -151,7 +182,7 @@ local function animate(model, root)
 		headYaw = ease(headYaw, yawGoal, 6, dt)
 		headPitch = ease(headPitch, pitchGoal, 6, dt)
 		bodyYaw = ease(bodyYaw, bodyYaw + (bodyGoal - bodyYaw + math.pi) % (2 * math.pi) - math.pi, 2.5, dt) -- the short way round
-		talk = ease(talk, if now < talkingUntil then 1 else 0, 5, dt)
+		talk = ease(talk, if Dialogue.Speaking("VillageChief") then 1 else 0, 5, dt)
 
 		local turn = CFrame.Angles(0, bodyYaw, 0)
 		local breath = CFrame.new(0, math.sin(now * 1.8) * 0.05, 0)
@@ -182,50 +213,33 @@ local function animate(model, root)
 end
 
 local function label(model)
-	local root = model:WaitForChild("Root", 10)
+	local root = model.PrimaryPart or model:WaitForChild("HumanoidRootPart", 10)
 	if not root then
 		return
 	end
+	local id = model:GetAttribute("VillagerId")
+	local box, size = model:GetBoundingBox()
 	local board = Instance.new("BillboardGui")
-	board.Name = "QuestGiver"
+	board.Name = "Villager"
 	board.Adornee = root
 	board.Size = UDim2.fromOffset(200, 66)
-	board.StudsOffsetWorldSpace = Vector3.new(0, root.Size.Y / 2 + 1.4, 0)
+	board.StudsOffsetWorldSpace = Vector3.new(0, box.Y + size.Y / 2 - root.Position.Y + 1.4, 0)
 	board.MaxDistance = 150
 	board.Parent = root
-	marker = text(board, 38, UDim2.new(), UDim2.new(1, 0, 0, 42), GOLD, Enum.TextXAlignment.Center)
-	text(board, 15, UDim2.fromOffset(0, 44), UDim2.new(1, 0, 0, 18), Color3.new(1, 1, 1), Enum.TextXAlignment.Center).Text = Config.Chief.Name
+	markers[id] = text(board, 38, UDim2.new(), UDim2.new(1, 0, 0, 42), GOLD, Enum.TextXAlignment.Center)
+	text(board, 15, UDim2.fromOffset(0, 44), UDim2.new(1, 0, 0, 18), Color3.new(1, 1, 1), Enum.TextXAlignment.Center).Text = model.Name
 	refresh()
-	animate(model, root)
+	if id == "VillageChief" then
+		animate(model, root)
+	end
 end
 
-local shown = 0 -- counts the lines, so an old timer does not close a newer one
-local function say(name, line)
-	shown += 1
-	local this = shown
-	speaker.Text = name
-	words.Text = line
-	speech.Visible = true
-	talkingUntil = os.clock() + math.min(1.5 + #line / 30, 5)
-	task.delay(4 + #line / 20, function()
-		if shown == this then
-			speech.Visible = false
-		end
-	end)
-end
-speech.Activated:Connect(function()
-	speech.Visible = false
-end)
-
-task.spawn(function() -- the server makes the remote after the zone is built, a while after joining
-	ReplicatedStorage:WaitForChild("QuestDialog", math.huge).OnClientEvent:Connect(say)
-end)
-
-CollectionService:GetInstanceAddedSignal("QuestGiver"):Connect(label)
-for _, model in CollectionService:GetTagged("QuestGiver") do
+CollectionService:GetInstanceAddedSignal("Villager"):Connect(label)
+for _, model in CollectionService:GetTagged("Villager") do
 	task.spawn(label, model)
 end
 player:GetAttributeChangedSignal("Quests"):Connect(refresh)
+player:GetAttributeChangedSignal("Weapon"):Connect(refresh)
 refresh()
 
 return true

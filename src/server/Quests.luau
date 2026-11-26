@@ -1,20 +1,16 @@
 -- Quests (Config/Quests): the Village Chief who gives them, the kill count and the rewards. Server only: the client is only
--- told what to show. Progress is kept in the player's saved data (ProfileStore, through PlayerData).
-local CollectionService = game:GetService("CollectionService")
-local Players = game:GetService("Players")
+-- told what to show. Progress is kept in the player's saved data (ProfileStore, through PlayerData). A player needs a weapon
+-- (from the Weapon Master) before the chief will give them anything.
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 
 local Config = require(ReplicatedStorage.Shared.Config.Quests)
+local Weapons = require(ReplicatedStorage.Shared.Config.Weapons)
 local village = require(ReplicatedStorage.Shared.Config.Zones).OutsideZone1.Village
+local Dialogue = require(script.Parent.Dialogue)
 local PlayerData = require(script.Parent.PlayerData)
 
 local chief = Config.Chief
-local lastTalk = {} -- [player] = when they last talked
-
-local dialog = Instance.new("RemoteEvent") -- server -> client only: what the chief says
-dialog.Name = "QuestDialog"
-dialog.Parent = ReplicatedStorage
 
 local Quests = {}
 
@@ -29,30 +25,58 @@ local function nextQuest(data)
 	return nil
 end
 
--- Talking takes the next quest, asks after it, or hands it in for the reward.
 local function talk(player)
 	local data = PlayerData.Get(player)
 	if not data then
-		return
+		return nil
+	end
+	if not Weapons[data.Weapon] then
+		return { Lines = chief.NoWeapon }
 	end
 	local quest, state = nextQuest(data)
-	local line
 	if not quest then
-		line = chief.NoMoreQuests
+		return { Lines = chief.NoMoreQuests }
 	elseif not state then
-		data.Quests[quest.Id] = { Progress = 0 }
-		line = `{quest.Offer}\nReward: {quest.Reward.Gold} gold, {quest.Reward.Xp} XP`
+		local lines = table.clone(quest.Offer)
+		lines[#lines] ..= `\nReward: {quest.Reward.Gold} gold, {quest.Reward.Xp} XP`
+		return { Lines = lines, Choices = { { Label = "Accept quest", Action = "Accept", Arg = quest.Id }, { Label = "Not now" } } }
 	elseif state.Progress < quest.Count then
-		line = string.format(quest.Reminder, state.Progress, quest.Count)
-	else
-		data.Quests[quest.Id] = { Done = true } -- marked before paying, so it can never pay twice
-		PlayerData.AddGold(player, quest.Reward.Gold)
-		PlayerData.AddXp(player, quest.Reward.Xp)
-		line = `{quest.Thanks}\nYou got {quest.Reward.Gold} gold and {quest.Reward.Xp} XP.`
-		print(`[Quest] {player.Name} finished {quest.Id}`)
+		return { Lines = { string.format(quest.Reminder, state.Progress, quest.Count) } }
 	end
+	return { Lines = quest.Ready, Choices = { { Label = "Claim reward", Action = "Claim", Arg = quest.Id } } }
+end
+
+local function accept(player, id)
+	local data = PlayerData.Get(player)
+	if not data or not Weapons[data.Weapon] then
+		return nil
+	end
+	local quest, state = nextQuest(data)
+	if not quest or quest.Id ~= id or state then
+		return nil
+	end
+	data.Quests[quest.Id] = { Progress = 0 }
 	PlayerData.Sync(player)
-	dialog:FireClient(player, chief.Name, line)
+	return { Lines = quest.Accepted }
+end
+
+local function claim(player, id)
+	local data = PlayerData.Get(player)
+	if not data then
+		return nil
+	end
+	local quest, state = nextQuest(data)
+	if not quest or quest.Id ~= id or not state or state.Progress < quest.Count then
+		return nil
+	end
+	data.Quests[quest.Id] = { Done = true } -- marked before paying, so it can never pay twice
+	PlayerData.AddGold(player, quest.Reward.Gold)
+	PlayerData.AddXp(player, quest.Reward.Xp)
+	PlayerData.Sync(player)
+	print(`[Quest] {player.Name} finished {quest.Id}`)
+	local lines = table.clone(quest.Thanks)
+	lines[#lines] ..= `\nYou got {quest.Reward.Gold} gold and {quest.Reward.Xp} XP.`
+	return { Lines = lines }
 end
 
 -- Called by MobSpawner for the player who gets the kill.
@@ -65,21 +89,6 @@ function Quests.MobKilled(player, mobName)
 	if quest and state and quest.Mob == mobName and state.Progress < quest.Count then
 		state.Progress += 1
 		PlayerData.Sync(player)
-	end
-end
-
--- A cheating client can fire a prompt from anywhere, so who is asking, and from how far, is checked here.
-local function asked(player, at)
-	local character = player.Character
-	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-	local root = character and character:FindFirstChild("HumanoidRootPart")
-	if not (humanoid and humanoid.Health > 0 and root) or (root.Position - at).Magnitude > chief.TalkDistance + 4 then
-		return
-	end
-	local now = os.clock()
-	if now - (lastTalk[player] or 0) >= chief.Cooldown then
-		lastTalk[player] = now
-		talk(player)
 	end
 end
 
@@ -121,24 +130,18 @@ local function buildChief()
 	root.Parent = model
 	model.PrimaryPart = root
 
-	CollectionService:AddTag(model, "QuestGiver")
 	model.Parent = workspace
 
-	local prompt = Instance.new("ProximityPrompt")
-	prompt.ActionText = "Talk"
-	prompt.ObjectText = chief.Name
-	prompt.KeyboardKeyCode = chief.PromptKey
-	prompt.MaxActivationDistance = chief.TalkDistance
-	prompt.RequiresLineOfSight = false
-	prompt.Triggered:Connect(function(player)
-		asked(player, root.Position)
-	end)
-	prompt.Parent = root
+	Dialogue.Add({
+		Id = "VillageChief",
+		Name = chief.Name,
+		Model = model,
+		PromptKey = chief.PromptKey,
+		TalkDistance = chief.TalkDistance,
+		Talk = talk,
+		Actions = { Accept = accept, Claim = claim },
+	})
 end
-
-Players.PlayerRemoving:Connect(function(player)
-	lastTalk[player] = nil
-end)
 
 task.spawn(function()
 	while not workspace:GetAttribute("ZoneReady") do -- set by init.server once the ground is built

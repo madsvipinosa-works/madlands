@@ -8,7 +8,7 @@ local Leveling = require(ReplicatedStorage.Shared.Config.Leveling)
 local TEMPLATE = {
 	Level = 1,
 	Xp = 0,
-	Weapon = "Sword", -- equipped weapon id, a key in Config/Weapons
+	Weapon = "", -- equipped weapon id, a key in Config/Weapons; "" until the Weapon Master gives the first one
 	Gold = 0, -- carried gold, can drop on death
 	BankGold = 0, -- safe gold
 	Inventory = {}, -- [itemId] = count

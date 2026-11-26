@@ -116,6 +116,8 @@ return {
 			Campfire = Vector3.new(-28, 0, -286),
 			-- where the Village Chief stands (Config/Quests), and the spot they look at
 			Chief = { Position = Vector3.new(6, 0, -311), Faces = Vector3.new(-1, 0, -322) },
+			-- where the Weapon Master stands (Config/WeaponMaster), and the spot they look at
+			WeaponMaster = { Position = Vector3.new(-15, 0, -303), Faces = Vector3.new(-1, 0, -320) },
 			Dirt = { -- round patches of trodden earth that together make the square, off to one side of the lane
 				{ At = Vector3.new(-24, 0, -287), Radius = 15 },
 				{ At = Vector3.new(-34, 0, -276), Radius = 9 },

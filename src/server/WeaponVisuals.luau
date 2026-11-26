@@ -187,6 +187,13 @@ local function attach(player, character)
 	addTuner(model, grip, visual)
 end
 
+-- Called when a player gets a weapon, so it shows in their hand right away.
+function WeaponVisuals.Refresh(player)
+	if player.Character then
+		task.spawn(attach, player, player.Character)
+	end
+end
+
 local function track(player)
 	player.CharacterAdded:Connect(function(character)
 		attach(player, character)

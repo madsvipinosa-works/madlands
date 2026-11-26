@@ -19,6 +19,9 @@ local Feedback = {}
 -- (shortcut: if the server refuses a swing, the sound still played; it only plays once per Cooldown).
 local lastClick, guess, guessExpires = 0, 0, 0
 function Feedback.ClickSound()
+	if not Weapons[Players.LocalPlayer:GetAttribute("Weapon") or ""] then
+		return -- nothing in your hand to swing
+	end
 	local weapon = Weapons.Sword -- shortcut: always the Sword, see PlaySwing
 	local now = os.clock()
 	if now - lastClick < weapon.Cooldown + 0.02 then

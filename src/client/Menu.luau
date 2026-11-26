@@ -458,7 +458,7 @@ local function refresh()
 	if not level then
 		return
 	end
-	local weaponId = player:GetAttribute("Weapon") or "Sword"
+	local weaponId = player:GetAttribute("Weapon") or ""
 	local weapon = Weapons[weaponId]
 	local xp, needed = player:GetAttribute("Xp") or 0, player:GetAttribute("XpNeeded") or 0
 
@@ -469,7 +469,7 @@ local function refresh()
 	statValues.Experience.Text = if needed > 0 then string.format("%d / %d", xp, needed) else "MAX"
 	statValues.Gold.Text = tostring(player:GetAttribute("Gold") or 0)
 	statValues["Bank gold"].Text = tostring(player:GetAttribute("BankGold") or 0)
-	statValues.Weapon.Text = weapon and weapon.Name or weaponId
+	statValues.Weapon.Text = weapon and weapon.Name or "None"
 	statValues.Damage.Text = if weapon then tostring(weapon.Damage) else "-"
 	statValues.Reach.Text = if weapon then weapon.Range .. " studs" else "-"
 	statValues["Swing speed"].Text = if weapon then string.format("%.1f / sec", 1 / weapon.Cooldown) else "-"

@@ -11,7 +11,7 @@ require(script.Hud)
 require(script.Sounds)
 require(script.Menu)
 require(script.GateFade)
-require(script.Quests)
+require(script.Quests) -- also loads the dialogue box and the guide arrows
 
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
 	if not gameProcessed and input.UserInputType == Enum.UserInputType.MouseButton1 then
