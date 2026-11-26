@@ -1,14 +1,15 @@
 -- World zones, as data. Read-only; server/ZoneBuilder turns a zone into terrain, a canyon wall, a trail and trees.
 -- Cities are separate places (DESIGN.md section 6), so this place only holds the outside zones. A zone is a circle
--- around the origin, which is also the spawn.
+-- around the origin. Players start in its Village, at the south end; the town gate is at the north end.
 return {
 	OutsideZone1 = {
 		Name = "Outside Zone 1",
 		LevelRange = { 1, 15 }, -- Greenfields in DESIGN.md; the zone level sync (build step 6) will read this
 
 		-- Size: Radius is the zone's size. When you change it, also move Gate.Z (about Radius - 20), the trail's last waypoint (about
-		-- 60 studs in front of the gate) and the camps, which are placed in studs from the spawn.
-		Radius = 420, -- studs from the spawn to the foot of the canyon wall
+		-- 60 studs in front of the gate), the Village (and the trail's first waypoint) and the camps, which are all placed in studs
+		-- from the middle of the zone.
+		Radius = 420, -- studs from the middle to the foot of the canyon wall
 		MaxWalkSlope = 50, -- degrees: players cannot walk up anything steeper (hills are gentle; the canyon's ledges are far steeper)
 		Depth = 16, -- studs of terrain below the surface (the top surface is at y = 0)
 		Material = "Grass", -- any Enum.Material name
@@ -105,10 +106,77 @@ return {
 			Seed = 7, -- change for a different layout
 		},
 
-		-- The trail from spawn to the town gate: a winding dirt path. Waypoints are x, z on the ground; the path curves
+		-- The village where players start, opposite the gate: the hand-made houses (assets/models/houses) set unevenly along a
+		-- winding dirt lane, a campfire in a trodden square, a few trees, and a fence round it all, open to the north where the
+		-- trail leaves. Positions are x, z on the ground.
+		Village = {
+			Center = Vector3.new(0, 0, -300),
+			Radius = 95, -- studs round the Center kept free of the zone's trees, rocks and hills (the fence stands inside it)
+			Spawn = Vector3.new(-1, 3, -322), -- where players start and respawn, facing north (up the lane, to the gate)
+			Campfire = Vector3.new(-28, 0, -286),
+			Dirt = { -- round patches of trodden earth that together make the square, off to one side of the lane
+				{ At = Vector3.new(-24, 0, -287), Radius = 15 },
+				{ At = Vector3.new(-34, 0, -276), Radius = 9 },
+				{ At = Vector3.new(-9, 0, -296), Radius = 11 },
+				{ At = Vector3.new(-12, 0, -277), Radius = 8 },
+			},
+			Lane = { -- the lane from the end of the trail to the chief house
+				Vector3.new(0, 0, -292), Vector3.new(-6, 0, -308), Vector3.new(-2, 0, -325), Vector3.new(7, 0, -336), Vector3.new(9, 0, -350),
+			},
+			LaneWidth = 13, -- it varies a little along the way
+			PathWidth = 8, -- the paths to the doors
+			Sink = 0.4, -- studs each house is set into the ground
+			Scale = { VillageChiefHouse = 1.6, VillageCottage = 1.6, VillageFarmhouse = 1.7 }, -- size of each model (1 = as saved)
+			-- Faces = the spot (on the lane or square) the door looks at; a path runs from the house to it.
+			Houses = {
+				{ Model = "VillageChiefHouse", Position = Vector3.new(14, 0, -363), Faces = Vector3.new(6, 0, -332) }, -- at the head of the lane
+				{ Model = "VillageFarmhouse", Position = Vector3.new(-30, 0, -355), Faces = Vector3.new(-5, 0, -327) },
+				{ Model = "VillageCottage", Position = Vector3.new(-51, 0, -317), Faces = Vector3.new(-24, 0, -293) }, -- on the square
+				{ Model = "VillageFarmhouse", Position = Vector3.new(-31, 0, -246), Faces = Vector3.new(-2, 0, -258) }, -- by the way in
+				{ Model = "VillageCottage", Position = Vector3.new(48, 0, -337), Faces = Vector3.new(0, 0, -320) },
+				{ Model = "VillageFarmhouse", Position = Vector3.new(27, 0, -296), Faces = Vector3.new(-3, 0, -302) }, -- right on the lane
+				{ Model = "VillageCottage", Position = Vector3.new(49, 0, -253), Faces = Vector3.new(6, 0, -270) }, -- set back, up a long path
+			},
+			Trees = { -- trees between the houses (the model and colors are the zone's Trees)
+				Scale = { 1.2, 1.7 },
+				Spots = {
+					Vector3.new(-49, 0, -277), Vector3.new(-59, 0, -262), Vector3.new(-60, 0, -343), Vector3.new(-11, 0, -377),
+					Vector3.new(44, 0, -364), Vector3.new(62, 0, -306), Vector3.new(60, 0, -288), Vector3.new(38, 0, -229),
+				},
+			},
+			Fence = {
+				-- The fence runs smoothly through these points, from one side of the way in to the other.
+				Path = {
+					Vector3.new(22, 0, -227), Vector3.new(46, 0, -222), Vector3.new(66, 0, -238), Vector3.new(68, 0, -262), Vector3.new(80, 0, -283),
+					Vector3.new(76, 0, -318), Vector3.new(66, 0, -346), Vector3.new(48, 0, -368), Vector3.new(32, 0, -386), Vector3.new(6, 0, -389),
+					Vector3.new(-22, 0, -382), Vector3.new(-48, 0, -372), Vector3.new(-64, 0, -346), Vector3.new(-76, 0, -320), Vector3.new(-74, 0, -288),
+					Vector3.new(-62, 0, -261), Vector3.new(-60, 0, -236), Vector3.new(-40, 0, -224), Vector3.new(-16, 0, -227),
+				},
+				PostEvery = 5.5, -- studs between timber posts
+				PillarEvery = 6, -- every this many posts is a stone pillar instead
+				PostHeight = 4.2,
+				PillarHeight = 5.2,
+				EntranceHeight = 8, -- the two pillars at the way in, each with a lantern
+				PostColor = Color3.fromRGB(72, 45, 30), -- dark timber, like the houses' frames
+				RailColor = Color3.fromRGB(108, 72, 46),
+				Stone = { Model = "VillageChiefHouse", Part = "Stone_Base_3" }, -- the stone pillars: a chimney of this house model
+				PillarWidth = 1.9,
+				EntranceWidth = 2.4,
+				LanternColor = Color3.fromRGB(255, 194, 96),
+				Seed = 31,
+			},
+		},
+
+		-- The trail from the village to the town gate: a winding dirt path. Waypoints are x, z on the ground; the path curves
 		-- smoothly through them. The last one is just in front of the gate (see Gate below), on a stone apron.
 		Trail = {
 			Waypoints = {
+				Vector3.new(0, 0, -292),
+				Vector3.new(8, 0, -245),
+				Vector3.new(-12, 0, -195),
+				Vector3.new(10, 0, -145),
+				Vector3.new(-8, 0, -95),
+				Vector3.new(6, 0, -48),
 				Vector3.new(0, 0, 0),
 				Vector3.new(14, 0, 45),
 				Vector3.new(-10, 0, 90),
@@ -157,7 +225,7 @@ return {
 		-- placed at random inside a circle (Radius, and optionally a hole in the middle, MinRadius) around the camp Center plus
 		-- the group's Offset (x, z). A second group with
 		-- an Offset is the part of the pack standing "beside" the main one. Placement is fixed by the camp's Seed.
-		-- The spawn is at 0, 0 and the trail runs north (+z), so camps keep well away from the trail (mobs notice you at about 30 studs).
+		-- The trail runs north (+z) from the Village, so camps keep well away from both (mobs notice you at about 30 studs).
 		Camps = {
 			{
 				Name = "Goblin Hollow", Mob = "Goblin", Seed = 21,
@@ -196,9 +264,9 @@ return {
 		},
 
 		-- Campfires beside the trail: a ring of stones, logs, a fire and log seats. Along = how far along the trail each one
-		-- stands (0 = spawn, 1 = the gate); they alternate sides, starting on the left.
+		-- stands (0 = the village, 1 = the gate); they alternate sides, starting on the left.
 		Campfires = {
-			Along = { 0.47 },
+			Along = { 0.72 },
 			Stones = 7, -- stones in the ring around the fire
 			StoneRing = 3.8, -- studs from the fire to the ring (the bigger, the more space between the stones)
 			Offset = 16, -- studs from the trail's edge to the fire
@@ -226,17 +294,17 @@ return {
 			Tint = Color3.new(1, 1, 1), -- multiplies the models' own colors; white leaves them as made
 			Tilt = 6, -- most degrees a rock leans
 			Sink = 0.08, -- share of its height set into the ground
-			-- Which models stand where, by how far along the trail (0 = spawn, 1 = the gate): Main = the first rock of a group, Small = the
+			-- Which models stand where, by how far along the trail (0 = the village, 1 = the gate): Main = the first rock of a group, Small = the
 			-- ones beside it, Boulder = a lone big one. List a name twice to make it more common.
 			Areas = {
-				{ -- the meadow by the spawn: soft, mossy shapes
-					Until = 0.35,
+				{ -- from the village across the meadow: soft, mossy shapes
+					Until = 0.66,
 					Main = { "RockMossyBoulder", "RockBoulderRound", "RockCluster" },
 					Small = { "RockPebbles", "RockBoulderRound" },
 					Boulder = { "RockMossyBoulder" },
 				},
 				{ -- around the campfire: flat slabs to sit on, loose clusters
-					Until = 0.7,
+					Until = 0.84,
 					Main = { "RockFlatSlab", "RockCluster", "RockBoulderRound", "RockMossyBoulder" },
 					Small = { "RockPebbles", "RockFlatSlab" },
 					Boulder = { "RockSplitBoulder", "RockMossyBoulder" },
@@ -262,7 +330,6 @@ return {
 			Scattered = {
 				Count = 540, -- how many to try to place (some are skipped where it would be crowded)
 				GroveCutoff = -0.05, -- trees only grow where a noise map is above this: raise it for fewer, tighter groves (about -0.4 to 0.3)
-				ClearAroundSpawn = 40, -- studs kept open around the spawn
 				ClearAroundMobs = 14, -- studs kept open around each mob camp group (on top of its radius)
 				ClearAroundCampfires = 18, -- studs kept open around each campfire
 				ClearAroundTrail = 20, -- studs kept open beyond the trail's edge

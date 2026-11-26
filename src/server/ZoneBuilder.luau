@@ -54,8 +54,9 @@ local function buildHills(zone, trail)
 		local height = hills.Height * rng:NextNumber(0.6, 1)
 		local x, z = math.cos(angle) * distance, math.sin(angle) * distance
 		local reach = math.sqrt(hills.Radius ^ 2 - (hills.Radius - height) ^ 2) -- how far out the dome meets the ground
-		-- not on the trail, and not on the river bank or at the gate, which are built over it
-		if nearest(Vector3.new(x, 0, z), trail) > reach + zone.Trail.Width and z + reach < zone.Gate.Z - 70 then
+		-- not on the trail, not on the village, and not at the gate, which is built over it
+		local fromVillage = (Vector3.new(x, 0, z) - zone.Village.Center).Magnitude
+		if nearest(Vector3.new(x, 0, z), trail) > reach + zone.Trail.Width and fromVillage > reach + zone.Village.Radius and z + reach < zone.Gate.Z - 70 then
 			terrain:FillBall(Vector3.new(x, height - hills.Radius, z), hills.Radius, material)
 		end
 	end
@@ -517,7 +518,7 @@ local function buildProps(zone, points)
 
 	local r = zone.Rocks
 	local rng = Random.new(r.Seed)
-	local noRocks = {} -- circles rocks must stay out of: around every fire
+	local noRocks = { { Position = zone.Village.Center, Radius = zone.Village.Radius } } -- circles rocks must stay out of: the village and every fire
 	for _, circle in clear do
 		table.insert(noRocks, { Position = circle.Position, Radius = r.ClearAroundCampfires })
 	end
@@ -620,7 +621,7 @@ local function buildTrees(zone, points, keepClear)
 		end
 	end
 
-	-- Scattered: random spots in groves, away from the spawn, the mobs, the trail and the canyon.
+	-- Scattered: random spots in groves, away from the village, the mobs, the trail and the canyon.
 	local s = trees.Scattered
 	for _ = 1, s.Count do
 		local angle = rng:NextNumber(0, math.pi * 2)
@@ -630,7 +631,6 @@ local function buildTrees(zone, points, keepClear)
 		local grove = math.noise(x / 55 + trees.Seed, z / 55 + trees.Seed, 2.5) -- -1..1: positive in groves, negative in clearings
 		if
 			grove > s.GroveCutoff
-			and distance > s.ClearAroundSpawn
 			and nearest(position, points) > zone.Trail.Width / 2 + s.ClearAroundTrail
 			and clearOf(position, keepClear)
 		then
@@ -638,6 +638,157 @@ local function buildTrees(zone, points, keepClear)
 		end
 	end
 	print(`[Zone] {placed} trees planted`)
+end
+
+-- The village where players start ---------------------------------------------------------------------------------
+
+-- A rustic fence along a smooth line through Fence.Path: slightly crooked timber posts with two rails, a stone pillar every
+-- few posts (a copy of a house chimney, so the stonework matches), and taller pillars with a lantern at the two ends, the way in.
+local function fence(parent, f)
+	local rng = Random.new(f.Seed)
+	local points = trailPoints(f.Path)
+	local spots, run = { points[1] }, 0
+	for i = 2, #points do
+		run += (points[i] - points[i - 1]).Magnitude
+		if run >= f.PostEvery then
+			run = 0
+			table.insert(spots, points[i])
+		end
+	end
+	if (points[#points] - spots[#spots]).Magnitude < f.PostEvery / 2 then
+		spots[#spots] = points[#points]
+	else
+		table.insert(spots, points[#points])
+	end
+
+	local model = Instance.new("Model")
+	model.Name = "Fence"
+	model.Parent = parent
+	local function part(cframe, size, color)
+		return prop(model, Enum.PartType.Block, cframe, size, Enum.Material.SmoothPlastic, color, true)
+	end
+	local chimney = ServerStorage.Models.houses[f.Stone.Model]:FindFirstChild(f.Stone.Part, true)
+
+	local previous -- the ground under the post before this one
+	for i, spot in spots do
+		local y = groundHeight(spot.X, spot.Z)
+		if not y then
+			previous = nil
+			continue
+		end
+		local ground = Vector3.new(spot.X, y, spot.Z)
+		local base = CFrame.lookAlong(ground, spots[math.min(i + 1, #spots)] - spots[math.max(i - 1, 1)])
+		local entrance = i == 1 or i == #spots
+		if entrance or (i % f.PillarEvery == 1 and i < #spots - 2) then
+			local height = if entrance then f.EntranceHeight else f.PillarHeight
+			if chimney then
+				local pillar = chimney:Clone()
+				local width = if entrance then f.EntranceWidth else f.PillarWidth
+				pillar.Size = chimney.Size * (width / chimney.Size.X) -- the same shape, smaller; the part not needed sits in the ground
+				pillar.CFrame = base * CFrame.new(0, height - pillar.Size.Y / 2, 0) * CFrame.Angles(0, rng:NextInteger(0, 3) * math.pi / 2, 0)
+				pillar.Anchored = true
+				pillar.CanTouch = false
+				pillar.Color = Color3.new(1, 1, 1)
+				pillar.Parent = model
+			end
+			if entrance then
+				local top = base * CFrame.new(0, height - 0.1, 0)
+				local glass = part(top * CFrame.new(0, 0.75, 0), Vector3.new(1, 1.2, 1), f.LanternColor)
+				glass.Material = Enum.Material.Neon
+				for x = -1, 1, 2 do
+					for z = -1, 1, 2 do
+						part(top * CFrame.new(x * 0.55, 0.75, z * 0.55), Vector3.new(0.22, 1.5, 0.22), f.PostColor)
+					end
+				end
+				part(top * CFrame.new(0, 1.6, 0), Vector3.new(1.7, 0.35, 1.7), f.PostColor)
+				local light = Instance.new("PointLight")
+				light.Color = f.LanternColor
+				light.Range = 18
+				light.Brightness = 1.5
+				light.Shadows = false
+				light.Parent = glass
+			end
+		else
+			local height = f.PostHeight * rng:NextNumber(0.9, 1.1)
+			local post = base * CFrame.Angles(math.rad(rng:NextNumber(-4, 4)), math.rad(rng:NextNumber(-8, 8)), math.rad(rng:NextNumber(-4, 4)))
+			part(post * CFrame.new(0, height / 2 - 0.3, 0), Vector3.new(0.85, height + 0.6, 0.85), f.PostColor)
+			part(post * CFrame.new(0, height + 0.15, 0) * CFrame.Angles(0, math.pi / 4, 0), Vector3.new(0.7, 0.45, 0.7), f.RailColor)
+		end
+		if previous then
+			for _, share in { 0.38, 0.72 } do -- two rails, at these shares of the post height
+				local from = previous + Vector3.new(0, f.PostHeight * share + rng:NextNumber(-0.18, 0.18), 0)
+				local to = ground + Vector3.new(0, f.PostHeight * share + rng:NextNumber(-0.18, 0.18), 0)
+				part(CFrame.lookAt((from + to) / 2, to), Vector3.new(0.35, 0.55, (to - from).Magnitude), f.RailColor)
+			end
+		end
+		previous = ground
+	end
+end
+
+-- The village (Config/Zones Village): the hand-made houses (assets/models/houses) along a winding dirt lane, each facing
+-- its own spot with a path to it, a campfire in the square, a few trees and a fence round it all.
+local function buildVillage(zone)
+	local v = zone.Village
+	local models = ServerStorage:WaitForChild("Models"):WaitForChild("houses")
+	local rng = Random.new(v.Fence.Seed + 1)
+	local folder = Instance.new("Folder")
+	folder.Name = "Village"
+	folder.Parent = propsFolder -- so nothing in it counts as ground
+
+	-- Everything is stood on the ground first and the dirt painted last: terrain that was just repainted may not answer a
+	-- raycast for a moment.
+	local yards = {}
+	for _, house in v.Houses do
+		local y = groundHeight(house.Position.X, house.Position.Z)
+		if y then
+			local model = models:WaitForChild(house.Model):Clone()
+			model:ScaleTo(model:GetScale() * v.Scale[house.Model])
+			for _, part in model:GetDescendants() do
+				if part:IsA("BasePart") then
+					part.Anchored = true
+					part.CanTouch = false
+					part.Color = Color3.new(1, 1, 1) -- white shows the model's own colors
+				end
+			end
+			-- the models' doors face -Z, which lookAlong turns toward the spot the house faces
+			model:PivotTo(CFrame.lookAlong(model:GetPivot().Position, house.Faces - house.Position))
+			local box, extent = model:GetBoundingBox()
+			model:PivotTo(model:GetPivot() + Vector3.new(house.Position.X - box.X, y - v.Sink - (box.Y - extent.Y / 2), house.Position.Z - box.Z))
+			model.Parent = folder
+			table.insert(yards, { At = house.Position, Radius = math.min(extent.X, extent.Z) / 2 + 1 })
+		end
+	end
+	local fireY = groundHeight(v.Campfire.X, v.Campfire.Z)
+	if fireY then
+		campfire(folder, v.Campfire.X, fireY, v.Campfire.Z, Random.new(zone.Trees.Seed + 2), zone.Campfires, zone.Rocks)
+	end
+	fence(folder, v.Fence)
+	local settings = table.clone(zone.Trees)
+	settings.Scale = v.Trees.Scale
+	for _, spot in v.Trees.Spots do
+		local y = groundHeight(spot.X, spot.Z)
+		if y then
+			tree(folder, spot.X, y, spot.Z, rng, settings)
+		end
+	end
+
+	local dirt = Enum.Material[zone.Trail.Material]
+	for _, patches in { v.Dirt, yards } do -- the square, and a yard under each house so no tall grass covers the doorstep
+		for _, patch in patches do
+			bareGround(patch.At, patch.Radius, dirt)
+		end
+	end
+	for _, point in trailPoints(v.Lane) do
+		bareGround(point, v.LaneWidth / 2 * rng:NextNumber(0.8, 1.15), dirt)
+	end
+	for _, house in v.Houses do -- the path to each door, with a slight bend in it
+		local along = house.Faces - house.Position
+		local bend = Vector3.new(-along.Z, 0, along.X).Unit * rng:NextNumber(-5, 5)
+		for _, point in trailPoints({ house.Position, house.Position + along * 0.55 + bend, house.Faces }) do
+			bareGround(point, v.PathWidth / 2 * rng:NextNumber(0.85, 1.15), dirt)
+		end
+	end
+	print(`[Zone] village built: {#v.Houses} houses`)
 end
 
 -- The town beyond the gate ------------------------------------------------------------------------------------------------
@@ -886,8 +1037,8 @@ local function buildFarTrees(zone)
 	print(`[Zone] {placed} trees on the far terraces`)
 end
 
--- The spawn: a hidden SpawnLocation at the middle of the zone, and no flat baseplate to hide the grass.
-local function placeSpawn()
+-- The spawn: a hidden SpawnLocation in the village, facing north, and no flat baseplate to hide the grass.
+local function placeSpawn(zone)
 	local baseplate = workspace:FindFirstChild("Baseplate")
 	if baseplate then
 		baseplate:Destroy()
@@ -903,7 +1054,7 @@ local function placeSpawn()
 	spawn.CanCollide = false
 	spawn.CanTouch = false
 	spawn.CanQuery = false
-	spawn.Position = Vector3.new(0, 3, 0)
+	spawn.CFrame = CFrame.lookAlong(zone.Village.Spawn, Vector3.zAxis)
 	spawn.Parent = workspace
 end
 
@@ -936,7 +1087,7 @@ for _, player in game:GetService("Players"):GetPlayers() do
 end
 -- Grass length is a Terrain property a game script is not allowed to change; it is set on the place in Studio instead.
 buildGround(zone)
-placeSpawn()
+placeSpawn(zone)
 local points = trailPoints(zone.Trail.Waypoints)
 buildHills(zone, points)
 paintTrail(zone, points)
@@ -945,6 +1096,8 @@ buildAtmosphere(zone)
 task.wait(1) -- new terrain cannot be raycast for a moment; the props and trees look for the ground with a raycast
 treeRay.FilterDescendantsInstances = { propsFolder }
 local keepClear = buildProps(zone, points)
+buildVillage(zone)
+table.insert(keepClear, { Position = zone.Village.Center, Radius = zone.Village.Radius })
 for _, area in Camps.Areas(zone) do -- the mobs' ground stays open: no trees where they walk and fight
 	table.insert(keepClear, { Position = area.Position, Radius = area.Radius + zone.Trees.Scattered.ClearAroundMobs })
 end
