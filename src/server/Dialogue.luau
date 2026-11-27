@@ -4,6 +4,7 @@
 local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ServerStorage = game:GetService("ServerStorage")
 
 local COOLDOWN = 0.3 -- seconds between two requests from one player
 
@@ -43,6 +44,50 @@ local function send(player, villager, conversation)
 	if conversation then
 		openRemote:FireClient(player, villager.Id, villager.Name, villager.Model.PrimaryPart.Position, conversation)
 	end
+end
+
+-- Stands a villager's hand-made model on the ground and returns it. def = { Model (in assets/models), Name, Scale };
+-- at = { Position, Faces } from Config/Zones. The model is anchored: its movement is only a look, so client/Quests does it.
+function Dialogue.Place(def, at)
+	local model = ServerStorage:WaitForChild("Models"):WaitForChild(def.Model):Clone()
+	model.Name = def.Name
+	model.ModelStreamingMode = Enum.ModelStreamingMode.Atomic -- reaches a client all at once
+	model:ScaleTo(model:GetScale() * def.Scale)
+	for _, part in model:GetDescendants() do
+		if part:IsA("BasePart") then
+			part.Anchored = true
+			part.CanCollide = false
+			part.CanTouch = false
+			part.Color = Color3.new(1, 1, 1) -- white shows the model's own colors
+		end
+	end
+
+	local spot = at.Position
+	local forward = Vector3.new(at.Faces.X - spot.X, 0, at.Faces.Z - spot.Z)
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Include
+	params.FilterDescendantsInstances = { workspace.Terrain }
+	local hit = workspace:Raycast(Vector3.new(spot.X, 120, spot.Z), Vector3.new(0, -200, 0), params)
+	local ground = if hit then hit.Position.Y else 0
+	-- the model's face is toward -Z, which lookAlong turns toward the spot
+	model:PivotTo(CFrame.lookAlong(model:GetPivot().Position, forward))
+	local box, size = model:GetBoundingBox()
+	model:PivotTo(model:GetPivot() + Vector3.new(spot.X - box.X, ground - (box.Y - size.Y / 2), spot.Z - box.Z))
+
+	-- an invisible post: players cannot walk through it, and the prompt and the name hang on it
+	local root = Instance.new("Part")
+	root.Name = "Root"
+	root.Anchored = true
+	root.CanQuery = false
+	root.CanTouch = false
+	root.Transparency = 1
+	root.Size = Vector3.new(2, size.Y, 2)
+	root.CFrame = CFrame.lookAlong(Vector3.new(spot.X, ground + size.Y / 2, spot.Z), forward) -- the client reads which way is forward
+	root.Parent = model
+	model.PrimaryPart = root
+
+	model.Parent = workspace
+	return model
 end
 
 -- villager = { Id, Name, Model (with a PrimaryPart), PromptKey, TalkDistance, Talk = function(player) -> conversation,

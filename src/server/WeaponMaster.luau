@@ -1,5 +1,4 @@
 -- The Weapon Master (Config/WeaponMaster): gives a player who has no weapon their first one. Server only.
-local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 
@@ -9,8 +8,6 @@ local village = require(ReplicatedStorage.Shared.Config.Zones).OutsideZone1.Vill
 local Dialogue = require(script.Parent.Dialogue)
 local PlayerData = require(script.Parent.PlayerData)
 local WeaponVisuals = require(script.Parent.WeaponVisuals)
-
-local IDLE_ANIMATION = "rbxassetid://507766388" -- Roblox's standard R15 idle
 
 local function talk(player)
 	local data = PlayerData.Get(player)
@@ -88,47 +85,12 @@ local function stand(at, weapon)
 end
 
 local function build()
-	local look = Config.Look
-	local description = Instance.new("HumanoidDescription")
-	description.HeadColor, description.LeftArmColor, description.RightArmColor = look.Skin, look.Skin, look.Skin
-	description.TorsoColor = look.Shirt
-	description.LeftLegColor, description.RightLegColor = look.Trousers, look.Trousers
-	local model = Players:CreateHumanoidModelFromDescriptionAsync(description, Enum.HumanoidRigType.R15)
-	model.Name = Config.Name
-	model.ModelStreamingMode = Enum.ModelStreamingMode.Atomic -- reaches a client all at once
-	local humanoid = model:FindFirstChildOfClass("Humanoid")
-	humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None -- client/Quests draws the name and marker
-	local root = model.HumanoidRootPart
-	root.Anchored = true
-
-	local spot, faces = village.WeaponMaster.Position, village.WeaponMaster.Faces
-	local params = RaycastParams.new()
-	params.FilterType = Enum.RaycastFilterType.Include
-	params.FilterDescendantsInstances = { workspace.Terrain }
-	local hit = workspace:Raycast(Vector3.new(spot.X, 120, spot.Z), Vector3.new(0, -200, 0), params)
-	local ground = if hit then hit.Position.Y else 0
-	local standing = Vector3.new(spot.X, ground + humanoid.HipHeight + root.Size.Y / 2, spot.Z)
-	local facing = CFrame.lookAt(standing, Vector3.new(faces.X, standing.Y, faces.Z))
-	model:PivotTo(facing)
-
-	local torso = model.LowerTorso
-	local apron = part(model, torso.CFrame * CFrame.new(0, -0.3, -0.58), Vector3.new(1.5, 1.7, 0.15), look.Apron, Enum.Material.Fabric)
-	apron.Anchored = false
-	apron.CanCollide = false
-	apron.Massless = true
-	local weld = Instance.new("WeldConstraint")
-	weld.Part0, weld.Part1 = torso, apron
-	weld.Parent = apron
-	model.Parent = workspace
-
-	local idle = Instance.new("Animation")
-	idle.AnimationId = IDLE_ANIMATION
-	local track = humanoid:FindFirstChildOfClass("Animator"):LoadAnimation(idle)
-	track.Looped = true
-	track:Play()
+	local model = Dialogue.Place(Config, village.WeaponMaster)
+	local root = model.PrimaryPart
+	local ground = root.Position.Y - root.Size.Y / 2
 
 	for i, id in Config.Offers do -- a row of stumps beside them, on the side away from the chief
-		local beside = facing * Vector3.new(-3.2 - (i - 1) * 2.6, 0, 0)
+		local beside = root.CFrame * Vector3.new(-3.2 - (i - 1) * 2.6, 0, 0)
 		stand(Vector3.new(beside.X, ground, beside.Z), Weapons[id])
 	end
 

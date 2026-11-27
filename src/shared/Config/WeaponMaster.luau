@@ -5,13 +5,9 @@ return {
 	PromptKey = Enum.KeyCode.F,
 	TalkDistance = 10, -- studs at which "Talk" shows
 	Offers = { "Sword", "Bow", "Wand" }, -- weapon ids from Config/Weapons a new player can choose from
-	-- a plain Roblox character in a leather apron, until there is a model
-	Look = {
-		Skin = Color3.fromRGB(190, 136, 100),
-		Shirt = Color3.fromRGB(70, 78, 88),
-		Trousers = Color3.fromRGB(52, 40, 32),
-		Apron = Color3.fromRGB(112, 70, 40),
-	},
+	Model = "WeaponMaster", -- assets/models/WeaponMaster.rbxm; parts named "Head...", "LeftArm" (free hand), "...Leg" and "Sword" move
+	Scale = 1, -- size of the model (1 = as saved)
+	LookDistance = 18, -- studs within which they watch you
 	-- Each entry is one page of the conversation.
 	Greeting = {
 		"A new face! You will not last long out there with empty hands.",

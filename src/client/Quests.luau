@@ -1,5 +1,5 @@
 -- What to do next: the tracker under the profile panel, the villagers' names with "!" or "?" over their heads, the arrows
--- on the ground (client/Guide), and how the chief moves. Display only: the server owns the weapon and quest state (the
+-- on the ground (client/Guide), and how the villagers move. Display only: the server owns the weapon and quest state (the
 -- "Weapon" and "Quests" attributes, set by PlayerData.Sync).
 local CollectionService = game:GetService("CollectionService")
 local HttpService = game:GetService("HttpService")
@@ -135,11 +135,11 @@ local function ease(value, target, speed, dt)
 	return value + (target - value) * (1 - math.exp(-speed * dt))
 end
 
--- The chief breathes, shifts their weight and moves their free hand. When you are near, the head follows you and the body
+-- A villager breathes, shifts their weight and moves their free hand. When you are near, the head follows you and the body
 -- turns after it; otherwise they look around. While talking they gesture and nod. Looks only: the model is anchored and
--- each client moves its own copy. Everything is worked out in the chief's own space: y up, forward -z.
-local function animate(model, root)
-	local base = root.CFrame * CFrame.new(0, -root.Size.Y / 2, 0) -- on the ground, facing the chief's forward
+-- each client moves its own copy. Everything is worked out in the villager's own space: y up, forward -z.
+local function animate(model, root, id, lookDistance)
+	local base = root.CFrame * CFrame.new(0, -root.Size.Y / 2, 0) -- on the ground, facing the villager's forward
 	local rest, neck, heads, shoulder = {}, Vector3.zero, 0, nil
 	for _, part in model:GetDescendants() do
 		if part:IsA("MeshPart") then
@@ -172,7 +172,7 @@ local function animate(model, root)
 		if you then
 			local to = base:PointToObjectSpace(you.Position) - neck
 			local flat = math.sqrt(to.X ^ 2 + to.Z ^ 2)
-			if flat < Config.Chief.LookDistance and flat > 0.5 then
+			if flat < lookDistance and flat > 0.5 then
 				local yaw = math.atan2(-to.X, -to.Z)
 				yawGoal = math.clamp(yaw * 0.75, -math.rad(55), math.rad(55)) -- the head turns most of the way...
 				bodyGoal = yaw - yawGoal -- ...and the body the rest
@@ -182,14 +182,14 @@ local function animate(model, root)
 		headYaw = ease(headYaw, yawGoal, 6, dt)
 		headPitch = ease(headPitch, pitchGoal, 6, dt)
 		bodyYaw = ease(bodyYaw, bodyYaw + (bodyGoal - bodyYaw + math.pi) % (2 * math.pi) - math.pi, 2.5, dt) -- the short way round
-		talk = ease(talk, if Dialogue.Speaking("VillageChief") then 1 else 0, 5, dt)
+		talk = ease(talk, if Dialogue.Speaking(id) then 1 else 0, 5, dt)
 
 		local turn = CFrame.Angles(0, bodyYaw, 0)
 		local breath = CFrame.new(0, math.sin(now * 1.8) * 0.05, 0)
 		local sway = about(Vector3.new(0, 0.8, 0), CFrame.Angles(math.sin(now * 0.7) * math.rad(1.2), 0, math.sin(now * 0.55) * math.rad(1.8)))
 		local nod = math.sin(now * 5) * math.rad(5) * talk
 		local head = about(neck, CFrame.Angles(0, headYaw, 0) * CFrame.Angles(headPitch + nod, 0, 0))
-		-- the free hand drifts a little, and comes up and moves while the chief speaks
+		-- the free hand drifts a little, and comes up and moves while they speak
 		local swing = math.sin(now * 0.9) * math.rad(7) * (1 - talk) + (math.rad(38) + math.sin(now * 4) * math.rad(12)) * talk
 		local arm = if shoulder then about(shoulder, CFrame.Angles(swing, 0, 0)) else CFrame.identity
 
@@ -198,7 +198,7 @@ local function animate(model, root)
 			local pose
 			if string.find(part.Name, "Leg") then
 				pose = turn
-			elseif part.Name == "Staff" then
+			elseif part.Name == "Staff" or part.Name == "Sword" then -- planted on the ground
 				pose = turn * sway
 			elseif string.find(part.Name, "^Head") then
 				pose = body * head
@@ -229,9 +229,8 @@ local function label(model)
 	markers[id] = text(board, 38, UDim2.new(), UDim2.new(1, 0, 0, 42), GOLD, Enum.TextXAlignment.Center)
 	text(board, 15, UDim2.fromOffset(0, 44), UDim2.new(1, 0, 0, 18), Color3.new(1, 1, 1), Enum.TextXAlignment.Center).Text = model.Name
 	refresh()
-	if id == "VillageChief" then
-		animate(model, root)
-	end
+	local settings = if id == "VillageChief" then Config.Chief else WeaponMaster
+	animate(model, root, id, settings.LookDistance)
 end
 
 CollectionService:GetInstanceAddedSignal("Villager"):Connect(label)

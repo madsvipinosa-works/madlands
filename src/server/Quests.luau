@@ -2,7 +2,6 @@
 -- told what to show. Progress is kept in the player's saved data (ProfileStore, through PlayerData). A player needs a weapon
 -- (from the Weapon Master) before the chief will give them anything.
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local ServerStorage = game:GetService("ServerStorage")
 
 local Config = require(ReplicatedStorage.Shared.Config.Quests)
 local Weapons = require(ReplicatedStorage.Shared.Config.Weapons)
@@ -92,45 +91,8 @@ function Quests.MobKilled(player, mobName)
 	end
 end
 
--- The chief is the hand-made model, anchored. Its idle movement is only a look, so client/Quests does it.
 local function buildChief()
-	local model = ServerStorage:WaitForChild("Models"):WaitForChild(chief.Model):Clone()
-	model.Name = chief.Name
-	model.ModelStreamingMode = Enum.ModelStreamingMode.Atomic -- reaches a client all at once
-	model:ScaleTo(model:GetScale() * chief.Scale)
-	for _, part in model:GetDescendants() do
-		if part:IsA("BasePart") then
-			part.Anchored = true
-			part.CanCollide = false
-			part.CanTouch = false
-			part.Color = Color3.new(1, 1, 1) -- white shows the model's own colors
-		end
-	end
-
-	local spot, faces = village.Chief.Position, village.Chief.Faces
-	local params = RaycastParams.new()
-	params.FilterType = Enum.RaycastFilterType.Include
-	params.FilterDescendantsInstances = { workspace.Terrain }
-	local hit = workspace:Raycast(Vector3.new(spot.X, 120, spot.Z), Vector3.new(0, -200, 0), params)
-	local ground = if hit then hit.Position.Y else 0
-	-- the model's face is toward -Z, which lookAlong turns toward the spot
-	model:PivotTo(CFrame.lookAlong(model:GetPivot().Position, Vector3.new(faces.X - spot.X, 0, faces.Z - spot.Z)))
-	local box, size = model:GetBoundingBox()
-	model:PivotTo(model:GetPivot() + Vector3.new(spot.X - box.X, ground - (box.Y - size.Y / 2), spot.Z - box.Z))
-
-	-- an invisible post: players cannot walk through it, and the prompt and the name hang on it
-	local root = Instance.new("Part")
-	root.Name = "Root"
-	root.Anchored = true
-	root.CanQuery = false
-	root.CanTouch = false
-	root.Transparency = 1
-	root.Size = Vector3.new(2, size.Y, 2)
-	root.CFrame = CFrame.lookAlong(Vector3.new(spot.X, ground + size.Y / 2, spot.Z), Vector3.new(faces.X - spot.X, 0, faces.Z - spot.Z)) -- the client reads which way is forward
-	root.Parent = model
-	model.PrimaryPart = root
-
-	model.Parent = workspace
+	local model = Dialogue.Place(chief, village.Chief)
 
 	Dialogue.Add({
 		Id = "VillageChief",
